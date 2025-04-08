@@ -1,23 +1,6 @@
 # GEMS Sensing Data Access Tool
 
-[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-A tool for extracting environmental sensor data from the GEMS database at the University of Minnesota.
-
-## Overview
-
-The GEMS Sensing Data Access Tool allows researchers to easily extract sensor data from the GEMS database by project, date range, and node IDs. It features robust error handling, data verification, and flexible output formats.
-
-## Features
-
-- Query sensor data by project name, date range, and specific nodes
-- Export data in CSV or Parquet formats
-- Compress outputs with metadata for archiving
-- List available projects
-- Verify data integrity through SHA-256 hashing
-- Retry logic for handling network issues
-- Detailed logging and verbose output options
+The purpose of this project is to pull data by project, start, and end date from the GEMS Sensing database. This database is documented in the `database_info.md` file.
 
 ## Installation
 
@@ -61,7 +44,7 @@ The GEMS Sensing Data Access Tool allows researchers to easily extract sensor da
 
 ### Basic Command
 ```bash
-python get_sensing_data.py --project "Winter Turf - v3" --start-date 2023-01-01 --end-date 2023-01-31
+python get_sensing_data.py --project winterturf --start-date 2023-01-01 --end-date 2023-01-31
 ```
 
 ### Available Parameters
@@ -77,40 +60,13 @@ python get_sensing_data.py --project "Winter Turf - v3" --start-date 2023-01-01 
 - `--setup-credentials`: Create a template .env file for database credentials
 - `--list-projects`: List all available projects and exit
 
-## Examples
-
-### List Available Projects
-```bash
-python get_sensing_data.py --list-projects
-```
-
-### Basic Data Extraction
-```bash
-python get_sensing_data.py --project "Winter Turf - v3" --start-date 2023-01-01 --end-date 2023-01-31
-```
-
-### Query Specific Node IDs
-```bash
-python get_sensing_data.py --project "Winter Turf - v3" --node-id node001,node002 --start-date 2023-01-01
-```
-
-### Create Compressed Output
-```bash
-python get_sensing_data.py --project "Winter Turf - v3" --start-date 2023-01-01 --end-date 2023-01-31 --zip
-```
-
-### Verbose Output with Custom Directory
-```bash
-python get_sensing_data.py --project "Winter Turf - v3" --start-date 2023-01-01 --verbose --output-dir /path/to/output
-```
-
 ## Data Output
 
 ### Format
 By default, the tool exports data as CSV files with the following characteristics:
 - Located in a `/data` folder in the current directory (created if it doesn't exist)
 - Named according to the pattern: `YYYYMMDDSTART_YYYYMMDDEND_project_CURRENTTIMESTAMP.csv` (or .parquet)
-  (Example: `20230101_20230131_Winter Turf - v3_20240407153045.csv`)
+  (Example: `20230101_20230131_winterturf_20240407153045.csv`)
 - Includes file integrity verification using SHA-256 hashing
 - Contains raw data records including node_id, event, message, and timestamps
 
@@ -120,6 +76,49 @@ When using the `--zip` flag, the tool will:
 - Compress the file into a zip archive with the same base name
 - Include a metadata file in the archive with query details and statistics
 - Provide a SHA-256 hash of the archive for verification
+
+### Data Handling Features
+- Error handling with exponential backoff retry logic
+- File integrity verification
+- Metadata generation
+
+## Dependencies
+
+### Core Libraries
+- **sqlalchemy**: Database ORM and connection management
+- **psycopg2-binary**: PostgreSQL adapter for Python
+- **pandas**: Data manipulation and analysis
+- **python-dotenv**: For loading environment variables from .env file
+
+### Optional Libraries
+- **pyarrow**: Required for Parquet file format support
+
+## Examples
+
+### List Available Projects
+```bash
+python get_sensing_data.py --list-projects
+```
+
+### Basic Data Extraction
+```bash
+python get_sensing_data.py --project winterturf --start-date 2023-01-01 --end-date 2023-01-31
+```
+
+### Query Specific Node IDs
+```bash
+python get_sensing_data.py --project winterturf --node-id node001,node002 --start-date 2023-01-01
+```
+
+### Create Compressed Output
+```bash
+python get_sensing_data.py --project winterturf --start-date 2023-01-01 --end-date 2023-01-31 --zip
+```
+
+### Verbose Output with Custom Directory
+```bash
+python get_sensing_data.py --project winterturf --start-date 2023-01-01 --verbose --output-dir /path/to/output
+```
 
 ## Troubleshooting
 
@@ -141,11 +140,5 @@ cd tests
 python run_tests.py
 ```
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contact
-
-For questions or support, please contact:
-- Bryan Runck - runck014@umn.edu
+## Environment
+- venv --> see requirements.txt
