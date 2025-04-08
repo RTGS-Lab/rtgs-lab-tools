@@ -38,6 +38,8 @@ The GEMS Sensing Data Access Tool allows researchers to easily extract sensor da
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
+   **Note:** If working on Minnesota Supercomputing Institute resources, python is only available after loading the module with `module load python`.
+
 
 3. Install dependencies:
    ```bash
