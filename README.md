@@ -30,7 +30,7 @@ The GEMS Sensing Data Access Tool allows researchers to easily extract sensor da
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd sensing
+   cd gems_sensing_db_tools
    ```
 
 2. Create and activate a virtual environment:
