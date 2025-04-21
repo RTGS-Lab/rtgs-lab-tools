@@ -13,6 +13,7 @@ import hashlib
 import time
 import logging
 import zipfile
+import urllib.parse
 from datetime import datetime
 from pathlib import Path
 
@@ -115,7 +116,13 @@ def load_credentials_from_env():
 
 def create_engine_from_credentials(creds):
     """Create SQLAlchemy engine from credentials."""
-    db_url = f"postgresql://{creds['user']}:{creds['pass']}@{creds['host']}:{creds['port']}/{creds['db']}"
+    # Only encode username and password
+    user_encoded = urllib.parse.quote_plus(creds['user'])
+    pass_encoded = urllib.parse.quote_plus(creds['pass'])
+
+    # Construct DB URL with encoded username and password
+    db_url = f"postgresql://{user_encoded}:{pass_encoded}@{creds['host']}:{creds['port']}/{creds['db']}"
+    
     try:
         engine = create_engine(db_url)
         
