@@ -1,6 +1,9 @@
 # Data output directory
 /data/
 
+# Figure output directory
+/figures/
+
 # Environment and credentials
 .env
 venv/
