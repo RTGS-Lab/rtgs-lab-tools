@@ -16,6 +16,10 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 GEMS_TOOL_PATH = os.path.join(SCRIPT_DIR, "get_sensing_data.py")
 VISUALIZER_PATH = os.path.join(SCRIPT_DIR, "gems_sensing_data_visualizer.py")
 
+# -----------------
+# GET DATA TOOL
+# -----------------
+
 @mcp.tool("list_projects")
 async def list_projects() -> Dict[str, Any]:
     """List all available projects in the GEMS Sensing database."""
@@ -100,7 +104,78 @@ async def setup_credentials() -> Dict[str, Any]:
         return {"error": str(e)}
 
 # -----------------
-# DATA VISUALIZATION ENDPOINTS
+# ERROR PARSING TOOL
+# -----------------
+
+@mcp.tool("parse_error_codes")
+async def parse_error_codes(
+    file_path: str,
+    generate_graph: bool = False,
+    node_filter: Optional[str] = None,
+    error_codes_md: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Parse error codes from GEMS sensor data files using the error code parser.
+    
+    Args:
+        file_path: Path to the CSV or JSON file containing error data
+        generate_graph: Whether to generate error frequency graphs (default: False)
+        node_filter: Comma-separated list of node IDs to filter errors by (use "all" to separate by node)
+        error_codes_md: Optional path to a custom ERRORCODES.md file
+    """
+    # Ensure the figures directory exists if generating graphs
+    if generate_graph:
+        figures_dir = os.path.join(SCRIPT_DIR, "figures")
+        os.makedirs(figures_dir, exist_ok=True)
+    
+    # Build the command with all options
+    ERROR_PARSER_PATH = os.path.join(SCRIPT_DIR, "error_code_parser.py")
+    cmd = [PYTHON_EXECUTABLE, ERROR_PARSER_PATH, file_path]
+    
+    # Add error codes MD file if provided
+    if error_codes_md:
+        cmd.append(error_codes_md)
+    
+    # Add graph generation flag if enabled
+    if generate_graph:
+        cmd.append("--graph")
+    
+    # Add node filtering if provided
+    if node_filter:
+        cmd.append(f"--nodes={node_filter}")
+    
+    try:
+        stdout, stderr = await run_command(cmd)
+        
+        # Determine output files from stdout
+        graph_files = []
+        if generate_graph:
+            for line in stdout.splitlines():
+                if "Error frequency graph saved to" in line:
+                    graph_file = line.split("Error frequency graph saved to")[1].strip()
+                    if os.path.exists(graph_file):
+                        graph_files.append(graph_file)
+        
+        result = {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd)
+        }
+        
+        if graph_files:
+            result["graph_files"] = graph_files
+        
+        return result
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Error parsing error codes: {str(e)}",
+            "command": " ".join(cmd)
+        }
+
+# -----------------
+# DATA VISUALIZATION TOOL
 # -----------------
 
 @mcp.tool("visualize_data")
@@ -271,6 +346,102 @@ async def run_command(cmd: List[str]) -> tuple:
         raise Exception(f"Command failed with exit code {process.returncode}: {error_message}")
     
     return stdout_str, stderr_str
+
+# -----------------
+# FILE VIEWING TOOL
+# -----------------
+
+@mcp.tool("list_directory_files")
+async def list_directory_files(directory: Optional[str] = None) -> Dict[str, Any]:
+    """
+    List all files in a directory, with the default being the data directory.
+    
+    Args:
+        directory: Path to the directory to list (default: ./data)
+    """
+    try:
+        # Default to data directory if none specified
+        if directory is None:
+            directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+        
+        # Ensure the directory exists
+        if not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+            return {
+                "success": True,
+                "directory": directory,
+                "files": [],
+                "message": f"Directory {directory} was created as it did not exist."
+            }
+        
+        # Check if it's a valid directory
+        if not os.path.isdir(directory):
+            return {
+                "success": False,
+                "error": f"{directory} is not a directory."
+            }
+        
+        # Get all files and subdirectories
+        all_items = os.listdir(directory)
+        
+        # Separate files and directories
+        files = []
+        subdirs = []
+        
+        for item in all_items:
+            item_path = os.path.join(directory, item)
+            if os.path.isdir(item_path):
+                subdirs.append({
+                    "name": item,
+                    "type": "directory",
+                    "path": item_path
+                })
+            else:
+                # Get file size and modification time
+                stat_info = os.stat(item_path)
+                size_bytes = stat_info.st_size
+                mod_time = stat_info.st_mtime
+                
+                # Format size for human readability
+                if size_bytes < 1024:
+                    size_str = f"{size_bytes} B"
+                elif size_bytes < 1024 * 1024:
+                    size_str = f"{size_bytes / 1024:.1f} KB"
+                else:
+                    size_str = f"{size_bytes / (1024 * 1024):.1f} MB"
+                
+                # Format modification time
+                from datetime import datetime
+                mod_time_str = datetime.fromtimestamp(mod_time).strftime('%Y-%m-%d %H:%M:%S')
+                
+                files.append({
+                    "name": item,
+                    "type": "file",
+                    "path": item_path,
+                    "size_bytes": size_bytes,
+                    "size": size_str,
+                    "last_modified": mod_time_str
+                })
+        
+        # Sort both lists by name
+        files.sort(key=lambda x: x["name"])
+        subdirs.sort(key=lambda x: x["name"])
+        
+        return {
+            "success": True,
+            "directory": directory,
+            "directories": subdirs,
+            "files": files,
+            "total_files": len(files),
+            "total_directories": len(subdirs)
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Error listing directory: {str(e)}",
+            "directory": directory
+        }
 
 # Start the server when the script is run directly
 if __name__ == "__main__":
