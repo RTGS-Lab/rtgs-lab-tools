@@ -108,6 +108,18 @@ The GEMS Sensing Database Tools repo allows researchers to easily extract sensor
   }
 }
 ```
+11. Add this to your .env file
+
+```
+# Particle API credentials
+PARTICLE_ACCESS_TOKEN = your_api_token
+```
+
+If you need a Particle access token, make sure the Particle CLI is installed and do this command:
+
+```
+particle token create
+```
 
 ## Usage
 
