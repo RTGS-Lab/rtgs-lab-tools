@@ -3,21 +3,38 @@
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A tool for extracting environmental sensor data from the GEMS database at the University of Minnesota.
+A repository of tools for common lab analysis.This includes a tool for extracting environmental sensor data from the GEMS database at the University of Minnesota, as well as analyzing error codes and visualizing data.
 
 ## Overview
 
-The GEMS Sensing Data Access Tool allows researchers to easily extract sensor data from the GEMS database by project, date range, and node IDs. It features robust error handling, data verification, and flexible output formats.
+The GEMS Sensing Database Tools repo allows researchers to easily extract sensor data from the GEMS database by project, date range, and node IDs. It features robust error handling, data verification, and flexible output formats. it also provides error code analysis and data vizualization.
 
 ## Features
 
-- Query sensor data by project name, date range, and specific nodes
-- Export data in CSV or Parquet formats
-- Compress outputs with metadata for archiving
-- List available projects
-- Verify data integrity through SHA-256 hashing
-- Retry logic for handling network issues
-- Detailed logging and verbose output options
+### Tools
+
+- get_sensing_data.py - gets raw data from GEMS Sensing database
+   - Query sensor data by project name, date range, and specific nodes
+   - Export data in CSV or Parquet formats
+   - Compress outputs with metadata for archiving
+   - List available projects
+   - Verify data integrity through SHA-256 hashing
+   - Retry logic for handling network issues
+   - Detailed logging and verbose output options
+
+- gems_sensing_data_visualizer.py - visualizes data fom a CSV file
+   - Sort by node_id, parameter, etc
+   - Explore database if parameters are unknown
+   - List database parameters
+
+- error_code_parser.py - parses and analyzes hex error codes in CSV files
+   - plot error code frequency bar graphs
+   - get list of most common errors
+   - translates hex to natural language error
+
+### MCP Server
+
+   This repo also allows all of its command line tools to be attached to an MCP server to allow natual language analysis. See Installation details for how to use.
 
 ## Installation
 
@@ -58,6 +75,51 @@ The GEMS Sensing Data Access Tool allows researchers to easily extract sensor da
    - Install the UMN VPN client from: https://it.umn.edu/services-technologies/virtual-private-network-vpn
    - Connect using your UMN credentials
    - The tool will not be able to access the database without an active VPN connection
+
+### Optional MCP Server steps
+
+6. Open Claude Desktop
+
+7. Navigate to Settings
+
+8. Click Developer
+
+9. Click Edit Config
+
+10. Paste this in:
+```
+{
+  "mcpServers": {
+    "particle": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/ABSOLUTE_PATH_TO_WORKING_DIR/particle-mcp-server/",
+        "run",
+        "particle.py"
+      ]
+    },
+    "gems_sensing": {
+      "command": "/ABSOLUTE_PATH_TO_WORKING_DIR/venv/bin/python",
+      "args": [   
+        "/ABSOLUTE_PATH_TO_WORKING_DIR/gems_sensing_db_tools_mcp_server.py"
+      ]
+    }
+  }
+}
+```
+11. Add this to your .env file
+
+```
+# Particle API credentials
+PARTICLE_ACCESS_TOKEN = your_api_token
+```
+
+If you need a Particle access token, make sure the Particle CLI is installed and do this command:
+
+```
+particle token create
+```
 
 ## Usage
 
@@ -142,6 +204,10 @@ To run the test suite:
 cd tests
 python run_tests.py
 ```
+
+### Notes
+
+This repo also pulls in particle-mcp-server as a submodule to allow Particle API functions to be called if you are using the MCP functionality.
 
 ## License
 
