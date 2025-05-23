@@ -15,6 +15,78 @@ PYTHON_EXECUTABLE = sys.executable
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 GEMS_TOOL_PATH = os.path.join(SCRIPT_DIR, "get_sensing_data.py")
 VISUALIZER_PATH = os.path.join(SCRIPT_DIR, "gems_sensing_data_visualizer.py")
+UID_DECODER_PATH = os.path.join(SCRIPT_DIR, "configuration_uid_decoder.py")
+
+# -----------------
+# UID DECODER TOOLS
+# -----------------
+
+@mcp.tool("decode_system_uid")
+async def decode_system_uid(uid: str) -> Dict[str, Any]:
+    """
+    Decode a system configuration UID from ConfigurationManager.
+    
+    Args:
+        uid: System configuration UID (decimal or hexadecimal with 0x prefix)
+    """
+    try:
+        stdout, stderr = await run_command([PYTHON_EXECUTABLE, UID_DECODER_PATH, "system", uid])
+        return {
+            "success": True,
+            "output": stdout,
+            "command": f"configuration_uid_decoder.py system {uid}"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "command": f"configuration_uid_decoder.py system {uid}"
+        }
+
+@mcp.tool("decode_sensor_uid")
+async def decode_sensor_uid(uid: str) -> Dict[str, Any]:
+    """
+    Decode a sensor configuration UID from ConfigurationManager.
+    
+    Args:
+        uid: Sensor configuration UID (decimal or hexadecimal with 0x prefix)
+    """
+    try:
+        stdout, stderr = await run_command([PYTHON_EXECUTABLE, UID_DECODER_PATH, "sensor", uid])
+        return {
+            "success": True,
+            "output": stdout,
+            "command": f"configuration_uid_decoder.py sensor {uid}"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "command": f"configuration_uid_decoder.py sensor {uid}"
+        }
+
+@mcp.tool("decode_both_uids")
+async def decode_both_uids(system_uid: str, sensor_uid: str) -> Dict[str, Any]:
+    """
+    Decode both system and sensor configuration UIDs from ConfigurationManager.
+    
+    Args:
+        system_uid: System configuration UID (decimal or hexadecimal with 0x prefix)
+        sensor_uid: Sensor configuration UID (decimal or hexadecimal with 0x prefix)
+    """
+    try:
+        stdout, stderr = await run_command([PYTHON_EXECUTABLE, UID_DECODER_PATH, "both", system_uid, sensor_uid])
+        return {
+            "success": True,
+            "output": stdout,
+            "command": f"configuration_uid_decoder.py both {system_uid} {sensor_uid}"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "command": f"configuration_uid_decoder.py both {system_uid} {sensor_uid}"
+        }
 
 # -----------------
 # GET DATA TOOL
