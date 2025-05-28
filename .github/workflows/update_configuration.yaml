@@ -115,7 +115,7 @@ jobs:
         id: update
         continue-on-error: true
         run: |
-          python3 particle_config_updater.py \
+          python3 update_configuration.py \
             --config "${{ github.event.inputs.config_file }}" \
             --devices "${{ github.event.inputs.device_list_file }}" \
             --token "${{ secrets.PARTICLE_ACCESS_TOKEN }}" \
