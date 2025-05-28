@@ -7,11 +7,11 @@ on:
       config_file:
         description: 'Path to configuration file'
         required: true
-        default: 'config.json'
+        default: 'configurations/config.json'
       device_list_file:
         description: 'Path to device list file'
         required: true
-        default: 'devices.txt'
+        default: 'devices/devices.txt'
       max_retries:
         description: 'Maximum retry attempts per device'
         required: false
@@ -214,7 +214,7 @@ jobs:
             echo "\`\`\`json" >> "$LOG_FILE"
             cat results/update_results.json >> "$LOG_FILE"
             echo "\`\`\`" >> "$LOG_FILE"
-            echo "</details>" >> "$LOG_FILE"
+            echo "<details>" >> "$LOG_FILE"
           fi
           
           echo "📝 Log created: $LOG_FILE"
@@ -249,22 +249,7 @@ jobs:
           echo "- Successful: ${{ needs.update-configurations.outputs.success-count }}" >> $GITHUB_STEP_SUMMARY
           echo "- Failed: ${{ needs.update-configurations.outputs.fail-count }}" >> $GITHUB_STEP_SUMMARY
 
-      - name: Create issue on failure
+      - name: Failure notification
         if: needs.update-configurations.outputs.fail-count > 0
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: '🚨 Configuration update failed - ' + new Date().toISOString().split('T')[0],
-              body: `## Configuration Update Failure
-              
-              **Failed devices**: ${{ needs.update-configurations.outputs.fail-count }}/${{ needs.update-configurations.outputs.total-count }}
-              **Configuration**: ${{ github.event.inputs.config_file }}
-              **Device list**: ${{ github.event.inputs.device_list_file }}
-              **Workflow**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-              
-              Check the workflow logs and artifacts for detailed error information.`,
-              labels: ['configuration-update', 'failure']
-            });
+        run: |
+          echo "🚨 Failure occurred" >> $GITHUB_STEP_SUMMARY
