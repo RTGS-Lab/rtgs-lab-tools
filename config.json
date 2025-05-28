@@ -1,18 +1,18 @@
 {
     "config": {
       "system": {
-        "logPeriod": 300,
+        "logPeriod": 900,
         "backhaulCount": 4,
-        "powerSaveMode": 1,
-        "loggingMode": 0,
+        "powerSaveMode": 2,
+        "loggingMode": 2,
         "numAuxTalons": 1,
         "numI2CTalons": 1,
         "numSDI12Talons": 1
       },
       "sensors": {
         "numET": 0,
-        "numHaar": 0,
-        "numSoil": 1,
+        "numHaar": 1,
+        "numSoil": 2,
         "numApogeeSolar": 0,
         "numCO2": 0,
         "numO2": 0,
