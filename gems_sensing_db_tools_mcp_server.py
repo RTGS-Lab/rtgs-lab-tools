@@ -34,10 +34,10 @@ async def update_particle_configurations(
     output_file: str = "update_results.json"
 ) -> Dict[str, Any]:
     """
-    Update configurations on multiple Particle devices with automatic git logging.
+    Update sensor and system configuration on multiple Particle devices with automatic git logging.
     
     Args:
-        config: Configuration as JSON string OR path to configuration file
+        config: Configuration as a string OR path to configuration file example of string: '{"config":{"system":{"logPeriod":900,"backhaulCount":4,"powerSaveMode":2,"loggingMode":2,"numAuxTalons":1,"numI2CTalons":1,"numSDI12Talons":1},"sensors":{"numET":0,"numHaar":0,"numSoil":1,"numApogeeSolar":0,"numCO2":0,"numO2":0,"numPressure":0}}}'
         devices: Device IDs as comma-separated string OR path to device list file
         max_retries: Maximum retry attempts per device (default: 3)
         restart_wait: Seconds to wait for device restart (default: 30)
@@ -110,22 +110,6 @@ async def update_particle_configurations(
             "mcp_execution": True
         }
 
-@mcp.tool("validate_particle_config")
-async def validate_particle_config(config: str, devices: str) -> Dict[str, Any]:
-    """
-    Validate Particle device configuration without making changes (dry run).
-    
-    Args:
-        config: Configuration as JSON string OR path to configuration file
-        devices: Device IDs as comma-separated string OR path to device list file
-    """
-    return await update_particle_configurations(
-        config=config,
-        devices=devices,
-        dry_run=True,
-        output_file="validation_results.json"
-    )
-
 @mcp.tool("create_particle_config_template")
 async def create_particle_config_template() -> Dict[str, Any]:
     """Create a template configuration for Particle devices."""
@@ -154,8 +138,7 @@ async def create_particle_config_template() -> Dict[str, Any]:
     
     return {
         "success": True,
-        "template": template_config,
-        "json_string": json.dumps(template_config, indent=2),
+        "config_string": template_config,
         "description": "Template configuration for Particle devices. Modify values as needed before applying."
     }
 
@@ -166,7 +149,7 @@ async def create_particle_config_template() -> Dict[str, Any]:
 @mcp.tool("decode_system_uid")
 async def decode_system_uid(uid: str) -> Dict[str, Any]:
     """
-    Decode a system configuration UID from ConfigurationManager.
+    Decode a system configuration UID from after getting it with particle cloud function getSystemUid
     
     Args:
         uid: System configuration UID (decimal or hexadecimal with 0x prefix)
@@ -188,7 +171,7 @@ async def decode_system_uid(uid: str) -> Dict[str, Any]:
 @mcp.tool("decode_sensor_uid")
 async def decode_sensor_uid(uid: str) -> Dict[str, Any]:
     """
-    Decode a sensor configuration UID from ConfigurationManager.
+    Decode a sensor configuration UID after getting it with particle cloud function getSensorUid.
     
     Args:
         uid: Sensor configuration UID (decimal or hexadecimal with 0x prefix)
@@ -210,7 +193,7 @@ async def decode_sensor_uid(uid: str) -> Dict[str, Any]:
 @mcp.tool("decode_both_uids")
 async def decode_both_uids(system_uid: str, sensor_uid: str) -> Dict[str, Any]:
     """
-    Decode both system and sensor configuration UIDs from ConfigurationManager.
+    Decode both system and sensor configuration UIDs after getting them from particle cloud functions getSensorUid and getSystemUid.
     
     Args:
         system_uid: System configuration UID (decimal or hexadecimal with 0x prefix)
