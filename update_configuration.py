@@ -1,16 +1,9 @@
-#should take a config file and a list of device ids
-#should call updateConfig(config.json as string) for each device
-#should check return value, if any return value then retry
-#should wait for restart and device to come back online
-#should verify the UID matches the uploaded config file
-#if it doesn't then retry
-
 #!/usr/bin/env python3
 """
-Particle Device Configuration Updater
+Particle Device Configuration Updater with Git Logging
 
-This script updates configurations on multiple Particle devices and verifies the updates.
-It handles retries, waits for device restarts, and validates configuration UIDs.
+This script updates configurations on multiple Particle devices, verifies the updates,
+and automatically commits execution logs to the repository for audit purposes.
 """
 
 import json
@@ -24,6 +17,12 @@ from datetime import datetime
 import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
+import os
+import re
+import subprocess
+import getpass
+import socket
+import platform
 
 # Configure logging
 logging.basicConfig(
@@ -36,13 +35,240 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+class GitLogger:
+    """Handle git operations for logging configuration updates."""
+    
+    def __init__(self, repo_path: str = None):
+        self.repo_path = repo_path or self._find_git_repo()
+        self.logs_dir = os.path.join(self.repo_path, 'logs', 'configuration-updates')
+        self.ensure_logs_directory()
+        
+    def _find_git_repo(self) -> str:
+        """Find the git repository root."""
+        current_dir = os.getcwd()
+        while current_dir != '/':
+            if os.path.exists(os.path.join(current_dir, '.git')):
+                return current_dir
+            current_dir = os.path.dirname(current_dir)
+        
+        # If not found, use current directory
+        return os.getcwd()
+    
+    def ensure_logs_directory(self):
+        """Ensure the logs directory exists."""
+        os.makedirs(self.logs_dir, exist_ok=True)
+        
+    def _run_git_command(self, command: List[str], cwd: str = None) -> Tuple[bool, str]:
+        """Run a git command and return success status and output."""
+        try:
+            result = subprocess.run(
+                command,
+                cwd=cwd or self.repo_path,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            return result.returncode == 0, result.stdout + result.stderr
+        except subprocess.TimeoutExpired:
+            return False, "Git command timed out"
+        except Exception as e:
+            return False, f"Git command failed: {e}"
+    
+    def _get_execution_context(self) -> Dict[str, Any]:
+        """Get context information about the script execution."""
+        context = {
+            'timestamp': datetime.now().isoformat(),
+            'user': getpass.getuser(),
+            'hostname': socket.gethostname(),
+            'platform': platform.platform(),
+            'python_version': platform.python_version(),
+            'working_directory': os.getcwd(),
+            'script_path': os.path.abspath(__file__),
+            'environment_variables': {
+                'CI': os.environ.get('CI', 'false'),
+                'GITHUB_ACTIONS': os.environ.get('GITHUB_ACTIONS', 'false'),
+                'GITHUB_ACTOR': os.environ.get('GITHUB_ACTOR'),
+                'GITHUB_WORKFLOW': os.environ.get('GITHUB_WORKFLOW'),
+                'GITHUB_RUN_ID': os.environ.get('GITHUB_RUN_ID'),
+                'MCP_SESSION': os.environ.get('MCP_SESSION', 'false')  # You can set this for LLM executions
+            }
+        }
+        
+        # Determine execution source
+        if context['environment_variables']['GITHUB_ACTIONS'] == 'true':
+            context['execution_source'] = 'GitHub Actions'
+            context['triggered_by'] = context['environment_variables']['GITHUB_ACTOR']
+        elif context['environment_variables']['MCP_SESSION'] == 'true':
+            context['execution_source'] = 'LLM/MCP'
+            context['triggered_by'] = f"LLM via {context['user']}@{context['hostname']}"
+        else:
+            context['execution_source'] = 'Manual/Local'
+            context['triggered_by'] = f"{context['user']}@{context['hostname']}"
+            
+        return context
+    
+    def create_execution_log(self, results: Dict[str, Any], config: Dict[str, Any], 
+                           device_ids: List[str], args: argparse.Namespace) -> str:
+        """Create a detailed execution log."""
+        context = self._get_execution_context()
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        log_filename = f"{timestamp}_{context['execution_source'].lower().replace('/', '_')}_config_update.md"
+        log_path = os.path.join(self.logs_dir, log_filename)
+        
+        # Create log content
+        log_content = f"""# Configuration Update Execution Log
+
+## Execution Context
+- **Timestamp**: {context['timestamp']}
+- **Execution Source**: {context['execution_source']}
+- **Triggered By**: {context['triggered_by']}
+- **Hostname**: {context['hostname']}
+- **Platform**: {context['platform']}
+- **Working Directory**: {context['working_directory']}
+
+## Update Details
+- **Configuration Source**: {getattr(args, 'config', 'N/A')}
+- **Device Source**: {getattr(args, 'devices', 'N/A')}
+- **Total Devices**: {len(device_ids)}
+- **Max Retries**: {getattr(args, 'max_retries', 3)}
+- **Restart Wait**: {getattr(args, 'restart_wait', 30)}s
+- **Online Timeout**: {getattr(args, 'online_timeout', 120)}s
+- **Max Concurrent**: {getattr(args, 'max_concurrent', 5)}
+- **Dry Run**: {getattr(args, 'dry_run', False)}
+
+## Results Summary
+- **Successful Updates**: {results['summary']['successful']}
+- **Failed Updates**: {results['summary']['failed']}
+- **Success Rate**: {(results['summary']['successful'] / results['summary']['total_devices'] * 100):.1f}%
+- **Total Duration**: {self._calculate_duration(results)}
+- **Expected System UID**: {results['summary'].get('expected_system_uid', 'N/A')}
+- **Expected Sensor UID**: {results['summary'].get('expected_sensor_uid', 'N/A')}
+
+## Device List
+"""
+        
+        # Add device results
+        for device_result in results['device_results']:
+            status = "✅" if device_result['success'] else "❌"
+            log_content += f"- {status} `{device_result['device_id']}` - "
+            if device_result['success']:
+                log_content += f"Success (System UID: {device_result.get('system_uid', 'N/A')}, Sensor UID: {device_result.get('sensor_uid', 'N/A')})\n"
+            else:
+                log_content += f"Failed: {device_result.get('error', 'Unknown error')}\n"
+        
+        # Add configuration details
+        log_content += f"""
+## Configuration Applied
+```json
+{json.dumps(config, indent=2)}
+```
+
+## Detailed Results
+<details>
+<summary>Full Results JSON</summary>
+
+```json
+{json.dumps(results, indent=2)}
+```
+</details>
+
+## Execution Environment
+<details>
+<summary>Environment Details</summary>
+
+```json
+{json.dumps(context, indent=2)}
+```
+</details>
+
+---
+*Log generated automatically by Particle Configuration Updater*
+"""
+        
+        # Write log file
+        with open(log_path, 'w') as f:
+            f.write(log_content)
+            
+        logger.info(f"Created execution log: {log_path}")
+        return log_path
+    
+    def _calculate_duration(self, results: Dict[str, Any]) -> str:
+        """Calculate and format execution duration."""
+        try:
+            start_time = datetime.fromisoformat(results['summary']['start_time'])
+            end_time = datetime.fromisoformat(results['summary']['end_time'])
+            duration = (end_time - start_time).total_seconds()
+            
+            if duration < 60:
+                return f"{duration:.1f}s"
+            elif duration < 3600:
+                return f"{duration/60:.1f}m"
+            else:
+                return f"{duration/3600:.1f}h"
+        except:
+            return "Unknown"
+    
+    def commit_and_push_log(self, log_path: str, results: Dict[str, Any]) -> bool:
+        """Commit and push the log file to the repository."""
+        context = self._get_execution_context()
+        
+        try:
+            # Check if we're in a git repository
+            success, _ = self._run_git_command(['git', 'status'])
+            if not success:
+                logger.warning("Not in a git repository or git not available")
+                return False
+            
+            # Add the log file
+            success, output = self._run_git_command(['git', 'add', log_path])
+            if not success:
+                logger.error(f"Failed to add log file to git: {output}")
+                return False
+            
+            # Check if there are changes to commit
+            success, output = self._run_git_command(['git', 'diff', '--staged', '--quiet'])
+            if success:  # No changes staged
+                logger.info("No changes to commit (log file already exists)")
+                return True
+            
+            # Create commit message
+            success_rate = (results['summary']['successful'] / results['summary']['total_devices'] * 100)
+            commit_message = (
+                f"📝 Config update log: {results['summary']['successful']}/{results['summary']['total_devices']} "
+                f"devices ({success_rate:.0f}%) - {context['execution_source']} by {context['triggered_by']}"
+            )
+            
+            # Commit the changes
+            success, output = self._run_git_command(['git', 'commit', '-m', commit_message])
+            if not success:
+                logger.error(f"Failed to commit log file: {output}")
+                return False
+            
+            logger.info(f"Committed log file with message: {commit_message}")
+            
+            # Try to push (this might fail in some environments, which is ok)
+            success, output = self._run_git_command(['git', 'push'])
+            if success:
+                logger.info("Successfully pushed log to remote repository")
+            else:
+                logger.warning(f"Failed to push to remote (this is normal in some environments): {output}")
+                # Don't return False here - local commit is still valuable
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to commit/push log: {e}")
+            return False
+
 class ParticleConfigUpdater:
-    def __init__(self, access_token: str):
-        self.access_token = access_token
+    def __init__(self, enable_git_logging: bool = True, repo_path: str = None):
+        self.access_token = os.environ.get('PARTICLE_ACCESS_TOKEN')
+        if not self.access_token:
+            raise ValueError("PARTICLE_ACCESS_TOKEN env variable is required")
         self.base_url = "https://api.particle.io/v1"
         self.session = requests.Session()
         self.session.headers.update({
-            'Authorization': f'Bearer {access_token}',
+            'Authorization': f'Bearer {self.access_token}',
             'Content-Type': 'application/x-www-form-urlencoded'
         })
         
@@ -56,6 +282,10 @@ class ParticleConfigUpdater:
         # Thread-safe counters
         self._lock = threading.Lock()
         self._processed_count = 0
+        
+        # Git logging
+        self.enable_git_logging = enable_git_logging
+        self.git_logger = GitLogger(repo_path) if enable_git_logging else None
         
     def _create_session(self) -> requests.Session:
         """Create a new session for thread safety."""
@@ -160,9 +390,9 @@ class ParticleConfigUpdater:
         logger.error(f"Device {device_id} did not come back online within {self.online_check_timeout} seconds")
         return False
     
-    def verify_configuration_uid(self, device_id: str, expected_system_uid: int, expected_sensor_uid: int, session: Optional[requests.Session] = None) -> bool:
-        """Verify that the device has the expected configuration UIDs."""
-        logger.info(f"Verifying configuration UIDs for device {device_id}")
+    def get_configuration_uids(self, device_id: str, session: Optional[requests.Session] = None) -> Tuple[Optional[int], Optional[int], bool]:
+        """Get the current configuration UIDs from the device."""
+        logger.info(f"Getting configuration UIDs for device {device_id}")
         
         for attempt in range(self.uid_check_retries):
             # Check system configuration UID
@@ -180,27 +410,38 @@ class ParticleConfigUpdater:
                 continue
             
             try:
-                system_uid = int(system_uid)
-                sensor_uid = int(sensor_uid)
+                system_uid_int = int(system_uid) if system_uid != "timeout" else None
+                sensor_uid_int = int(sensor_uid) if sensor_uid != "timeout" else None
                 
-                if system_uid == expected_system_uid and sensor_uid == expected_sensor_uid:
-                    logger.info(f"Configuration UIDs verified for {device_id}")
-                    logger.info(f"  System UID: {system_uid} (expected: {expected_system_uid})")
-                    logger.info(f"  Sensor UID: {sensor_uid} (expected: {expected_sensor_uid})")
-                    return True
-                else:
-                    logger.warning(f"Configuration UID mismatch for {device_id}")
-                    logger.warning(f"  System UID: {system_uid} (expected: {expected_system_uid})")
-                    logger.warning(f"  Sensor UID: {sensor_uid} (expected: {expected_sensor_uid})")
-                    
+                logger.info(f"Retrieved UIDs for {device_id}: System={system_uid_int}, Sensor={sensor_uid_int}")
+                return system_uid_int, sensor_uid_int, True
+                
             except (ValueError, TypeError) as e:
-                logger.error(f"Invalid UID response from {device_id}: {e}")
+                logger.error(f"Invalid UID response from {device_id}: system={system_uid}, sensor={sensor_uid}, error={e}")
             
             if attempt < self.uid_check_retries - 1:
-                logger.info(f"Retrying UID verification in 10 seconds...")
+                logger.info(f"Retrying UID retrieval in 10 seconds...")
                 time.sleep(10)
         
-        return False
+        return None, None, False
+    
+    def verify_configuration_uid(self, device_id: str, expected_system_uid: int, expected_sensor_uid: int, session: Optional[requests.Session] = None) -> Tuple[bool, Optional[int], Optional[int]]:
+        """Verify that the device has the expected configuration UIDs and return actual UIDs."""
+        system_uid, sensor_uid, success = self.get_configuration_uids(device_id, session)
+        
+        if not success:
+            return False, system_uid, sensor_uid
+        
+        if system_uid == expected_system_uid and sensor_uid == expected_sensor_uid:
+            logger.info(f"Configuration UIDs verified for {device_id}")
+            logger.info(f"  System UID: {system_uid} (expected: {expected_system_uid})")
+            logger.info(f"  Sensor UID: {sensor_uid} (expected: {expected_sensor_uid})")
+            return True, system_uid, sensor_uid
+        else:
+            logger.warning(f"Configuration UID mismatch for {device_id}")
+            logger.warning(f"  System UID: {system_uid} (expected: {expected_system_uid})")
+            logger.warning(f"  Sensor UID: {sensor_uid} (expected: {expected_sensor_uid})")
+            return False, system_uid, sensor_uid
     
     def update_device_config(self, device_id: str, config: Dict[str, Any], expected_system_uid: int, expected_sensor_uid: int, config_json_str: str) -> Dict[str, Any]:
         """Update configuration on a single device with full verification."""
@@ -220,9 +461,14 @@ class ParticleConfigUpdater:
             'attempts': 0,
             'error': None,
             'response_code': None,
-            'uid_verified': False,
+            'system_uid': None,
+            'sensor_uid': None,
+            'expected_system_uid': expected_system_uid,
+            'expected_sensor_uid': expected_sensor_uid,
+            'uid_match': False,
             'timestamp': datetime.now().isoformat(),
-            'thread_name': threading.current_thread().name
+            'thread_name': threading.current_thread().name,
+            'config_json': config_json_str
         }
         
         for attempt in range(self.max_retries):
@@ -258,10 +504,14 @@ class ParticleConfigUpdater:
                     result['error'] = "Device did not come back online after restart"
                     continue
                 
-                # Verify configuration UIDs
-                if self.verify_configuration_uid(device_id, expected_system_uid, expected_sensor_uid, session):
+                # Get and verify configuration UIDs
+                uid_match, system_uid, sensor_uid = self.verify_configuration_uid(device_id, expected_system_uid, expected_sensor_uid, session)
+                result['system_uid'] = system_uid
+                result['sensor_uid'] = sensor_uid
+                result['uid_match'] = uid_match
+                
+                if uid_match:
                     result['success'] = True
-                    result['uid_verified'] = True
                     logger.info(f"[{current_progress}] Configuration update completed successfully for {device_id} (timeout case)")
                     break
                 else:
@@ -285,10 +535,14 @@ class ParticleConfigUpdater:
                     result['error'] = "Device did not come back online after restart"
                     continue
                 
-                # Verify configuration UIDs
-                if self.verify_configuration_uid(device_id, expected_system_uid, expected_sensor_uid, session):
+                # Get and verify configuration UIDs
+                uid_match, system_uid, sensor_uid = self.verify_configuration_uid(device_id, expected_system_uid, expected_sensor_uid, session)
+                result['system_uid'] = system_uid
+                result['sensor_uid'] = sensor_uid
+                result['uid_match'] = uid_match
+                
+                if uid_match:
                     result['success'] = True
-                    result['uid_verified'] = True
                     logger.info(f"[{current_progress}] Configuration update completed successfully for {device_id}")
                     break
                 else:
@@ -298,6 +552,10 @@ class ParticleConfigUpdater:
             elif response == 0:
                 logger.info(f"[{current_progress}] Configuration removed successfully for {device_id}")
                 result['success'] = True
+                # Still get current UIDs for reporting
+                _, system_uid, sensor_uid = self.get_configuration_uids(device_id, session)
+                result['system_uid'] = system_uid
+                result['sensor_uid'] = sensor_uid
                 break
             else:
                 # Handle error codes (based on your implementation)
@@ -329,7 +587,8 @@ class ParticleConfigUpdater:
         
         return result
     
-    def update_multiple_devices(self, device_ids: List[str], config: Dict[str, Any]) -> Dict[str, Any]:
+    def update_multiple_devices(self, device_ids: List[str], config: Dict[str, Any], 
+                              args: argparse.Namespace = None) -> Dict[str, Any]:
         """Update configuration on multiple devices using parallel processing."""
         logger.info(f"Starting parallel configuration update for {len(device_ids)} devices")
         logger.info(f"Using {self.max_concurrent_devices} concurrent threads")
@@ -348,7 +607,8 @@ class ParticleConfigUpdater:
                     'failed': len(device_ids),
                     'start_time': datetime.now().isoformat(),
                     'end_time': datetime.now().isoformat(),
-                    'error': f"Failed to calculate expected UIDs: {e}"
+                    'error': f"Failed to calculate expected UIDs: {e}",
+                    'config_json': json.dumps(config, separators=(',', ':'))
                 },
                 'device_results': []
             }
@@ -363,7 +623,10 @@ class ParticleConfigUpdater:
                 'failed': 0,
                 'start_time': datetime.now().isoformat(),
                 'end_time': None,
-                'concurrent_threads': self.max_concurrent_devices
+                'concurrent_threads': self.max_concurrent_devices,
+                'expected_system_uid': expected_system_uid,
+                'expected_sensor_uid': expected_sensor_uid,
+                'config_json': config_json_str
             },
             'device_results': []
         }
@@ -412,9 +675,14 @@ class ParticleConfigUpdater:
                         'attempts': 0,
                         'error': f"Thread execution error: {e}",
                         'response_code': None,
-                        'uid_verified': False,
+                        'system_uid': None,
+                        'sensor_uid': None,
+                        'expected_system_uid': expected_system_uid,
+                        'expected_sensor_uid': expected_sensor_uid,
+                        'uid_match': False,
                         'timestamp': datetime.now().isoformat(),
-                        'thread_name': threading.current_thread().name
+                        'thread_name': threading.current_thread().name,
+                        'config_json': config_json_str
                     }
                     results['device_results'].append(error_result)
                     results['summary']['failed'] += 1
@@ -433,6 +701,17 @@ class ParticleConfigUpdater:
         logger.info(f"  Success rate: {(results['summary']['successful'] / results['summary']['total_devices'] * 100):.1f}%")
         logger.info(f"  Average time per device: {(total_duration / results['summary']['total_devices']):.1f}s")
         logger.info(f"  Concurrent threads used: {self.max_concurrent_devices}")
+        
+        # Create and commit git log if enabled
+        if self.enable_git_logging and self.git_logger and args:
+            try:
+                log_path = self.git_logger.create_execution_log(results, config, device_ids, args)
+                if self.git_logger.commit_and_push_log(log_path, results):
+                    logger.info("✅ Execution log committed to repository")
+                else:
+                    logger.warning("⚠️ Failed to commit execution log to repository")
+            except Exception as e:
+                logger.error(f"Failed to create/commit git log: {e}")
         
         return results
 
@@ -465,6 +744,29 @@ def load_config_file(config_path: str) -> Dict[str, Any]:
         logger.error(f"Error loading configuration file: {e}")
         raise
 
+def parse_config_input(config_input: str) -> Dict[str, Any]:
+    """Parse configuration input - either a file path or JSON string."""
+    # First, try to treat it as JSON string
+    try:
+        config = json.loads(config_input)
+        logger.info("Configuration parsed as JSON string")
+        
+        # Basic validation
+        if 'config' not in config:
+            raise ValueError("Configuration must have a 'config' root element")
+        
+        if 'system' not in config['config']:
+            raise ValueError("Configuration must have a 'system' section")
+        
+        if 'sensors' not in config['config']:
+            raise ValueError("Configuration must have a 'sensors' section")
+        
+        return config
+    except json.JSONDecodeError:
+        # If JSON parsing fails, treat as file path
+        logger.info("Configuration input treated as file path")
+        return load_config_file(config_input)
+
 def load_device_list(device_list_path: str) -> List[str]:
     """Load device list from file."""
     try:
@@ -492,6 +794,37 @@ def load_device_list(device_list_path: str) -> List[str]:
         logger.error(f"Error loading device list: {e}")
         raise
 
+def parse_device_input(device_input: str) -> List[str]:
+    """Parse device input - either a file path or comma/space separated list."""
+    # Check if it looks like a list of device IDs (contains device ID patterns)
+    # Particle device IDs are typically 24 character hex strings
+    device_id_pattern = r'[a-f0-9]{24}'
+    
+    # Remove any brackets if present and clean up the string
+    cleaned_input = device_input.strip().strip('[]')
+    
+    # Try to find device IDs in the input
+    potential_devices = re.findall(device_id_pattern, cleaned_input, re.IGNORECASE)
+    
+    if potential_devices:
+        # Looks like a list of device IDs
+        logger.info(f"Device input parsed as device ID list: {len(potential_devices)} devices found")
+        return potential_devices
+    
+    # Check if input contains comma or space separated values that might be device IDs
+    # Split by comma, semicolon, or whitespace
+    tokens = re.split(r'[,;\s]+', cleaned_input)
+    tokens = [token.strip() for token in tokens if token.strip()]
+    
+    # Check if all tokens look like device IDs (at least 20 chars, alphanumeric)
+    if all(len(token) >= 20 and re.match(r'^[a-f0-9]+$', token, re.IGNORECASE) for token in tokens):
+        logger.info(f"Device input parsed as separated device ID list: {len(tokens)} devices found")
+        return tokens
+    
+    # If we can't parse as device list, treat as file path
+    logger.info("Device input treated as file path")
+    return load_device_list(device_input)
+
 def save_results(results: Dict[str, Any], output_path: str):
     """Save results to JSON file."""
     try:
@@ -503,22 +836,28 @@ def save_results(results: Dict[str, Any], output_path: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Update Particle device configurations")
-    parser.add_argument("--config", required=True, help="Path to configuration JSON file")
-    parser.add_argument("--devices", required=True, help="Path to device list file (JSON array or line-separated)")
-    parser.add_argument("--token", required=True, help="Particle access token")
+    parser.add_argument("--config", required=True, help="Path to configuration JSON file OR JSON string")
+    parser.add_argument("--devices", required=True, help="Path to device list file OR comma/space separated device IDs")
     parser.add_argument("--output", default="update_results.json", help="Output file for results")
     parser.add_argument("--max-retries", type=int, default=3, help="Maximum retry attempts per device")
     parser.add_argument("--restart-wait", type=int, default=30, help="Seconds to wait for device restart")
     parser.add_argument("--online-timeout", type=int, default=120, help="Seconds to wait for device to come online")
     parser.add_argument("--max-concurrent", type=int, default=5, help="Maximum concurrent devices to process")
     parser.add_argument("--dry-run", action="store_true", help="Validate inputs without making changes")
+    parser.add_argument("--no-git-log", action="store_true", help="Disable automatic git logging")
+    parser.add_argument("--repo-path", help="Path to git repository (auto-detected if not specified)")
     
     args = parser.parse_args()
     
     try:
+        # Set MCP environment variable if not already set (for LLM detection)
+        if 'MCP_SESSION' not in os.environ:
+            # You can set this in your MCP server when calling the script
+            os.environ['MCP_SESSION'] = 'false'
+        
         # Load configuration and device list
-        config = load_config_file(args.config)
-        device_ids = load_device_list(args.devices)
+        config = parse_config_input(args.config)
+        device_ids = parse_device_input(args.devices)
         
         if args.dry_run:
             logger.info("DRY RUN MODE - No changes will be made")
@@ -531,13 +870,16 @@ def main():
             return 0
         
         # Create updater and configure settings
-        updater = ParticleConfigUpdater(args.token)
+        updater = ParticleConfigUpdater(
+            enable_git_logging=not args.no_git_log,
+            repo_path=args.repo_path
+        )
         updater.max_retries = args.max_retries
         updater.restart_wait_time = args.restart_wait
         updater.online_check_timeout = args.online_timeout
         updater.max_concurrent_devices = args.max_concurrent
         
-        results = updater.update_multiple_devices(device_ids, config)
+        results = updater.update_multiple_devices(device_ids, config, args)
         
         # Save results
         save_results(results, args.output)

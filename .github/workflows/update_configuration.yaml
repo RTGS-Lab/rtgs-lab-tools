@@ -28,53 +28,21 @@ on:
         description: 'Maximum concurrent devices to process'
         required: false
         default: '5'
+      dry_run:
+        description: 'Perform dry run (validate without changes)'
+        type: boolean
+        required: false
+        default: false
+
 jobs:
-  validate-inputs:
-    name: Validate Inputs
-    runs-on: ubuntu-latest
-    outputs:
-      proceed: ${{ steps.validate.outputs.proceed }}
-      device_count: ${{ steps.validate-devices.outputs.count }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Check files exist
-        id: validate-devices
-        run: |
-          if [ ! -f "${{ github.event.inputs.config_file }}" ]; then
-            echo "❌ Configuration file not found: ${{ github.event.inputs.config_file }}"
-            exit 1
-          fi
-          
-          if [ ! -f "${{ github.event.inputs.device_list_file }}" ]; then
-            echo "❌ Device list file not found: ${{ github.event.inputs.device_list_file }}"
-            exit 1
-          fi
-          
-          # Count devices
-          if grep -q '^\[' "${{ github.event.inputs.device_list_file }}"; then
-            DEVICE_COUNT=$(grep -o ',' "${{ github.event.inputs.device_list_file }}" | wc -l)
-            DEVICE_COUNT=$((DEVICE_COUNT + 1))
-          else
-            DEVICE_COUNT=$(grep -c . "${{ github.event.inputs.device_list_file }}")
-          fi
-          
-          echo "Found $DEVICE_COUNT devices"
-          echo "count=$DEVICE_COUNT" >> $GITHUB_OUTPUT
-
   update-configurations:
     name: Update Device Configurations
-    needs: validate-inputs
-    if: needs.validate-inputs.outputs.proceed == 'true'
     runs-on: ubuntu-latest
-    outputs:
-      success-count: ${{ steps.parse-results.outputs.successful }}
-      fail-count: ${{ steps.parse-results.outputs.failed }}
-      total-count: ${{ steps.parse-results.outputs.total }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -88,41 +56,29 @@ jobs:
             pip install -r requirements.txt
           fi
 
+      - name: Configure git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
       - name: Run configuration update script
         id: update
-        continue-on-error: true
+        env:
+          PARTICLE_ACCESS_TOKEN: ${{ secrets.PARTICLE_ACCESS_TOKEN }}
+          GITHUB_ACTIONS: 'true'
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_WORKFLOW: ${{ github.workflow }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
           python3 update_configuration.py \
             --config "${{ github.event.inputs.config_file }}" \
             --devices "${{ github.event.inputs.device_list_file }}" \
-            --token "${{ secrets.PARTICLE_ACCESS_TOKEN }}" \
             --output ./update_results.json \
             --max-retries ${{ github.event.inputs.max_retries }} \
             --restart-wait ${{ github.event.inputs.restart_wait }} \
             --online-timeout ${{ github.event.inputs.online_timeout }} \
             --max-concurrent ${{ github.event.inputs.max_concurrent }} \
-            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
-
-      - name: Parse results
-        id: parse-results
-        if: always()
-        run: |
-          if [ -f update_results.json ]; then
-            TOTAL=$(grep -o '"total_devices":[0-9]*' update_results.json | cut -d: -f2)
-            SUCCESSFUL=$(grep -o '"successful":[0-9]*' update_results.json | cut -d: -f2)
-            FAILED=$(grep -o '"failed":[0-9]*' update_results.json | cut -d: -f2)
-            
-            echo "total=${TOTAL}" >> $GITHUB_OUTPUT
-            echo "successful=${SUCCESSFUL}" >> $GITHUB_OUTPUT
-            echo "failed=${FAILED}" >> $GITHUB_OUTPUT
-            
-            echo "## Results: ${SUCCESSFUL}/${TOTAL} devices updated successfully" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "total=0" >> $GITHUB_OUTPUT
-            echo "successful=0" >> $GITHUB_OUTPUT
-            echo "failed=0" >> $GITHUB_OUTPUT
-            echo "## ❌ No results file found" >> $GITHUB_STEP_SUMMARY
-          fi
+            ${{ github.event.inputs.dry_run == true && '--dry-run' || '' }}
 
       - name: Upload results
         if: always()
@@ -132,101 +88,29 @@ jobs:
           path: |
             update_results.json
             particle_config_update.log
-          retention-days: 30
+          retention-days: 120
 
-      - name: Check for failures
-        if: steps.parse-results.outputs.failed > 0
-        run: |
-          echo "❌ Configuration update completed with failures"
-          exit 1
-
-  create-update-log:
-    name: Create Update Log
-    needs: [validate-inputs, update-configurations]
-    if: always() && needs.validate-inputs.outputs.proceed == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download results
+      - name: Check results and set summary
         if: always()
-        uses: actions/download-artifact@v4
-        with:
-          name: configuration-update-results-${{ github.run_id }}
-          path: ./results
-
-      - name: Create log
         run: |
-          mkdir -p logs/configuration-updates
-          
-          TIMESTAMP=$(date -u '+%Y-%m-%d_%H-%M-%S')
-          LOG_FILE="logs/configuration-updates/${TIMESTAMP}_config_update.md"
-          
-          cat > "$LOG_FILE" << EOF
-          # Configuration Update Log
-          
-          **Timestamp**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-          **Triggered By**: @${{ github.actor }}
-          **Workflow**: [${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          
-          ## Update Details
-          - **Configuration**: ${{ github.event.inputs.config_file }}
-          - **Device List**: ${{ github.event.inputs.device_list_file }}
-          - **Total Devices**: ${{ needs.update-configurations.outputs.total-count }}
-          - **Successful**: ${{ needs.update-configurations.outputs.success-count }}
-          - **Failed**: ${{ needs.update-configurations.outputs.fail-count }}
-          - **Dry Run**: ${{ github.event.inputs.dry_run }}
-          
-          ## Results
-          EOF
-          
-          if [ -f "results/update_results.json" ]; then
-            echo "" >> "$LOG_FILE"
-            echo "<details>" >> "$LOG_FILE"
-            echo "<summary>Detailed Results</summary>" >> "$LOG_FILE"
-            echo "" >> "$LOG_FILE"
-            echo "\`\`\`json" >> "$LOG_FILE"
-            cat results/update_results.json >> "$LOG_FILE"
-            echo "\`\`\`" >> "$LOG_FILE"
-            echo "<details>" >> "$LOG_FILE"
+          if [ -f update_results.json ]; then
+            TOTAL=$(python3 -c "import json; data=json.load(open('update_results.json')); print(data['summary']['total_devices'])")
+            SUCCESSFUL=$(python3 -c "import json; data=json.load(open('update_results.json')); print(data['summary']['successful'])")
+            FAILED=$(python3 -c "import json; data=json.load(open('update_results.json')); print(data['summary']['failed'])")
+            
+            echo "## Configuration Update Results" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total Devices**: ${TOTAL}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Successful**: ${SUCCESSFUL}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Failed**: ${FAILED}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Success Rate**: $(python3 -c "print(f'{${SUCCESSFUL}/${TOTAL}*100:.1f}%')")" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$FAILED" -gt 0 ]; then
+              echo "❌ Some devices failed to update"
+              exit 1
+            else
+              echo "✅ All devices updated successfully"
+            fi
+          else
+            echo "❌ No results file found" >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
-          
-          echo "📝 Log created: $LOG_FILE"
-
-      - name: Commit log
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add logs/configuration-updates/
-          
-          if ! git diff --staged --quiet; then
-            git commit -m "📝 Configuration update log - $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-            git push
-          fi
-
-  notify-results:
-    name: Notify Results
-    needs: [validate-inputs, update-configurations]
-    if: always() && needs.validate-inputs.outputs.proceed == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Success notification
-        if: needs.update-configurations.outputs.fail-count == '0'
-        run: |
-          echo "## ✅ All devices updated successfully!" >> $GITHUB_STEP_SUMMARY
-          echo "Updated ${{ needs.update-configurations.outputs.total-count }} devices" >> $GITHUB_STEP_SUMMARY
-
-      - name: Partial success notification
-        if: needs.update-configurations.outputs.success-count > 0 && needs.update-configurations.outputs.fail-count > 0
-        run: |
-          echo "## ⚠️ Partial success" >> $GITHUB_STEP_SUMMARY
-          echo "- Successful: ${{ needs.update-configurations.outputs.success-count }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Failed: ${{ needs.update-configurations.outputs.fail-count }}" >> $GITHUB_STEP_SUMMARY
-
-      - name: Failure notification
-        if: needs.update-configurations.outputs.fail-count > 0
-        run: |
-          echo "🚨 Failure occurred" >> $GITHUB_STEP_SUMMARY
