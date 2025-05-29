@@ -4,6 +4,9 @@ name: Update Particle Device Configurations
 on:
   workflow_dispatch:
     inputs:
+      update_note:
+        description: 'Note on what this update is for'
+        required: true
       config_file:
         description: 'Path to configuration file'
         required: true
@@ -78,6 +81,7 @@ jobs:
             --restart-wait ${{ github.event.inputs.restart_wait }} \
             --online-timeout ${{ github.event.inputs.online_timeout }} \
             --max-concurrent ${{ github.event.inputs.max_concurrent }} \
+            --note ${{ github.event.inputs.update_note }} \
             ${{ github.event.inputs.dry_run == true && '--dry-run' || '' }}
 
       - name: Upload results

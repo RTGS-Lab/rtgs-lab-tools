@@ -112,7 +112,7 @@ class GitLogger:
         """Create a detailed execution log."""
         context = self._get_execution_context()
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        log_filename = f"{timestamp}_{context['execution_source'].lower().replace('/', '_')}_config_update.md"
+        log_filename = f"{timestamp}_{context['execution_source'].lower().replace('/', '_')}_{args.note.lower().replace(' ','_')}_config_update.md"
         log_path = os.path.join(self.logs_dir, log_filename)
         
         # Create log content
@@ -846,6 +846,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Validate inputs without making changes")
     parser.add_argument("--no-git-log", action="store_true", help="Disable automatic git logging")
     parser.add_argument("--repo-path", help="Path to git repository (auto-detected if not specified)")
+    parser.add_argument("--note", help="Note about what update is for")
     
     args = parser.parse_args()
     
