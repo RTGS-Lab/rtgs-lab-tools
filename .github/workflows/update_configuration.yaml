@@ -28,16 +28,6 @@ on:
         description: 'Maximum concurrent devices to process'
         required: false
         default: '5'
-      dry_run:
-        description: 'Dry run - validate inputs without making changes'
-        required: false
-        default: false
-        type: boolean
-      confirmation:
-        description: 'Type "CONFIRM" to proceed with actual updates'
-        required: true
-        type: string
-
 jobs:
   validate-inputs:
     name: Validate Inputs
@@ -48,19 +38,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Validate confirmation
-        id: validate
-        run: |
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            echo "proceed=true" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.inputs.confirmation }}" = "CONFIRM" ]; then
-            echo "proceed=true" >> $GITHUB_OUTPUT
-          else
-            echo "❌ Update not confirmed. Please type 'CONFIRM' to proceed."
-            echo "proceed=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
 
       - name: Check files exist
         id: validate-devices
