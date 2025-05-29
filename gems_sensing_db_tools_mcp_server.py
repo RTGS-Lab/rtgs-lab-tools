@@ -16,6 +16,148 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 GEMS_TOOL_PATH = os.path.join(SCRIPT_DIR, "get_sensing_data.py")
 VISUALIZER_PATH = os.path.join(SCRIPT_DIR, "gems_sensing_data_visualizer.py")
 UID_DECODER_PATH = os.path.join(SCRIPT_DIR, "configuration_uid_decoder.py")
+CONFIG_UPDATER_PATH = os.path.join(SCRIPT_DIR, "update_configuration.py")
+
+# -----------------
+# PARTICLE CONFIGURATION UPDATE TOOLS
+# -----------------
+
+@mcp.tool("update_particle_configurations")
+async def update_particle_configurations(
+    config: str,
+    devices: str,
+    max_retries: int = 3,
+    restart_wait: int = 30,
+    online_timeout: int = 120,
+    max_concurrent: int = 5,
+    dry_run: bool = False,
+    output_file: str = "update_results.json"
+) -> Dict[str, Any]:
+    """
+    Update configurations on multiple Particle devices with automatic git logging.
+    
+    Args:
+        config: Configuration as JSON string OR path to configuration file
+        devices: Device IDs as comma-separated string OR path to device list file
+        max_retries: Maximum retry attempts per device (default: 3)
+        restart_wait: Seconds to wait for device restart (default: 30)
+        online_timeout: Seconds to wait for device to come online (default: 120)
+        max_concurrent: Maximum concurrent devices to process (default: 5)
+        dry_run: Validate inputs without making changes (default: False)
+        output_file: Output file for detailed results (default: update_results.json)
+    """
+    try:
+        # Set MCP environment variables for proper logging
+        env = os.environ.copy()
+        env['MCP_SESSION'] = 'true'
+        env['MCP_USER'] = 'claude'
+        
+        # Build command
+        cmd = [
+            PYTHON_EXECUTABLE, CONFIG_UPDATER_PATH,
+            "--config", config,
+            "--devices", devices,
+            "--output", output_file,
+            "--max-retries", str(max_retries),
+            "--restart-wait", str(restart_wait),  
+            "--online-timeout", str(online_timeout),
+            "--max-concurrent", str(max_concurrent)
+        ]
+        
+        if dry_run:
+            cmd.append("--dry-run")
+        
+        # Run the command with MCP environment
+        stdout, stderr = await run_command_with_env(cmd, env)
+        
+        # Try to load and parse the results file if it exists
+        results_data = None
+        if os.path.exists(output_file):
+            try:
+                with open(output_file, 'r') as f:
+                    results_data = json.load(f)
+            except Exception as e:
+                pass  # Continue without results data if parsing fails
+        
+        result = {
+            "success": True,
+            "output": stdout,
+            "stderr": stderr if stderr else None,
+            "command": " ".join(cmd),
+            "results_file": output_file,
+            "mcp_execution": True,
+            "dry_run": dry_run
+        }
+        
+        # Add parsed results if available
+        if results_data:
+            result["summary"] = results_data.get("summary", {})
+            result["device_count"] = results_data["summary"].get("total_devices", 0)
+            result["successful_count"] = results_data["summary"].get("successful", 0)
+            result["failed_count"] = results_data["summary"].get("failed", 0)
+            
+            if not dry_run:
+                success_rate = (result["successful_count"] / result["device_count"] * 100) if result["device_count"] > 0 else 0
+                result["success_rate"] = f"{success_rate:.1f}%"
+        
+        return result
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Configuration update failed: {str(e)}",
+            "command": " ".join(cmd) if 'cmd' in locals() else "N/A",
+            "mcp_execution": True
+        }
+
+@mcp.tool("validate_particle_config")
+async def validate_particle_config(config: str, devices: str) -> Dict[str, Any]:
+    """
+    Validate Particle device configuration without making changes (dry run).
+    
+    Args:
+        config: Configuration as JSON string OR path to configuration file
+        devices: Device IDs as comma-separated string OR path to device list file
+    """
+    return await update_particle_configurations(
+        config=config,
+        devices=devices,
+        dry_run=True,
+        output_file="validation_results.json"
+    )
+
+@mcp.tool("create_particle_config_template")
+async def create_particle_config_template() -> Dict[str, Any]:
+    """Create a template configuration for Particle devices."""
+    template_config = {
+        "config": {
+            "system": {
+                "logPeriod": 300,
+                "backhaulCount": 4,
+                "powerSaveMode": 1,
+                "loggingMode": 0,
+                "numAuxTalons": 1,
+                "numI2CTalons": 1,
+                "numSDI12Talons": 1
+            },
+            "sensors": {
+                "numET": 0,
+                "numHaar": 0,
+                "numSoil": 3,
+                "numApogeeSolar": 0,
+                "numCO2": 0,
+                "numO2": 0,
+                "numPressure": 0
+            }
+        }
+    }
+    
+    return {
+        "success": True,
+        "template": template_config,
+        "json_string": json.dumps(template_config, indent=2),
+        "description": "Template configuration for Particle devices. Modify values as needed before applying."
+    }
 
 # -----------------
 # UID DECODER TOOLS
@@ -419,6 +561,42 @@ async def run_command(cmd: List[str]) -> tuple:
     
     return stdout_str, stderr_str
 
+async def run_command_with_env(cmd: List[str], env: Dict[str, str]) -> tuple:
+    """
+    Run a command asynchronously with custom environment variables.
+    
+    Args:
+        cmd: Command to run as a list of strings
+        env: Environment variables dictionary
+        
+    Returns:
+        Tuple of (stdout, stderr) as strings
+    """
+    # Print the command for debugging
+    print(f"Running command with MCP env: {' '.join(cmd)}")
+    
+    # Make sure we're running in the correct directory
+    cwd = os.path.dirname(os.path.abspath(__file__))
+    
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        cwd=cwd,
+        env=env  # Set custom environment
+    )
+    
+    stdout, stderr = await process.communicate()
+    
+    stdout_str = stdout.decode('utf-8')
+    stderr_str = stderr.decode('utf-8')
+    
+    if process.returncode != 0:
+        error_message = stderr_str if stderr_str else "Unknown error"
+        raise Exception(f"Command failed with exit code {process.returncode}: {error_message}")
+    
+    return stdout_str, stderr_str
+
 # -----------------
 # FILE VIEWING TOOL
 # -----------------
@@ -521,6 +699,7 @@ if __name__ == "__main__":
     print(f"Python executable: {PYTHON_EXECUTABLE}")
     print(f"GEMS tool path: {GEMS_TOOL_PATH}")
     print(f"Visualizer tool path: {VISUALIZER_PATH}")
+    print(f"Config updater path: {CONFIG_UPDATER_PATH}")
     print(f"Current working directory: {os.getcwd()}")
     
     mcp.run(transport='stdio')
