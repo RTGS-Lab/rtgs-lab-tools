@@ -10,11 +10,11 @@ on:
       config_file:
         description: 'Path to configuration file'
         required: true
-        default: 'configurations/config.json'
+        default: 'config.json'
       device_list_file:
         description: 'Path to device list file'
         required: true
-        default: 'devices/devices.txt'
+        default: 'devices.txt'
       max_retries:
         description: 'Maximum retry attempts per device'
         required: false
@@ -54,10 +54,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
+          pip install -e .
 
       - name: Configure git
         run: |
@@ -73,16 +70,16 @@ jobs:
           GITHUB_WORKFLOW: ${{ github.workflow }}
           GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
-          python3 update_configuration.py \
-            --config "${{ github.event.inputs.config_file }}" \
-            --devices "${{ github.event.inputs.device_list_file }}" \
+          python -m rtgs_lab_tools.device_configuration.cli update-config \
+            --config "src/rtgs_lab_tools/device_configuration/configurations/${{ github.event.inputs.config_file }}" \
+            --devices "src/rtgs_lab_tools/device_configuration/devices/${{ github.event.inputs.device_list_file }}" \
             --output ./update_results.json \
             --max-retries ${{ github.event.inputs.max_retries }} \
             --restart-wait ${{ github.event.inputs.restart_wait }} \
             --online-timeout ${{ github.event.inputs.online_timeout }} \
             --max-concurrent ${{ github.event.inputs.max_concurrent }} \
-            --note ${{ github.event.inputs.update_note }} \
-            ${{ github.event.inputs.dry_run == true && '--dry-run' || '' }}
+            --note "${{ github.event.inputs.update_note }}" \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
 
       - name: Upload results
         if: always()

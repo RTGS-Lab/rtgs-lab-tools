@@ -1,5 +1,4 @@
 """MCP server for RTGS Lab Tools."""
 
-from .server import create_server
-
-__all__ = ["create_server"]
+# New FastMCP server is available at .fastmcp_server
+# Use: python -m rtgs_lab_tools.mcp_server.fastmcp_server
