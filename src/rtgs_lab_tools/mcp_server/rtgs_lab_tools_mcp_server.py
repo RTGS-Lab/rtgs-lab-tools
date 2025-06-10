@@ -557,6 +557,186 @@ async def device_configuration_update_config(
         }
 
 
+@mcp.tool("device_configuration_decode_system_uid")
+async def device_configuration_decode_system_uid(
+    uid: str,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Decode system configuration UID from ConfigurationManager.
+
+    Args:
+        uid: System configuration UID in decimal or hexadecimal format (with 0x prefix)
+        note: Description for this operation (optional)
+
+    Returns:
+        Dict with success status and decoded system configuration
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            PYTHON_EXECUTABLE,
+            "-m",
+            "rtgs_lab_tools.cli",
+            "device-configuration",
+            "decode-system",
+            uid,
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"System UID decoding failed: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+@mcp.tool("device_configuration_decode_sensor_uid")
+async def device_configuration_decode_sensor_uid(
+    uid: str,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Decode sensor configuration UID from ConfigurationManager.
+
+    Args:
+        uid: Sensor configuration UID in decimal or hexadecimal format (with 0x prefix)
+        note: Description for this operation (optional)
+
+    Returns:
+        Dict with success status and decoded sensor configuration
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            PYTHON_EXECUTABLE,
+            "-m",
+            "rtgs_lab_tools.cli",
+            "device-configuration",
+            "decode-sensor",
+            uid,
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Sensor UID decoding failed: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+@mcp.tool("device_configuration_decode_both_uids")
+async def device_configuration_decode_both_uids(
+    system_uid: str,
+    sensor_uid: str,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Decode both system and sensor configuration UIDs from ConfigurationManager.
+
+    Args:
+        system_uid: System configuration UID in decimal or hexadecimal format (with 0x prefix)
+        sensor_uid: Sensor configuration UID in decimal or hexadecimal format (with 0x prefix)
+        note: Description for this operation (optional)
+
+    Returns:
+        Dict with success status and decoded configurations for both UIDs
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            PYTHON_EXECUTABLE,
+            "-m",
+            "rtgs_lab_tools.cli",
+            "device-configuration",
+            "decode-both",
+            system_uid,
+            sensor_uid,
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"UID decoding failed: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
 # -----------------
 # GRIDDED DATA TOOLS
 # -----------------

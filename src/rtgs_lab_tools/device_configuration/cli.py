@@ -16,6 +16,12 @@ from ..core.cli_utils import (
 )
 from ..core.config import Config
 from ..core.exceptions import APIError, ValidationError
+from .uid_decoding import (
+    decode_both_configs,
+    format_sensor_config,
+    format_system_config,
+    parse_uid,
+)
 from .update_configuration import ParticleConfigUpdater
 
 
@@ -190,6 +196,136 @@ def update_config(
             "note": note,
         }
         cli_ctx.log_error("Device configuration error", e, parameters, __file__)
+        raise
+
+
+@device_configuration_cli.command()
+@click.argument("uid")
+@add_common_options
+@click.pass_context
+@handle_common_errors("uid-decoding")
+def decode_system(ctx, uid, verbose, log_file, no_git_log, note):
+    """Decode system configuration UID."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("uid-decoding", verbose, log_file, no_git_log)
+
+    try:
+        parsed_uid = parse_uid(uid)
+        output = format_system_config(parsed_uid)
+        click.echo(output)
+
+        # Log success
+        operation = f"Decode system UID {uid}"
+        parameters = {"uid": uid, "parsed_uid": parsed_uid, "note": note}
+        results = {
+            "success": True,
+            "uid": parsed_uid,
+            "start_time": cli_ctx.start_time.isoformat(),
+            "end_time": datetime.now().isoformat(),
+            "note": note,
+        }
+
+        cli_ctx.log_success(
+            operation=operation,
+            parameters=parameters,
+            results=results,
+            script_path=__file__,
+        )
+
+    except Exception as e:
+        parameters = {"uid": uid, "note": note}
+        cli_ctx.log_error("System UID decoding error", e, parameters, __file__)
+        raise
+
+
+@device_configuration_cli.command()
+@click.argument("uid")
+@add_common_options
+@click.pass_context
+@handle_common_errors("uid-decoding")
+def decode_sensor(ctx, uid, verbose, log_file, no_git_log, note):
+    """Decode sensor configuration UID."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("uid-decoding", verbose, log_file, no_git_log)
+
+    try:
+        parsed_uid = parse_uid(uid)
+        output = format_sensor_config(parsed_uid)
+        click.echo(output)
+
+        # Log success
+        operation = f"Decode sensor UID {uid}"
+        parameters = {"uid": uid, "parsed_uid": parsed_uid, "note": note}
+        results = {
+            "success": True,
+            "uid": parsed_uid,
+            "start_time": cli_ctx.start_time.isoformat(),
+            "end_time": datetime.now().isoformat(),
+            "note": note,
+        }
+
+        cli_ctx.log_success(
+            operation=operation,
+            parameters=parameters,
+            results=results,
+            script_path=__file__,
+        )
+
+    except Exception as e:
+        parameters = {"uid": uid, "note": note}
+        cli_ctx.log_error("Sensor UID decoding error", e, parameters, __file__)
+        raise
+
+
+@device_configuration_cli.command()
+@click.argument("system_uid")
+@click.argument("sensor_uid")
+@add_common_options
+@click.pass_context
+@handle_common_errors("uid-decoding")
+def decode_both(ctx, system_uid, sensor_uid, verbose, log_file, no_git_log, note):
+    """Decode both system and sensor configuration UIDs."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("uid-decoding", verbose, log_file, no_git_log)
+
+    try:
+        parsed_system_uid = parse_uid(system_uid)
+        parsed_sensor_uid = parse_uid(sensor_uid)
+        output = decode_both_configs(parsed_system_uid, parsed_sensor_uid)
+        click.echo(output)
+
+        # Log success
+        operation = f"Decode both UIDs {system_uid} and {sensor_uid}"
+        parameters = {
+            "system_uid": system_uid,
+            "sensor_uid": sensor_uid,
+            "parsed_system_uid": parsed_system_uid,
+            "parsed_sensor_uid": parsed_sensor_uid,
+            "note": note,
+        }
+        results = {
+            "success": True,
+            "system_uid": parsed_system_uid,
+            "sensor_uid": parsed_sensor_uid,
+            "start_time": cli_ctx.start_time.isoformat(),
+            "end_time": datetime.now().isoformat(),
+            "note": note,
+        }
+
+        cli_ctx.log_success(
+            operation=operation,
+            parameters=parameters,
+            results=results,
+            script_path=__file__,
+        )
+
+    except Exception as e:
+        parameters = {
+            "system_uid": system_uid,
+            "sensor_uid": sensor_uid,
+            "note": note,
+        }
+        cli_ctx.log_error("UID decoding error", e, parameters, __file__)
         raise
 
 
