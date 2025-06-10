@@ -8,12 +8,12 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
+from rtgs_lab_tools.core.exceptions import RTGSLabToolsError, ValidationError
 from rtgs_lab_tools.visualization.time_series import (
-    create_time_series_plot,
     create_multi_parameter_plot,
+    create_time_series_plot,
     plot_sensor_data,
 )
-from rtgs_lab_tools.core.exceptions import ValidationError, RTGSLabToolsError
 
 
 @pytest.fixture

@@ -59,6 +59,9 @@ dev = [
     "isort>=5.10.0",
     "mypy>=0.991",
     "pre-commit>=2.20.0",
+    "pandas-stubs>=1.5.0",
+    "types-requests>=2.25.0",
+    "types-seaborn>=0.11.0",
 ]
 all = [
     "rtgs-lab-tools[climate,visualization,mcp,dev]",
@@ -98,12 +101,15 @@ multi_line_output = 3
 src_paths = ["src", "tests"]
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 no_implicit_reexport = true
 strict_optional = true
+exclude = [
+    "src/rtgs_lab_tools/mcp_server/particle-mcp-server/",
+]
 
 [[tool.mypy.overrides]]
 module = [

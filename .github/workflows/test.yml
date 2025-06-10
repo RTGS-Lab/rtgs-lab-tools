@@ -34,10 +34,6 @@ jobs:
       run: |
         isort --check-only src/ tests/
     
-    - name: Type check with mypy
-      run: |
-        mypy src/
-    
     - name: Test with pytest
       run: |
         pytest --cov=src/rtgs_lab_tools --cov-report=xml

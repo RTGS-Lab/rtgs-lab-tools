@@ -1,8 +1,9 @@
 """Tests for configuration management."""
 
 import os
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from rtgs_lab_tools.core import Config
 from rtgs_lab_tools.core.exceptions import ConfigError

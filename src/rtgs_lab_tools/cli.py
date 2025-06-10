@@ -14,11 +14,11 @@ def register_commands():
     """Register all tool command groups with the main CLI."""
 
     # Import the grouped CLI commands from each tool
+    from .agricultural_modeling.cli import agricultural_modeling_cli
     from .device_configuration.cli import device_configuration_cli
     from .error_analysis.cli import error_analysis_cli
     from .gridded_data.cli import gridded_data_cli
     from .sensing_data.cli import sensing_data_cli
-    from .agricultural_modeling.cli import agricultural_modeling_cli
     from .visualization.cli import visualization_cli
 
     # Add them to the main CLI with their specific names

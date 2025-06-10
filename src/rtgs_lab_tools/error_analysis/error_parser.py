@@ -461,7 +461,7 @@ def display_enhanced_error_analysis(
     enhanced_analysis = {
         "enhanced_analysis": {},
         "node_analysis": {},
-        "overall_analysis": {}
+        "overall_analysis": {},
     }
 
     # Load error code database for enhanced translations
@@ -483,12 +483,12 @@ def display_enhanced_error_analysis(
 
                     # Get error counts for this node
                     error_counts = node_errors["normalized_code"].value_counts()
-                    
+
                     # Build node analysis data
                     node_analysis_data = {
                         "total_errors": len(node_errors),
-                        "unique_error_codes": node_errors['normalized_code'].nunique(),
-                        "error_details": []
+                        "unique_error_codes": node_errors["normalized_code"].nunique(),
+                        "error_details": [],
                     }
 
                     # Print each error with enhanced details and capture data
@@ -496,10 +496,12 @@ def display_enhanced_error_analysis(
                         error_info = node_errors[
                             node_errors["normalized_code"] == code
                         ].iloc[0]
-                        enhanced_details = get_enhanced_error_details(code, count, error_info, error_db)
+                        enhanced_details = get_enhanced_error_details(
+                            code, count, error_info, error_db
+                        )
                         node_analysis_data["error_details"].append(enhanced_details)
                         print_enhanced_error_details_from_data(enhanced_details)
-                    
+
                     enhanced_analysis["node_analysis"][node_id] = node_analysis_data
         else:
             # Show analysis for specific nodes only
@@ -513,12 +515,12 @@ def display_enhanced_error_analysis(
 
                     # Get error counts for this node
                     error_counts = node_errors["normalized_code"].value_counts()
-                    
+
                     # Build node analysis data
                     node_analysis_data = {
                         "total_errors": len(node_errors),
-                        "unique_error_codes": node_errors['normalized_code'].nunique(),
-                        "error_details": []
+                        "unique_error_codes": node_errors["normalized_code"].nunique(),
+                        "error_details": [],
                     }
 
                     # Print each error with enhanced details and capture data
@@ -526,61 +528,65 @@ def display_enhanced_error_analysis(
                         error_info = node_errors[
                             node_errors["normalized_code"] == code
                         ].iloc[0]
-                        enhanced_details = get_enhanced_error_details(code, count, error_info, error_db)
+                        enhanced_details = get_enhanced_error_details(
+                            code, count, error_info, error_db
+                        )
                         node_analysis_data["error_details"].append(enhanced_details)
                         print_enhanced_error_details_from_data(enhanced_details)
-                    
+
                     enhanced_analysis["node_analysis"][node_id] = node_analysis_data
                 else:
                     print(f"\nNode {node_id}: No errors found")
                     enhanced_analysis["node_analysis"][node_id] = {
                         "total_errors": 0,
                         "unique_error_codes": 0,
-                        "error_details": []
+                        "error_details": [],
                     }
 
     # Check if there's only one unique node and we already showed its analysis
     unique_nodes = parsed_errors_df["node_id"].nunique()
     show_overall_summary = True
-    
+
     if unique_nodes == 1 and node_filter and "all" not in node_filter:
         # Single node was specifically requested, skip overall summary
         show_overall_summary = False
     elif unique_nodes == 1 and node_filter and "all" in node_filter:
         # Single node with "all" filter, skip overall summary since it's identical
         show_overall_summary = False
-    
+
     # Build overall analysis data (always needed for return value)
     error_counts = parsed_errors_df["normalized_code"].value_counts()
     overall_analysis_data = {
-        "total_errors": analysis['total_errors'],
-        "unique_error_codes": analysis['unique_error_codes'],
+        "total_errors": analysis["total_errors"],
+        "unique_error_codes": analysis["unique_error_codes"],
         "basic_analysis": analysis,
-        "error_details": []
+        "error_details": [],
     }
 
     for code, count in error_counts.items():
-        error_info = parsed_errors_df[parsed_errors_df["normalized_code"] == code].iloc[0]
+        error_info = parsed_errors_df[parsed_errors_df["normalized_code"] == code].iloc[
+            0
+        ]
         enhanced_details = get_enhanced_error_details(code, count, error_info, error_db)
         overall_analysis_data["error_details"].append(enhanced_details)
-    
+
     # Only print overall summary if it's not a duplicate of single node analysis
     if show_overall_summary:
         print("\n=== OVERALL ERROR SUMMARY ===")
         print(
             f"Found {analysis['total_errors']} errors of {analysis['unique_error_codes']} distinct types:"
         )
-        
+
         for enhanced_details in overall_analysis_data["error_details"]:
             print_enhanced_error_details_from_data(enhanced_details)
-    
+
     enhanced_analysis["overall_analysis"] = overall_analysis_data
     enhanced_analysis["enhanced_analysis"] = {
         "timestamp": datetime.now().isoformat(),
         "database_loaded": len(error_db) > 0 if error_db else False,
-        "database_error_count": len(error_db) if error_db else 0
+        "database_error_count": len(error_db) if error_db else 0,
     }
-    
+
     return enhanced_analysis
 
 
@@ -591,38 +597,40 @@ def get_enhanced_error_details(
     error_db: Dict[str, Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """Get enhanced error details as a data structure."""
-    
+
     # Try to get enhanced description from error database first
     db_info = find_error_in_db(code, error_db) if error_db else None
-    
+
     enhanced_details = {
         "code": code,
         "count": count,
-        "database_match": db_info is not None
+        "database_match": db_info is not None,
     }
-    
+
     if db_info:
         # Use database information for enhanced output
-        enhanced_details.update({
-            "specific_name": db_info.get("specific_name", "Unknown Error"),
-            "description": db_info.get("description", "No description available"),
-            "hardware_device": db_info.get("hardware_device", "Unknown"),
-            "hardware_subdevice": db_info.get("hardware_subdevice", "Unknown"),
-            "error_class": db_info.get("class", "Unknown"),
-            "code_location": db_info.get("code_location", ""),
-            "base_error_code_hex": db_info.get("base_error_code_hex", ""),
-            "base_error_code_value": db_info.get("base_error_code_value", ""),
-            "error_code_structure": db_info.get("error_code_structure", ""),
-            "subtype": db_info.get("subtype", ""),
-            "code_name": db_info.get("code_name", "")
-        })
+        enhanced_details.update(
+            {
+                "specific_name": db_info.get("specific_name", "Unknown Error"),
+                "description": db_info.get("description", "No description available"),
+                "hardware_device": db_info.get("hardware_device", "Unknown"),
+                "hardware_subdevice": db_info.get("hardware_subdevice", "Unknown"),
+                "error_class": db_info.get("class", "Unknown"),
+                "code_location": db_info.get("code_location", ""),
+                "base_error_code_hex": db_info.get("base_error_code_hex", ""),
+                "base_error_code_value": db_info.get("base_error_code_value", ""),
+                "error_code_structure": db_info.get("error_code_structure", ""),
+                "subtype": db_info.get("subtype", ""),
+                "code_name": db_info.get("code_name", ""),
+            }
+        )
     else:
         # Fall back to parsed error info
         description = error_info.get("full_description", "Unknown error")
         error_class = error_info.get("error_class_name", "Unknown")
         hw_device = error_info.get("hardware_device_name", "Unknown")
         hw_subdevice = error_info.get("hardware_sub_device_name", "Unknown")
-        
+
         # Create a comprehensive error description like the original script
         if hw_device != "Unknown" and hw_subdevice != "Unknown":
             enhanced_description = f"{error_class} Error - {hw_device} {hw_subdevice}"
@@ -630,21 +638,23 @@ def get_enhanced_error_details(
             enhanced_description = f"{error_class} Error - {hw_device}"
         else:
             enhanced_description = f"{error_class} Error"
-        
-        enhanced_details.update({
-            "specific_name": enhanced_description,
-            "description": description,
-            "hardware_device": hw_device,
-            "hardware_subdevice": hw_subdevice,
-            "error_class": error_class,
-            "code_location": "",
-            "base_error_code_hex": code,
-            "base_error_code_value": "",
-            "error_code_structure": "",
-            "subtype": "",
-            "code_name": ""
-        })
-    
+
+        enhanced_details.update(
+            {
+                "specific_name": enhanced_description,
+                "description": description,
+                "hardware_device": hw_device,
+                "hardware_subdevice": hw_subdevice,
+                "error_class": error_class,
+                "code_location": "",
+                "base_error_code_hex": code,
+                "base_error_code_value": "",
+                "error_code_structure": "",
+                "subtype": "",
+                "code_name": "",
+            }
+        )
+
     return enhanced_details
 
 
@@ -652,7 +662,7 @@ def print_enhanced_error_details_from_data(enhanced_details: Dict[str, Any]):
     """Print enhanced error details from data structure."""
     code = enhanced_details["code"]
     count = enhanced_details["count"]
-    
+
     if enhanced_details["database_match"]:
         # Use database information for enhanced output
         specific_name = enhanced_details["specific_name"]

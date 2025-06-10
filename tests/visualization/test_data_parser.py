@@ -1,17 +1,18 @@
 """Tests for visualization data parser."""
 
 import json
-import pytest
-import pandas as pd
 from datetime import datetime
 
-from rtgs_lab_tools.visualization.data_parser import (
-    parse_sensor_messages,
-    extract_parameter_from_json,
-    get_available_parameters,
-    extract_time_series_data,
-)
+import pandas as pd
+import pytest
+
 from rtgs_lab_tools.core.exceptions import ValidationError
+from rtgs_lab_tools.visualization.data_parser import (
+    extract_parameter_from_json,
+    extract_time_series_data,
+    get_available_parameters,
+    parse_sensor_messages,
+)
 
 
 @pytest.fixture

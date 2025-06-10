@@ -8,8 +8,6 @@ from typing import Any, Callable, Dict, Optional
 
 import click
 
-from .git_logger import GitLogger
-from .logging import setup_logging
 from .exceptions import (
     APIError,
     ConfigError,
@@ -17,6 +15,8 @@ from .exceptions import (
     RTGSLabToolsError,
     ValidationError,
 )
+from .git_logger import GitLogger
+from .logging import setup_logging
 
 
 def setup_logging_for_tool(

@@ -148,19 +148,21 @@ class GitLogger:
 
         # Create safe filename from operation with length limits
         safe_operation = operation.lower().replace(" ", "_").replace("/", "_")
-        
+
         # Limit operation length to prevent filesystem issues (max 100 chars for operation part)
         if len(safe_operation) > 100:
             safe_operation = safe_operation[:97] + "..."
-            
+
         log_filename = f"{timestamp}_{context['execution_source'].lower().replace('/', '_')}_{safe_operation}.md"
-        
+
         # Final safety check - most filesystems have 255 char limit
         if len(log_filename) > 250:
             # Truncate the operation part further if needed
-            max_operation_len = 250 - len(f"{timestamp}_{context['execution_source'].lower().replace('/', '_')}_.md")
+            max_operation_len = 250 - len(
+                f"{timestamp}_{context['execution_source'].lower().replace('/', '_')}_.md"
+            )
             if max_operation_len > 0:
-                safe_operation = safe_operation[:max_operation_len - 3] + "..."
+                safe_operation = safe_operation[: max_operation_len - 3] + "..."
                 log_filename = f"{timestamp}_{context['execution_source'].lower().replace('/', '_')}_{safe_operation}.md"
             else:
                 # Fallback to just timestamp if other parts are too long
@@ -296,13 +298,15 @@ class GitLogger:
             triggered_by = context["triggered_by"]
 
             commit_message = f"{self.tool_name} log: {operation} {status_emoji} - {execution_source} by {triggered_by}"
-            
+
             # Add note to commit message if present in results
             if results.get("note"):
                 commit_message += f" - {results['note']}"
 
             # Store current branch and stash any changes
-            success, current_branch = self._run_git_command(["git", "branch", "--show-current"])
+            success, current_branch = self._run_git_command(
+                ["git", "branch", "--show-current"]
+            )
             if not success:
                 logger.error("Failed to get current branch")
                 return False
@@ -313,24 +317,49 @@ class GitLogger:
             shutil.copy2(log_path, log_backup_path)
 
             # Stash any uncommitted changes including untracked files
-            self._run_git_command(["git", "stash", "push", "--include-untracked", "-m", "GitLogger temporary stash"])
+            self._run_git_command(
+                [
+                    "git",
+                    "stash",
+                    "push",
+                    "--include-untracked",
+                    "-m",
+                    "GitLogger temporary stash",
+                ]
+            )
 
             try:
                 # Check if logs branch exists, create if not
-                success, _ = self._run_git_command(["git", "show-ref", "--verify", "--quiet", "refs/heads/logs"])
+                success, _ = self._run_git_command(
+                    ["git", "show-ref", "--verify", "--quiet", "refs/heads/logs"]
+                )
                 if not success:
                     # Try to fetch from remote first
-                    success, _ = self._run_git_command(["git", "fetch", "origin", "logs"])
+                    success, _ = self._run_git_command(
+                        ["git", "fetch", "origin", "logs"]
+                    )
                     if success:
                         # Create local tracking branch
-                        self._run_git_command(["git", "checkout", "-b", "logs", "origin/logs"])
+                        self._run_git_command(
+                            ["git", "checkout", "-b", "logs", "origin/logs"]
+                        )
                     else:
                         # Create new orphan branch
-                        success, _ = self._run_git_command(["git", "checkout", "--orphan", "logs"])
+                        success, _ = self._run_git_command(
+                            ["git", "checkout", "--orphan", "logs"]
+                        )
                         if success:
                             # Clear staging area and create initial commit
                             self._run_git_command(["git", "rm", "-rf", "--cached", "."])
-                            self._run_git_command(["git", "commit", "--allow-empty", "-m", "Initial logs branch"])
+                            self._run_git_command(
+                                [
+                                    "git",
+                                    "commit",
+                                    "--allow-empty",
+                                    "-m",
+                                    "Initial logs branch",
+                                ]
+                            )
 
                 # Switch to logs branch
                 success, output = self._run_git_command(["git", "checkout", "logs"])
@@ -344,15 +373,21 @@ class GitLogger:
                     logger.error(f"Failed to add log file: {output}")
                     return False
 
-                success, output = self._run_git_command(["git", "commit", "-m", commit_message])
+                success, output = self._run_git_command(
+                    ["git", "commit", "-m", commit_message]
+                )
                 if not success:
                     logger.error(f"Failed to commit log file: {output}")
                     return False
 
                 # Push to remote
-                success, output = self._run_git_command(["git", "push", "origin", "logs"])
+                success, output = self._run_git_command(
+                    ["git", "push", "origin", "logs"]
+                )
                 if success:
-                    logger.info(f"Successfully committed and pushed log: {commit_message}")
+                    logger.info(
+                        f"Successfully committed and pushed log: {commit_message}"
+                    )
                     return True
                 else:
                     logger.warning(f"Failed to push to remote: {output}")
@@ -362,13 +397,13 @@ class GitLogger:
             finally:
                 # Always switch back to original branch
                 self._run_git_command(["git", "checkout", current_branch])
-                
+
                 # Restore the log file to the working directory
                 if os.path.exists(log_backup_path):
                     shutil.copy2(log_backup_path, log_path)
                     os.remove(log_backup_path)
                     logger.debug(f"Restored log file to working directory: {log_path}")
-                
+
                 # Try to restore stashed changes
                 self._run_git_command(["git", "stash", "pop"])
 

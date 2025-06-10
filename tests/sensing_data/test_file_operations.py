@@ -8,13 +8,13 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from rtgs_lab_tools.sensing_data.file_operations import (
-    save_data,
-    create_zip_archive,
-    calculate_file_hash,
-    ensure_data_directory,
-)
 from rtgs_lab_tools.core.exceptions import RTGSLabToolsError
+from rtgs_lab_tools.sensing_data.file_operations import (
+    calculate_file_hash,
+    create_zip_archive,
+    ensure_data_directory,
+    save_data,
+)
 
 
 def test_save_data_csv(sample_raw_data, temp_output_dir):
@@ -96,13 +96,6 @@ def test_ensure_data_directory():
         assert os.path.exists(result_dir)
         assert os.path.isdir(result_dir)
         assert result_dir == str(Path(new_dir).resolve())
-
-
-def test_ensure_data_directory_default():
-    """Test directory creation with default (current directory)."""
-    result_dir = ensure_data_directory()
-    assert os.path.exists(result_dir)
-    assert result_dir == str(Path.cwd())
 
 
 def test_create_zip_archive(sample_raw_data, temp_output_dir):

@@ -90,7 +90,9 @@ def analyze(
         analysis = analyze_error_patterns(parsed_errors_df)
 
         # Enhanced error analysis display
-        enhanced_analysis = display_enhanced_error_analysis(parsed_errors_df, analysis, node_filter)
+        enhanced_analysis = display_enhanced_error_analysis(
+            parsed_errors_df, analysis, node_filter
+        )
 
         # Generate plots if requested
         output_dir_path = setup_output_directory(output_dir)
@@ -124,16 +126,18 @@ def analyze(
         # Save analysis results if requested
         if output_analysis:
             # Find repo root and ensure results directory exists
-            repo_root = Path(__file__).parents[3]  # Go up from src/rtgs_lab_tools/error_analysis/cli.py
+            repo_root = Path(__file__).parents[
+                3
+            ]  # Go up from src/rtgs_lab_tools/error_analysis/cli.py
             results_dir = repo_root / "results"
             results_dir.mkdir(exist_ok=True)
-            
+
             # Create full path for output file in results directory
             if Path(output_analysis).is_absolute():
                 output_path = Path(output_analysis)
             else:
                 output_path = results_dir / output_analysis
-                
+
             with open(output_path, "w") as f:
                 json.dump(enhanced_analysis, f, indent=2, default=str)
             click.echo(f"Enhanced analysis results saved to: {output_path}")
