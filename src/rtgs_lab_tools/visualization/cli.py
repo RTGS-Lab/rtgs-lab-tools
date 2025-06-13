@@ -16,8 +16,6 @@ from ..core.cli_utils import (
 from ..visualization import (
     create_multi_parameter_plot,
     create_time_series_plot,
-    get_available_parameters,
-    parse_sensor_messages,
 )
 
 
@@ -55,39 +53,43 @@ def create(
     cli_ctx.setup("visualization", verbose, log_file, no_git_log)
 
     try:
-        # Read CSV file
-        df = pd.read_csv(file)
-        cli_ctx.logger.info(f"Loaded {len(df)} records from {file}")
-
-        # Parse sensor messages
-        df = parse_sensor_messages(df)
+        from .data_utils import load_and_prepare_data, get_available_measurements
+        
+        # Load and prepare data (handles both raw and parsed data)
+        df, data_type, parsing_results = load_and_prepare_data(
+            file_path=file,
+            packet_types='all',  # Parse all packet types for visualization
+            cli_ctx=cli_ctx
+        )
+        
+        cli_ctx.logger.info(f"Loaded {len(df)} records from {file} (data type: {data_type})")
 
         if list_params:
-            # List available parameters
-            params_by_node = get_available_parameters(df)
+            # List available measurements from parsed data
+            measurements_by_node = get_available_measurements(df)
 
-            click.echo("Available parameters by node:")
-            for node, params in params_by_node.items():
+            click.echo("Available measurements by node:")
+            for node, measurements in measurements_by_node.items():
                 click.echo(f"\n{node}:")
-                for param in sorted(params):
-                    click.echo(f"  {param}")
+                for measurement in sorted(measurements):
+                    click.echo(f"  {measurement}")
             return
 
         output_path = None
 
         if multi_param:
             # Multi-parameter plot
-            parameters = []
+            measurements = []
             for param_spec in multi_param:
                 if "," in param_spec:
-                    node, param_path = param_spec.split(",", 1)
-                    parameters.append((param_path.strip(), node.strip()))
+                    node, measurement_name = param_spec.split(",", 1)
+                    measurements.append((measurement_name.strip(), node.strip()))
                 else:
-                    parameters.append((param_spec.strip(), None))
+                    measurements.append((param_spec.strip(), None))
 
             output_path = create_multi_parameter_plot(
                 df=df,
-                parameters=parameters,
+                measurements=measurements,
                 title=title,
                 output_file=output_file,
                 output_dir=output_dir,
@@ -101,7 +103,7 @@ def create(
 
             output_path = create_time_series_plot(
                 df=df,
-                parameter_path=parameter,
+                measurement_name=parameter,
                 node_ids=node_ids,
                 title=title,
                 output_file=output_file,
@@ -126,7 +128,7 @@ def create(
             operation = (
                 f"Create time series plot for {parameter} from {Path(file).name}"
             )
-            param_info = f"Parameter: {parameter}"
+            param_info = f"Measurement: {parameter}"
         else:
             operation = f"List parameters from {Path(file).name}"
             param_info = "Parameter listing"
@@ -189,21 +191,25 @@ def list_parameters(ctx, file, verbose, log_file, no_git_log, note):
     cli_ctx.setup("parameter-listing", verbose, log_file, no_git_log)
 
     try:
-        # Read CSV file
-        df = pd.read_csv(file)
-        cli_ctx.logger.info(f"Loaded {len(df)} records from {file}")
+        from .data_utils import load_and_prepare_data, get_available_measurements
+        
+        # Load and prepare data (handles both raw and parsed data)
+        df, data_type, parsing_results = load_and_prepare_data(
+            file_path=file,
+            packet_types='all',  # Parse all packet types for listing
+            cli_ctx=cli_ctx
+        )
+        
+        cli_ctx.logger.info(f"Loaded {len(df)} records from {file} (data type: {data_type})")
 
-        # Parse sensor messages
-        df = parse_sensor_messages(df)
+        # List available measurements from parsed data
+        measurements_by_node = get_available_measurements(df)
 
-        # List available parameters
-        params_by_node = get_available_parameters(df)
-
-        click.echo("Available parameters by node:")
-        for node, params in params_by_node.items():
+        click.echo("Available measurements by node:")
+        for node, measurements in measurements_by_node.items():
             click.echo(f"\n{node}:")
-            for param in sorted(params):
-                click.echo(f"  {param}")
+            for measurement in sorted(measurements):
+                click.echo(f"  {measurement}")
 
     except Exception as e:
         cli_ctx.log_error(

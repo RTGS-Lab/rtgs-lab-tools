@@ -1,4 +1,4 @@
-"""Time series plotting functions for sensor data."""
+"""Time series plotting functions for parsed GEMS sensor data."""
 
 import logging
 import os
@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from ..core.exceptions import RTGSLabToolsError, ValidationError
-from .data_parser import extract_time_series_data, parse_sensor_messages
+from .data_utils import filter_parsed_data
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ matplotlib.use("Agg")
 
 def create_time_series_plot(
     df: pd.DataFrame,
-    parameter_path: str,
+    measurement_name: str,
     node_ids: Optional[List[str]] = None,
     title: Optional[str] = None,
     output_file: Optional[str] = None,
@@ -31,11 +31,11 @@ def create_time_series_plot(
     format: str = "png",
     figsize: Tuple[int, int] = (12, 8),
 ) -> str:
-    """Create time series plot for a specific parameter.
+    """Create time series plot for a specific measurement from parsed data.
 
     Args:
-        df: DataFrame with sensor data
-        parameter_path: Parameter path to plot (e.g., "Data.Devices.0.Temperature")
+        df: Parsed DataFrame with measurements
+        measurement_name: Name of measurement to plot (e.g., "Temperature")
         node_ids: Optional list of node IDs to include
         title: Optional plot title
         output_file: Optional output filename
@@ -48,78 +48,82 @@ def create_time_series_plot(
         Path to saved plot file
 
     Raises:
-        ValidationError: If data is invalid
+        ValidationError: If measurement not found or data invalid
         RTGSLabToolsError: If plotting fails
     """
-    try:
-        # Parse sensor messages if not already done
-        if "parsed_message" not in df.columns:
-            df = parse_sensor_messages(df)
-
-        # Extract time series data
-        time_series_data = extract_time_series_data(df, parameter_path, node_ids)
-
-        if not time_series_data:
-            raise ValidationError(f"No data found for parameter: {parameter_path}")
-
-        # Create plot
-        fig, ax = plt.subplots(figsize=figsize)
-
-        colors = plt.cm.tab10(range(len(time_series_data)))
-
-        for i, (node_id, node_df) in enumerate(time_series_data.items()):
-            marker_style = "o" if show_markers else None
-
-            ax.plot(
-                node_df["timestamp"],
-                node_df["value"],
-                label=node_id,
-                marker=marker_style,
-                markersize=4,
-                color=colors[i % len(colors)],
-            )
-
-        # Format plot
-        if title is None:
-            param_name = parameter_path.split(".")[-1]
-            title = f"{param_name} Time Series"
-
-        ax.set_title(title)
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Value")
-        ax.grid(True, alpha=0.3)
-
-        # Format x-axis dates
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d %H:%M"))
-        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-
-        # Add legend if multiple nodes
-        if len(time_series_data) > 1:
-            ax.legend()
-
-        # Rotate date labels
-        fig.autofmt_xdate()
-        plt.tight_layout()
-
-        # Save plot
-        output_path = _save_plot(
-            fig,
-            output_file or f"{parameter_path.replace('.', '_')}_timeseries",
-            output_dir,
-            format,
+    # Filter data for the specified measurement
+    filtered_df = filter_parsed_data(df, measurement_name, node_ids)
+    
+    if filtered_df.empty:
+        available_measurements = df['measurement_name'].unique()
+        raise ValidationError(
+            f"No data found for measurement '{measurement_name}'. "
+            f"Available measurements: {', '.join(available_measurements)}"
         )
 
-        plt.close(fig)
-        return output_path
+    # Convert timestamp to datetime if it's not already
+    if not pd.api.types.is_datetime64_any_dtype(filtered_df['timestamp']):
+        filtered_df = filtered_df.copy()
+        filtered_df['timestamp'] = pd.to_datetime(filtered_df['timestamp'])
 
-    except Exception as e:
-        logger.error(f"Failed to create time series plot: {e}")
-        raise RTGSLabToolsError(f"Time series plotting failed: {e}")
+    # Group by node_id for plotting multiple nodes
+    plt.figure(figsize=figsize)
+    
+    for node_id in filtered_df['node_id'].unique():
+        node_data = filtered_df[filtered_df['node_id'] == node_id].copy()
+        node_data = node_data.sort_values('timestamp')
+        
+        # Plot the data
+        if show_markers:
+            plt.plot(node_data['timestamp'], node_data['value'], 
+                    marker='o', markersize=3, label=f"Node {node_id}", alpha=0.7)
+        else:
+            plt.plot(node_data['timestamp'], node_data['value'], 
+                    label=f"Node {node_id}", alpha=0.7)
+
+    # Customize the plot
+    if title:
+        plt.title(title)
+    else:
+        unit_info = ""
+        if not filtered_df['unit'].isna().all():
+            units = filtered_df['unit'].dropna().unique()
+            if len(units) == 1 and units[0]:
+                unit_info = f" ({units[0]})"
+        
+        if node_ids and len(node_ids) == 1:
+            plt.title(f"{measurement_name} - Node {node_ids[0]}{unit_info}")
+        else:
+            plt.title(f"{measurement_name}{unit_info}")
+
+    plt.xlabel("Time")
+    plt.ylabel(measurement_name)
+    
+    # Add legend if multiple nodes
+    if len(filtered_df['node_id'].unique()) > 1:
+        plt.legend()
+
+    # Format x-axis
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
+    plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=6))
+    plt.xticks(rotation=45)
+
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    # Save the plot
+    output_path = _save_plot(output_file, output_dir, measurement_name, format, node_ids)
+    
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    logger.info(f"Time series plot saved to: {output_path}")
+    return str(output_path)
 
 
 def create_multi_parameter_plot(
     df: pd.DataFrame,
-    parameters: List[Tuple[str, Optional[str]]],  # [(parameter_path, node_id), ...]
+    measurements: List[Tuple[str, Optional[str]]],  # (measurement_name, node_id)
     title: Optional[str] = None,
     output_file: Optional[str] = None,
     output_dir: str = "figures",
@@ -127,11 +131,11 @@ def create_multi_parameter_plot(
     format: str = "png",
     figsize: Tuple[int, int] = (12, 8),
 ) -> str:
-    """Create plot with multiple parameters from different nodes.
+    """Create multi-parameter plot from parsed data.
 
     Args:
-        df: DataFrame with sensor data
-        parameters: List of (parameter_path, node_id) tuples
+        df: Parsed DataFrame with measurements
+        measurements: List of (measurement_name, node_id) tuples to plot
         title: Optional plot title
         output_file: Optional output filename
         output_dir: Output directory for saved plots
@@ -141,135 +145,114 @@ def create_multi_parameter_plot(
 
     Returns:
         Path to saved plot file
+
+    Raises:
+        ValidationError: If measurements not found or data invalid
+        RTGSLabToolsError: If plotting fails
     """
-    try:
-        # Parse sensor messages if not already done
-        if "parsed_message" not in df.columns:
-            df = parse_sensor_messages(df)
+    plt.figure(figsize=figsize)
+    
+    plot_data = []
+    
+    for measurement_name, node_id in measurements:
+        # Filter data for this measurement and node
+        node_ids = [node_id] if node_id else None
+        filtered_df = filter_parsed_data(df, measurement_name, node_ids)
+        
+        if filtered_df.empty:
+            logger.warning(f"No data found for measurement '{measurement_name}' on node '{node_id}'")
+            continue
+        
+        # Convert timestamp to datetime if needed
+        if not pd.api.types.is_datetime64_any_dtype(filtered_df['timestamp']):
+            filtered_df = filtered_df.copy()
+            filtered_df['timestamp'] = pd.to_datetime(filtered_df['timestamp'])
+        
+        # Sort by timestamp
+        filtered_df = filtered_df.sort_values('timestamp')
+        
+        # Create label
+        if node_id:
+            label = f"{measurement_name} (Node {node_id})"
+        else:
+            label = measurement_name
+        
+        # Plot the data
+        if show_markers:
+            plt.plot(filtered_df['timestamp'], filtered_df['value'], 
+                    marker='o', markersize=3, label=label, alpha=0.7)
+        else:
+            plt.plot(filtered_df['timestamp'], filtered_df['value'], 
+                    label=label, alpha=0.7)
+        
+        plot_data.append((measurement_name, node_id, len(filtered_df)))
 
-        fig, ax = plt.subplots(figsize=figsize)
+    if not plot_data:
+        raise ValidationError("No valid data found for any of the specified measurements")
 
-        colors = plt.cm.tab10(range(len(parameters)))
-        plot_count = 0
+    # Customize the plot
+    if title:
+        plt.title(title)
+    else:
+        plt.title("Multi-Parameter Time Series")
 
-        for i, (parameter_path, node_id) in enumerate(parameters):
-            # Extract data for specific parameter and node
-            node_ids = [node_id] if node_id else None
-            time_series_data = extract_time_series_data(df, parameter_path, node_ids)
+    plt.xlabel("Time")
+    plt.ylabel("Values")
+    plt.legend()
 
-            if not time_series_data:
-                logger.warning(f"No data found for {parameter_path} on node {node_id}")
-                continue
+    # Format x-axis
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
+    plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=6))
+    plt.xticks(rotation=45)
 
-            # Plot each node's data
-            for node, node_df in time_series_data.items():
-                if node_id and node != node_id:
-                    continue
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
 
-                marker_style = "o" if show_markers else None
-                param_name = parameter_path.split(".")[-1]
-                label = f"{node} - {param_name}"
+    # Save the plot
+    measurement_names = [m[0] for m in measurements]
+    output_path = _save_plot(output_file, output_dir, "_".join(measurement_names[:3]), format)
+    
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
 
-                ax.plot(
-                    node_df["timestamp"],
-                    node_df["value"],
-                    label=label,
-                    marker=marker_style,
-                    markersize=4,
-                    color=colors[i % len(colors)],
-                )
-                plot_count += 1
-
-        if plot_count == 0:
-            raise ValidationError("No data found for any of the specified parameters")
-
-        # Format plot
-        ax.set_title(title or "Multi-Parameter Time Series")
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Value")
-        ax.grid(True, alpha=0.3)
-
-        # Format x-axis dates
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d %H:%M"))
-        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-
-        # Add legend
-        ax.legend()
-
-        # Rotate date labels
-        fig.autofmt_xdate()
-        plt.tight_layout()
-
-        # Save plot
-        output_path = _save_plot(
-            fig,
-            output_file
-            or f"multi_parameter_plot_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            output_dir,
-            format,
-        )
-
-        plt.close(fig)
-        return output_path
-
-    except Exception as e:
-        logger.error(f"Failed to create multi-parameter plot: {e}")
-        raise RTGSLabToolsError(f"Multi-parameter plotting failed: {e}")
+    logger.info(f"Multi-parameter plot saved to: {output_path}")
+    return str(output_path)
 
 
-def plot_sensor_data(
-    df: pd.DataFrame,
-    parameter_path: str,
-    node_id: Optional[str] = None,
-    output_dir: str = "figures",
-    **kwargs,
-) -> str:
-    """Simplified function to plot sensor data for a single parameter.
-
-    Args:
-        df: DataFrame with sensor data
-        parameter_path: Parameter path to plot
-        node_id: Optional specific node ID
-        output_dir: Output directory
-        **kwargs: Additional arguments passed to create_time_series_plot
-
-    Returns:
-        Path to saved plot file
-    """
-    node_ids = [node_id] if node_id else None
-
-    return create_time_series_plot(
-        df=df,
-        parameter_path=parameter_path,
-        node_ids=node_ids,
-        output_dir=output_dir,
-        **kwargs,
-    )
+# Legacy function for backwards compatibility
+def plot_sensor_data(*args, **kwargs):
+    """Legacy function - use create_time_series_plot instead."""
+    logger.warning("plot_sensor_data is deprecated, use create_time_series_plot instead")
+    return create_time_series_plot(*args, **kwargs)
 
 
-def _save_plot(fig: plt.Figure, filename: str, output_dir: str, format: str) -> str:
-    """Save matplotlib figure to file.
-
-    Args:
-        fig: Matplotlib figure
-        filename: Base filename (without extension)
-        output_dir: Output directory
-        format: File format
-
-    Returns:
-        Path to saved file
-    """
-    # Create output directory
+def _save_plot(
+    output_file: Optional[str],
+    output_dir: str,
+    base_name: str,
+    format: str,
+    node_ids: Optional[List[str]] = None
+) -> Path:
+    """Generate output file path for plots."""
+    # Ensure output directory exists
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # Add extension if not present
-    if not filename.lower().endswith(f".{format}"):
-        filename = f"{filename}.{format}"
+    if output_file:
+        # Use provided filename
+        file_path = Path(output_file)
+        if not file_path.is_absolute():
+            file_path = output_path / file_path
+    else:
+        # Generate filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_name = "".join(c for c in base_name if c.isalnum() or c in "._-")
+        
+        if node_ids and len(node_ids) == 1:
+            filename = f"{safe_name}_node_{node_ids[0]}_{timestamp}.{format}"
+        else:
+            filename = f"{safe_name}_{timestamp}.{format}"
+        
+        file_path = output_path / filename
 
-    # Save figure
-    file_path = output_path / filename
-    fig.savefig(str(file_path), format=format, dpi=300, bbox_inches="tight")
-
-    logger.info(f"Plot saved to {file_path}")
-    return str(file_path)
+    return file_path

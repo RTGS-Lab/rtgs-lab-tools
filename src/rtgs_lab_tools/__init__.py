@@ -21,11 +21,16 @@ from .gridded_data import ERA5Client, download_era5_data, process_era5_data
 # High-level data extraction functions
 from .sensing_data import extract_data, get_raw_data, list_available_projects
 
+# Data parsing functions
+from .data_parser.parsers.factory import ParserFactory
+from .data_parser.parsers.data_parser import DataV2Parser
+
 # Visualization functions
 from .visualization import (
     create_multi_parameter_plot,
     create_time_series_plot,
-    parse_sensor_messages,
+    detect_data_type,
+    load_and_prepare_data,
 )
 
 __all__ = [
@@ -40,10 +45,14 @@ __all__ = [
     "extract_data",
     "list_available_projects",
     "get_raw_data",
+    # Data parsing
+    "ParserFactory",
+    "DataV2Parser",
     # Visualization
     "create_time_series_plot",
     "create_multi_parameter_plot",
-    "parse_sensor_messages",
+    "detect_data_type",
+    "load_and_prepare_data",
     # Device management
     "ParticleConfigUpdater",
     "ParticleClient",
