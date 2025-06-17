@@ -37,12 +37,12 @@ def analyze(
     output_analysis,
     verbose,
     log_file,
-    no_git_log,
+    no_postgres_log,
     note,
 ):
     """Analyze error codes from GEMS sensor data files."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("error-analysis", verbose, log_file, no_git_log)
+    cli_ctx.setup("error-analysis", verbose, log_file, no_postgres_log)
 
     try:
         from ..error_analysis import (
@@ -201,10 +201,10 @@ def analyze(
 @add_common_options
 @click.pass_context
 @handle_common_errors("error-decoding")
-def decode(ctx, error_code, verbose, log_file, no_git_log, note):
+def decode(ctx, error_code, verbose, log_file, no_postgres_log, note):
     """Decode a single error code."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("error-decoding", verbose, log_file, no_git_log)
+    cli_ctx.setup("error-decoding", verbose, log_file, no_postgres_log)
 
     try:
         from ..error_analysis import ErrorCodeParser

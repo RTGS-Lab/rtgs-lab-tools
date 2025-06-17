@@ -50,7 +50,7 @@ def parse(
     output_file,
     verbose,
     log_file,
-    no_git_log,
+    no_postgres_log,
     note,
 ):
     """Parse GEMS sensing data from raw data file.
@@ -69,7 +69,7 @@ def parse(
     rtgs-lab-tools data-parser parse data/raw_data.csv --output-file data/parsed/my_parsed_data.csv
     """
     cli_ctx = ctx.obj
-    cli_ctx.setup("data-parsing", verbose, log_file, no_git_log)
+    cli_ctx.setup("data-parsing", verbose, log_file, no_postgres_log)
 
     try:
         from .core import parse_gems_data

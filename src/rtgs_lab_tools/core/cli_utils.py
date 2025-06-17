@@ -15,7 +15,7 @@ from .exceptions import (
     RTGSLabToolsError,
     ValidationError,
 )
-from .git_logger import GitLogger
+from .postgres_logger import PostgresLogger
 from .logging import setup_logging
 
 
@@ -37,48 +37,48 @@ def setup_logging_for_tool(
     return logger
 
 
-def setup_git_logger(tool_name: str, disable: bool = False) -> Optional[GitLogger]:
-    """Set up git logger for a specific tool.
+def setup_postgres_logger(tool_name: str, disable: bool = False) -> Optional[PostgresLogger]:
+    """Set up postgres logger for a specific tool.
 
     Args:
-        tool_name: Name of the tool for git logging
-        disable: Whether to disable git logging
+        tool_name: Name of the tool for postgres logging
+        disable: Whether to disable postgres logging
 
     Returns:
-        GitLogger instance or None if disabled/failed
+        PostgresLogger instance or None if disabled/failed
     """
     if disable:
         return None
 
     try:
-        return GitLogger(tool_name=tool_name)
+        return PostgresLogger(tool_name=tool_name)
     except Exception as e:
         # Log warning but don't fail the tool
         logging.getLogger().warning(
-            f"Failed to initialize git logging for {tool_name}: {e}"
+            f"Failed to initialize postgres logging for {tool_name}: {e}"
         )
         return None
 
 
-def log_error_to_git(
-    git_logger: Optional[GitLogger],
+def log_error_to_postgres(
+    postgres_logger: Optional[PostgresLogger],
     error_type: str,
     error: Exception,
     start_time: datetime,
     parameters: Dict[str, Any],
     script_path: str,
 ):
-    """Helper function to log errors to git.
+    """Helper function to log errors to postgres.
 
     Args:
-        git_logger: GitLogger instance (can be None)
+        postgres_logger: PostgresLogger instance (can be None)
         error_type: Type/category of error
         error: The exception that occurred
         start_time: When the operation started
         parameters: Parameters passed to the operation
         script_path: Path to the script being executed
     """
-    if not git_logger:
+    if not postgres_logger:
         return
 
     try:
@@ -92,14 +92,14 @@ def log_error_to_git(
             "end_time": datetime.now().isoformat(),
         }
 
-        git_logger.log_execution(
+        postgres_logger.log_execution(
             operation=operation,
             parameters=parameters,
             results=results,
             script_path=script_path,
         )
     except Exception:
-        # Don't let git logging errors crash the application
+        # Don't let postgres logging errors crash the application
         pass
 
 
@@ -158,7 +158,7 @@ def add_common_options(func: Callable) -> Callable:
     """
     # Add options in reverse order due to how decorators work
     func = click.option(
-        "--no-git-log", is_flag=True, help="Disable automatic git logging"
+        "--no-postgres-log", is_flag=True, help="Disable automatic postgres logging"
     )(func)
     func = click.option("--note", help="Note describing the purpose of this operation")(
         func
@@ -304,9 +304,9 @@ def device_config_parameters(func: Callable) -> Callable:
     """Add device configuration parameters to a command."""
     # Add options in reverse order due to how decorators work
     func = click.option(
-        "--no-particle-git-log",
+        "--no-particle-postgres-log",
         is_flag=True,
-        help="Disable Particle-specific git logging (CLI logging still active)",
+        help="Disable Particle-specific postgres logging (CLI logging still active)",
     )(func)
     func = click.option(
         "--dry-run", is_flag=True, help="Validate inputs without making changes"
@@ -453,7 +453,7 @@ class CLIContext:
 
     def __init__(self):
         self.logger: Optional[logging.Logger] = None
-        self.git_logger: Optional[GitLogger] = None
+        self.postgres_logger: Optional[PostgresLogger] = None
         self.start_time: Optional[datetime] = None
         self.tool_name: Optional[str] = None
 
@@ -462,7 +462,7 @@ class CLIContext:
         tool_name: str,
         verbose: bool = False,
         log_file: Optional[str] = None,
-        no_git_log: bool = False,
+        no_postgres_log: bool = False,
     ):
         """Set up context for a tool.
 
@@ -470,11 +470,11 @@ class CLIContext:
             tool_name: Name of the tool
             verbose: Enable verbose logging
             log_file: Optional log file
-            no_git_log: Disable git logging
+            no_postgres_log: Disable postgres logging
         """
         self.tool_name = tool_name
         self.logger = setup_logging_for_tool(tool_name, verbose, log_file)
-        self.git_logger = setup_git_logger(tool_name, no_git_log)
+        self.postgres_logger = setup_postgres_logger(tool_name, no_postgres_log)
         self.start_time = datetime.now()
 
     def log_error(
@@ -484,10 +484,10 @@ class CLIContext:
         parameters: Dict[str, Any],
         script_path: str,
     ):
-        """Log error to git if git logger is available."""
-        if self.git_logger and self.start_time:
-            log_error_to_git(
-                self.git_logger,
+        """Log error to postgres if postgres logger is available."""
+        if self.postgres_logger and self.start_time:
+            log_error_to_postgres(
+                self.postgres_logger,
                 error_type,
                 error,
                 self.start_time,
@@ -503,10 +503,10 @@ class CLIContext:
         script_path: str,
         additional_sections: Optional[Dict[str, str]] = None,
     ):
-        """Log successful operation to git if git logger is available."""
-        if self.git_logger:
+        """Log successful operation to postgres if postgres logger is available."""
+        if self.postgres_logger:
             try:
-                self.git_logger.log_execution(
+                self.postgres_logger.log_execution(
                     operation=operation,
                     parameters=parameters,
                     results=results,
@@ -515,4 +515,4 @@ class CLIContext:
                 )
             except Exception as e:
                 if self.logger:
-                    self.logger.error(f"Failed to create git log: {e}")
+                    self.logger.error(f"Failed to create postgres log: {e}")

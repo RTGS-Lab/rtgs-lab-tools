@@ -49,10 +49,10 @@ def temperature():
 @add_common_options
 @click.pass_context
 @handle_common_errors("temperature-conversion")
-def celsius_to_fahrenheit_cmd(ctx, value, verbose, log_file, no_git_log, note):
+def celsius_to_fahrenheit_cmd(ctx, value, verbose, log_file, no_postgres_log, note):
     """Convert temperature from Celsius to Fahrenheit."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("temperature-conversion", verbose, log_file, no_git_log)
+    cli_ctx.setup("temperature-conversion", verbose, log_file, no_postgres_log)
 
     result = celsius_to_fahrenheit(value)
     click.echo(f"{value}°C = {result:.2f}°F")
@@ -73,10 +73,10 @@ def celsius_to_fahrenheit_cmd(ctx, value, verbose, log_file, no_git_log, note):
 @add_common_options
 @click.pass_context
 @handle_common_errors("temperature-conversion")
-def fahrenheit_to_celsius_cmd(ctx, value, verbose, log_file, no_git_log, note):
+def fahrenheit_to_celsius_cmd(ctx, value, verbose, log_file, no_postgres_log, note):
     """Convert temperature from Fahrenheit to Celsius."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("temperature-conversion", verbose, log_file, no_git_log)
+    cli_ctx.setup("temperature-conversion", verbose, log_file, no_postgres_log)
 
     result = fahrenheit_to_celsius(value)
     click.echo(f"{value}°F = {result:.2f}°C")
@@ -103,10 +103,10 @@ def distance():
 @add_common_options
 @click.pass_context
 @handle_common_errors("distance-conversion")
-def feet_to_meters_cmd(ctx, value, verbose, log_file, no_git_log, note):
+def feet_to_meters_cmd(ctx, value, verbose, log_file, no_postgres_log, note):
     """Convert distance from feet to meters."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("distance-conversion", verbose, log_file, no_git_log)
+    cli_ctx.setup("distance-conversion", verbose, log_file, no_postgres_log)
 
     result = feet_to_meters(value)
     click.echo(f"{value} ft = {result:.4f} m")
@@ -127,10 +127,10 @@ def feet_to_meters_cmd(ctx, value, verbose, log_file, no_git_log, note):
 @add_common_options
 @click.pass_context
 @handle_common_errors("angle-conversion")
-def degrees_to_radians_cmd(ctx, value, verbose, log_file, no_git_log, note):
+def degrees_to_radians_cmd(ctx, value, verbose, log_file, no_postgres_log, note):
     """Convert angle from degrees to radians."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("angle-conversion", verbose, log_file, no_git_log)
+    cli_ctx.setup("angle-conversion", verbose, log_file, no_postgres_log)
 
     result = degrees_to_radians(value)
     click.echo(f"{value}° = {result:.6f} rad")
@@ -157,10 +157,10 @@ def speed():
 @add_common_options
 @click.pass_context
 @handle_common_errors("speed-conversion")
-def ms_to_mph(ctx, value, verbose, log_file, no_git_log, note):
+def ms_to_mph(ctx, value, verbose, log_file, no_postgres_log, note):
     """Convert speed from meters per second to miles per hour."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("speed-conversion", verbose, log_file, no_git_log)
+    cli_ctx.setup("speed-conversion", verbose, log_file, no_postgres_log)
 
     result = meters_per_second_to_miles_per_hour(value)
     click.echo(f"{value} m/s = {result:.4f} mph")
@@ -181,10 +181,10 @@ def ms_to_mph(ctx, value, verbose, log_file, no_git_log, note):
 @add_common_options
 @click.pass_context
 @handle_common_errors("speed-conversion")
-def mph_to_ms(ctx, value, verbose, log_file, no_git_log, note):
+def mph_to_ms(ctx, value, verbose, log_file, no_postgres_log, note):
     """Convert speed from miles per hour to meters per second."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("speed-conversion", verbose, log_file, no_git_log)
+    cli_ctx.setup("speed-conversion", verbose, log_file, no_postgres_log)
 
     result = miles_per_hour_to_meters_per_second(value)
     click.echo(f"{value} mph = {result:.4f} m/s")
@@ -211,10 +211,10 @@ def crops():
 @add_common_options
 @click.pass_context
 @handle_common_errors("crop-parameters")
-def parameters(ctx, crop, verbose, log_file, no_git_log, note):
+def parameters(ctx, crop, verbose, log_file, no_postgres_log, note):
     """Show crop parameters for growing degree day calculations."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("crop-parameters", verbose, log_file, no_git_log)
+    cli_ctx.setup("crop-parameters", verbose, log_file, no_postgres_log)
 
     try:
         if crop:
@@ -276,10 +276,10 @@ def parameters(ctx, crop, verbose, log_file, no_git_log, note):
 @add_common_options
 @click.pass_context
 @handle_common_errors("gdd-calculation")
-def gdd(ctx, t_min, t_max, crop, method, verbose, log_file, no_git_log, note):
+def gdd(ctx, t_min, t_max, crop, method, verbose, log_file, no_postgres_log, note):
     """Calculate Growing Degree Days for a crop."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("gdd-calculation", verbose, log_file, no_git_log)
+    cli_ctx.setup("gdd-calculation", verbose, log_file, no_postgres_log)
 
     try:
         # Get crop parameters
@@ -332,10 +332,10 @@ def gdd(ctx, t_min, t_max, crop, method, verbose, log_file, no_git_log, note):
 @add_common_options
 @click.pass_context
 @handle_common_errors("chu-calculation")
-def chu(ctx, t_min, t_max, t_base, verbose, log_file, no_git_log, note):
+def chu(ctx, t_min, t_max, t_base, verbose, log_file, no_postgres_log, note):
     """Calculate Corn Heat Units (CHU)."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("chu-calculation", verbose, log_file, no_git_log)
+    cli_ctx.setup("chu-calculation", verbose, log_file, no_postgres_log)
 
     result = calculate_corn_heat_units(t_min, t_max, t_base)
 
@@ -371,13 +371,13 @@ def evapotranspiration():
 @click.pass_context
 @handle_common_errors("evapotranspiration")
 def calculate(
-    ctx, input_file, output, validate_only, verbose, log_file, no_git_log, note
+    ctx, input_file, output, validate_only, verbose, log_file, no_postgres_log, note
 ):
     """Calculate reference evapotranspiration from weather data CSV."""
     import pandas as pd
 
     cli_ctx = ctx.obj
-    cli_ctx.setup("evapotranspiration", verbose, log_file, no_git_log)
+    cli_ctx.setup("evapotranspiration", verbose, log_file, no_postgres_log)
 
     try:
         # Read input file
@@ -446,10 +446,10 @@ def calculate(
 @add_common_options
 @click.pass_context
 @handle_common_errors("et-requirements")
-def requirements(ctx, verbose, log_file, no_git_log, note):
+def requirements(ctx, verbose, log_file, no_postgres_log, note):
     """Show required columns for evapotranspiration calculation."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("et-requirements", verbose, log_file, no_git_log)
+    cli_ctx.setup("et-requirements", verbose, log_file, no_postgres_log)
 
     required_cols = get_required_columns()
 

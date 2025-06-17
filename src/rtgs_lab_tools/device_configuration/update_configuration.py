@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 
 from ..core.config import Config
-from ..core.git_logger import GitLogger as CoreGitLogger
+from ..core.postgres_logger import PostgresLogger as CorePostgresLogger
 from .particle_client import ParticleClient, calculate_config_uid
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ class ParticleConfigUpdater:
 
     def __init__(
         self,
-        enable_git_logging: bool = True,
+        enable_postgres_logging: bool = True,
         repo_path: str = None,
         config: Optional[Config] = None,
     ):
@@ -48,11 +48,11 @@ class ParticleConfigUpdater:
         self._lock = threading.Lock()
         self._processed_count = 0
 
-        # Git logging
-        self.enable_git_logging = enable_git_logging
-        self.git_logger = (
-            CoreGitLogger(tool_name="device-configuration", repo_path=repo_path)
-            if enable_git_logging
+        # Postgres logging
+        self.enable_postgres_logging = enable_postgres_logging
+        self.postgres_logger = (
+            CorePostgresLogger(tool_name="device-configuration")
+            if enable_postgres_logging
             else None
         )
 
@@ -468,10 +468,10 @@ class ParticleConfigUpdater:
         )
         logger.info(f"  Concurrent threads used: {self.max_concurrent_devices}")
 
-        # Create and commit git log if enabled
-        if self.enable_git_logging and self.git_logger and args:
+        # Create and commit postgres log if enabled
+        if self.enable_postgres_logging and self.postgres_logger and args:
             try:
-                # Convert to the format expected by the core GitLogger
+                # Convert to the format expected by the core PostgresLogger
                 operation = f"Update configuration on {len(device_ids)} devices"
 
                 parameters = {
@@ -525,7 +525,7 @@ class ParticleConfigUpdater:
                     "Configuration Applied": f"```json\\n{json.dumps(config, indent=2)}\\n```",
                 }
 
-                log_path = self.git_logger.log_execution(
+                log_path = self.postgres_logger.log_execution(
                     operation=operation,
                     parameters=parameters,
                     results=cli_results,
@@ -586,7 +586,7 @@ def main():
         "--dry-run", action="store_true", help="Validate inputs without making changes"
     )
     parser.add_argument(
-        "--no-git-log", action="store_true", help="Disable automatic git logging"
+        "--no-postgres-log", action="store_true", help="Disable automatic postgres logging"
     )
     parser.add_argument(
         "--repo-path", help="Path to git repository (auto-detected if not specified)"
@@ -619,7 +619,7 @@ def main():
 
         # Create updater and configure settings
         updater = ParticleConfigUpdater(
-            enable_git_logging=not args.no_git_log,
+            enable_postgres_logging=not args.no_postgres_log,
             repo_path=args.repo_path,
             config=app_config,
         )

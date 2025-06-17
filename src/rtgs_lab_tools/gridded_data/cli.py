@@ -56,12 +56,12 @@ def era5(
     process,
     verbose,
     log_file,
-    no_git_log,
+    no_postgres_log,
     note,
 ):
     """Download and process ERA5 climate data."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("era5-data", verbose, log_file, no_git_log)
+    cli_ctx.setup("era5-data", verbose, log_file, no_postgres_log)
 
     try:
         from ..gridded_data import ERA5Client, download_era5_data, process_era5_data
@@ -201,12 +201,12 @@ def process_era5(
     spatial_subset,
     verbose,
     log_file,
-    no_git_log,
+    no_postgres_log,
     note,
 ):
     """Process ERA5 NetCDF data with aggregation and subsetting."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("era5-processing", verbose, log_file, no_git_log)
+    cli_ctx.setup("era5-processing", verbose, log_file, no_postgres_log)
 
     try:
         from ..gridded_data import process_era5_data
@@ -293,10 +293,10 @@ def process_era5(
 @add_common_options
 @click.pass_context
 @handle_common_errors("era5-variables")
-def list_variables(ctx, verbose, log_file, no_git_log, note):
+def list_variables(ctx, verbose, log_file, no_postgres_log, note):
     """List available ERA5 variables."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("era5-variables", verbose, log_file, no_git_log)
+    cli_ctx.setup("era5-variables", verbose, log_file, no_postgres_log)
 
     try:
         from ..gridded_data import ERA5Client

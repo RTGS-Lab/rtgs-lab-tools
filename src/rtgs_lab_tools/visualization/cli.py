@@ -45,12 +45,12 @@ def create(
     no_markers,
     verbose,
     log_file,
-    no_git_log,
+    no_postgres_log,
     note,
 ):
     """Create visualizations from sensor data."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("visualization", verbose, log_file, no_git_log)
+    cli_ctx.setup("visualization", verbose, log_file, no_postgres_log)
 
     try:
         from .data_utils import load_and_prepare_data, get_available_measurements
@@ -186,10 +186,10 @@ def create(
 @add_common_options
 @click.pass_context
 @handle_common_errors("parameter-listing")
-def list_parameters(ctx, file, verbose, log_file, no_git_log, note):
+def list_parameters(ctx, file, verbose, log_file, no_postgres_log, note):
     """List available parameters in a sensor data file."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("parameter-listing", verbose, log_file, no_git_log)
+    cli_ctx.setup("parameter-listing", verbose, log_file, no_postgres_log)
 
     try:
         from .data_utils import load_and_prepare_data, get_available_measurements

@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
-from ..core.git_logger import GitLogger
+from ..core.postgres_logger import PostgresLogger
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ def parse_gems_data(
     original_file_path: Optional[str] = None,
     logger_func: Optional[callable] = None,
     note: Optional[str] = None,
-    auto_commit_git_log: bool = True
+    auto_commit_postgres_log: bool = True
 ) -> Tuple[pd.DataFrame, Dict]:
     """Parse GEMS sensing data using the appropriate parsers.
     
@@ -34,7 +34,7 @@ def parse_gems_data(
         original_file_path: Path to original file (for naming saved files)
         logger_func: Optional logging function to call with messages
         note: Optional note for git logging
-        auto_commit_git_log: Whether to automatically create and commit git log
+        auto_commit_postgres_log: Whether to automatically create and commit postgres log
         
     Returns:
         Tuple of (parsed_dataframe, results_dict)
@@ -50,8 +50,8 @@ def parse_gems_data(
     from .output.csv_writer import CSVWriter
     from .output.parquet_writer import ParquetWriter
 
-    # Initialize git logger
-    git_logger = GitLogger("data-parser") if auto_commit_git_log else None
+    # Initialize postgres logger
+    postgres_logger = PostgresLogger("data-parser") if auto_commit_postgres_log else None
     start_time = datetime.now()
 
     def log(message: str):
@@ -158,8 +158,8 @@ def parse_gems_data(
         if note:
             results['note'] = note
         
-        # Log execution to git if enabled
-        if git_logger:
+        # Log execution to postgres if enabled
+        if postgres_logger:
             try:
                 operation = f"Parse GEMS data ({packet_types} packets)"
                 parameters = {
@@ -169,15 +169,15 @@ def parse_gems_data(
                     'save_to_parsed_dir': save_to_parsed_dir,
                     'original_file_path': original_file_path or 'N/A'
                 }
-                git_logger.log_execution(
+                postgres_logger.log_execution(
                     operation=operation,
                     parameters=parameters,
                     results=results,
                     script_path=__file__,
-                    auto_commit=True
+                    auto_save=True
                 )
             except Exception as e:
-                logger.warning(f"Failed to create git log: {e}")
+                logger.warning(f"Failed to create postgres log: {e}")
         
         return parsed_df, results
         
@@ -198,8 +198,8 @@ def parse_gems_data(
         if note:
             error_results['note'] = note
         
-        # Log execution to git if enabled (even for failures)
-        if git_logger:
+        # Log execution to postgres if enabled (even for failures)
+        if postgres_logger:
             try:
                 operation = f"Parse GEMS data ({packet_types} packets) - FAILED"
                 parameters = {
@@ -209,15 +209,15 @@ def parse_gems_data(
                     'save_to_parsed_dir': save_to_parsed_dir,
                     'original_file_path': original_file_path or 'N/A'
                 }
-                git_logger.log_execution(
+                postgres_logger.log_execution(
                     operation=operation,
                     parameters=parameters,
                     results=error_results,
                     script_path=__file__,
-                    auto_commit=True
+                    auto_save=True
                 )
             except Exception as log_e:
-                logger.warning(f"Failed to create git log for error: {log_e}")
+                logger.warning(f"Failed to create postgres log for error: {log_e}")
         
         # Re-raise the original exception
         raise

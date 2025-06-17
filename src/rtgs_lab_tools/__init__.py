@@ -7,7 +7,7 @@ __email__ = "rtgs@umn.edu"
 # Core infrastructure
 from .core import Config, DatabaseManager
 from .core.exceptions import APIError, DatabaseError, ValidationError
-from .core.git_logger import GitLogger
+from .core.postgres_logger import PostgresLogger
 
 # Device management
 from .device_configuration import ParticleClient, ParticleConfigUpdater
@@ -37,7 +37,7 @@ __all__ = [
     # Core
     "DatabaseManager",
     "Config",
-    "GitLogger",
+    "PostgresLogger",
     "ValidationError",
     "DatabaseError",
     "APIError",

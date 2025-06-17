@@ -41,12 +41,12 @@ def extract(
     retry_count,
     verbose,
     log_file,
-    no_git_log,
+    no_postgres_log,
     note,
 ):
     """Extract sensing data from GEMS database."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("data-extraction", verbose, log_file, no_git_log)
+    cli_ctx.setup("data-extraction", verbose, log_file, no_postgres_log)
 
     # Handle setup credentials
     if setup_credentials:
@@ -146,10 +146,10 @@ def extract(
 @add_common_options
 @click.pass_context
 @handle_common_errors("project-listing")
-def list_projects_cmd(ctx, verbose, log_file, no_git_log, note):
+def list_projects_cmd(ctx, verbose, log_file, no_postgres_log, note):
     """List all available projects in the database."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("project-listing", verbose, log_file, no_git_log)
+    cli_ctx.setup("project-listing", verbose, log_file, no_postgres_log)
 
     try:
         projects = list_available_projects()

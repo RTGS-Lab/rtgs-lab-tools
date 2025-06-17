@@ -50,12 +50,12 @@ def update_config(
     no_particle_git_log,
     verbose,
     log_file,
-    no_git_log,
+    no_postgres_log,
     note,
 ):
     """Update configurations on multiple Particle devices."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("device-configuration", verbose, log_file, no_git_log)
+    cli_ctx.setup("device-configuration", verbose, log_file, no_postgres_log)
 
     try:
         # Import here to handle potential import issues
@@ -86,12 +86,12 @@ def update_config(
             cli_ctx.logger.info(f"Would use {max_concurrent} concurrent threads")
             return
 
-        # Create updater with appropriate git logging settings
-        # Disable particle-specific git logging if CLI git logging is enabled to avoid duplicates
-        enable_particle_git_log = not no_particle_git_log and no_git_log
+        # Create updater with appropriate postgres logging settings
+        # Disable particle-specific postgres logging if CLI postgres logging is enabled to avoid duplicates
+        enable_particle_postgres_log = not no_particle_postgres_log and not no_postgres_log
 
         updater = ParticleConfigUpdater(
-            enable_git_logging=enable_particle_git_log, config=app_config
+            enable_postgres_logging=enable_particle_postgres_log, config=app_config
         )
         updater.max_retries = max_retries
         updater.restart_wait_time = restart_wait
@@ -118,7 +118,7 @@ def update_config(
         # Save results
         save_results(results, output)
 
-        # Log success to CLI git logger
+        # Log success to CLI postgres logger
         operation = f"Update configuration on {len(device_ids)} devices"
 
         parameters = {
@@ -188,7 +188,7 @@ def update_config(
             sys.exit(1)
 
     except Exception as e:
-        # Log error to CLI git logger
+        # Log error to CLI postgres logger
         parameters = {
             "config_source": config,
             "device_source": devices,
@@ -204,10 +204,10 @@ def update_config(
 @add_common_options
 @click.pass_context
 @handle_common_errors("uid-decoding")
-def decode_system(ctx, uid, verbose, log_file, no_git_log, note):
+def decode_system(ctx, uid, verbose, log_file, no_postgres_log, note):
     """Decode system configuration UID."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("uid-decoding", verbose, log_file, no_git_log)
+    cli_ctx.setup("uid-decoding", verbose, log_file, no_postgres_log)
 
     try:
         parsed_uid = parse_uid(uid)
@@ -243,10 +243,10 @@ def decode_system(ctx, uid, verbose, log_file, no_git_log, note):
 @add_common_options
 @click.pass_context
 @handle_common_errors("uid-decoding")
-def decode_sensor(ctx, uid, verbose, log_file, no_git_log, note):
+def decode_sensor(ctx, uid, verbose, log_file, no_postgres_log, note):
     """Decode sensor configuration UID."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("uid-decoding", verbose, log_file, no_git_log)
+    cli_ctx.setup("uid-decoding", verbose, log_file, no_postgres_log)
 
     try:
         parsed_uid = parse_uid(uid)
@@ -283,10 +283,10 @@ def decode_sensor(ctx, uid, verbose, log_file, no_git_log, note):
 @add_common_options
 @click.pass_context
 @handle_common_errors("uid-decoding")
-def decode_both(ctx, system_uid, sensor_uid, verbose, log_file, no_git_log, note):
+def decode_both(ctx, system_uid, sensor_uid, verbose, log_file, no_postgres_log, note):
     """Decode both system and sensor configuration UIDs."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("uid-decoding", verbose, log_file, no_git_log)
+    cli_ctx.setup("uid-decoding", verbose, log_file, no_postgres_log)
 
     try:
         parsed_system_uid = parse_uid(system_uid)
@@ -351,10 +351,10 @@ def decode_both(ctx, system_uid, sensor_uid, verbose, log_file, no_git_log, note
 def create_config(ctx, output, log_period, backhaul_count, power_save_mode, logging_mode,
                   num_aux_talons, num_i2c_talons, num_sdi12_talons, num_et, num_haar,
                   num_soil, num_apogee_solar, num_co2, num_o2, num_pressure,
-                  verbose, log_file, no_git_log, note):
+                  verbose, log_file, no_postgres_log, note):
     """Create a configuration JSON file with specified parameters."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("create-config", verbose, log_file, no_git_log)
+    cli_ctx.setup("create-config", verbose, log_file, no_postgres_log)
 
     try:
         # Build configuration with provided parameters
@@ -442,10 +442,10 @@ def create_config(ctx, output, log_period, backhaul_count, power_save_mode, logg
 @add_common_options
 @click.pass_context
 @handle_common_errors("create-devices")
-def create_devices(ctx, output, devices, devices_list, verbose, log_file, no_git_log, note):
+def create_devices(ctx, output, devices, devices_list, verbose, log_file, no_postgres_log, note):
     """Create a devices.txt file with specified device IDs."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("create-devices", verbose, log_file, no_git_log)
+    cli_ctx.setup("create-devices", verbose, log_file, no_postgres_log)
 
     try:
         device_ids = []
