@@ -233,7 +233,7 @@ def _save_to_parsed_dir(
     from .output.parquet_writer import ParquetWriter
     
     # Generate output file path
-    repo_root = Path(__file__).parents[2]  # Go up from src/rtgs_lab_tools/data_parser/core.py
+    repo_root = Path(__file__).parents[3]  # Go up from src/rtgs_lab_tools/data_parser/core.py to project root
     parsed_dir = repo_root / "data" / "parsed"
     parsed_dir.mkdir(parents=True, exist_ok=True)
     

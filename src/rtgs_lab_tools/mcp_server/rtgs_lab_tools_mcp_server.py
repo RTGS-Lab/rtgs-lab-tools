@@ -501,6 +501,47 @@ async def device_configuration_update_config(
         original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
 
+        # First, verify current configurations on devices before making changes
+        verification_results = {}
+        
+        # Parse devices to get device list for verification
+        try:
+            from ..device_configuration.particle_client import parse_device_input, ParticleAPI
+            from ..core.config import Config
+            
+            device_ids = parse_device_input(devices)
+            app_config = Config()
+            particle_api = ParticleAPI(app_config.particle_access_token)
+            
+            # Verify a sample of devices (first 3) to avoid overwhelming the API
+            sample_devices = device_ids[:3] if len(device_ids) > 3 else device_ids
+            
+            for device_id in sample_devices:
+                try:
+                    system_config_result = particle_api.call_function(device_id, "getSystemConfig", "")
+                    sensor_config_result = particle_api.call_function(device_id, "getSensorConfig", "")
+                    
+                    verification_results[device_id] = {
+                        "system_config": {
+                            "success": system_config_result.get("return_value") is not None,
+                            "value": system_config_result.get("return_value"),
+                            "error": system_config_result.get("error")
+                        },
+                        "sensor_config": {
+                            "success": sensor_config_result.get("return_value") is not None,
+                            "value": sensor_config_result.get("return_value"),
+                            "error": sensor_config_result.get("error")
+                        }
+                    }
+                except Exception as device_error:
+                    verification_results[device_id] = {
+                        "error": f"Failed to verify device: {str(device_error)}"
+                    }
+        except Exception as verification_error:
+            verification_results = {
+                "verification_error": f"Could not perform pre-update verification: {str(verification_error)}"
+            }
+
         # Set MCP environment variables
         env = os.environ.copy()
         env["MCP_SESSION"] = "true"
@@ -544,6 +585,7 @@ async def device_configuration_update_config(
             "command": " ".join(cmd),
             "mcp_execution": True,
             "git_logging_enabled": True,
+            "pre_update_verification": verification_results,
         }
 
     except Exception as e:
@@ -554,6 +596,7 @@ async def device_configuration_update_config(
             "success": False,
             "error": f"Device configuration update failed: {str(e)}",
             "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+            "verification_results": verification_results if "verification_results" in locals() else None,
         }
 
 
@@ -733,6 +776,323 @@ async def device_configuration_decode_both_uids(
         return {
             "success": False,
             "error": f"UID decoding failed: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+@mcp.tool("device_configuration_verify_config")
+async def device_configuration_verify_config(
+    device_id: str,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Verify current device configuration by calling Particle functions.
+
+    Args:
+        device_id: The Particle device ID to verify
+        note: Description for this operation (optional)
+
+    Returns:
+        Dict with success status and current device configuration
+    """
+    try:
+        from ..device_configuration.particle_client import ParticleAPI
+        from ..core.config import Config
+
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Initialize Particle API
+        app_config = Config()
+        particle_api = ParticleAPI(app_config.particle_access_token)
+
+        # Call getSystemConfig and getSensorConfig functions
+        try:
+            system_config_result = particle_api.call_function(device_id, "getSystemConfig", "")
+            sensor_config_result = particle_api.call_function(device_id, "getSensorConfig", "")
+
+            verification_results = {
+                "device_id": device_id,
+                "system_config": {
+                    "success": system_config_result.get("return_value") is not None,
+                    "raw_value": system_config_result.get("return_value"),
+                    "error": system_config_result.get("error")
+                },
+                "sensor_config": {
+                    "success": sensor_config_result.get("return_value") is not None,
+                    "raw_value": sensor_config_result.get("return_value"),
+                    "error": sensor_config_result.get("error")
+                }
+            }
+
+            os.chdir(original_cwd)
+
+            return {
+                "success": True,
+                "verification_results": verification_results,
+                "mcp_execution": True,
+            }
+
+        except Exception as api_error:
+            os.chdir(original_cwd)
+            return {
+                "success": False,
+                "error": f"Failed to verify device configuration: {str(api_error)}",
+                "device_id": device_id,
+            }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Device configuration verification failed: {str(e)}",
+            "device_id": device_id,
+        }
+
+
+@mcp.tool("device_configuration_create_config")
+async def device_configuration_create_config(
+    output: str = "config.json",
+    log_period: int = 300,
+    backhaul_count: int = 1,
+    power_save_mode: int = 2,
+    logging_mode: int = 2,
+    num_aux_talons: int = 1,
+    num_i2c_talons: int = 1,
+    num_sdi12_talons: int = 1,
+    num_et: int = 0,
+    num_haar: int = 0,
+    num_soil: int = 1,
+    num_apogee_solar: int = 0,
+    num_co2: int = 0,
+    num_o2: int = 0,
+    num_pressure: int = 0,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Create a configuration JSON file with specified parameters.
+
+    Args:
+        output: Output file path (default: config.json)
+        log_period: Logging period in seconds (default: 300)
+        backhaul_count: Backhaul count (default: 1)
+        power_save_mode: Power save mode (default: 2)
+        logging_mode: Logging mode (default: 2)
+        num_aux_talons: Number of auxiliary talons (default: 1)
+        num_i2c_talons: Number of I2C talons (default: 1)
+        num_sdi12_talons: Number of SDI12 talons (default: 1)
+        num_et: Number of ET sensors (default: 0)
+        num_haar: Number of Haar sensors (default: 0)
+        num_soil: Number of soil sensors (default: 1)
+        num_apogee_solar: Number of Apogee solar sensors (default: 0)
+        num_co2: Number of CO2 sensors (default: 0)
+        num_o2: Number of O2 sensors (default: 0)
+        num_pressure: Number of pressure sensors (default: 0)
+        note: Description for this operation (optional)
+
+    Returns:
+        Dict with success status and created file path
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            PYTHON_EXECUTABLE,
+            "-m",
+            "rtgs_lab_tools.cli",
+            "device-configuration",
+            "create-config",
+            "--output",
+            output,
+            "--log-period",
+            str(log_period),
+            "--backhaul-count",
+            str(backhaul_count),
+            "--power-save-mode",
+            str(power_save_mode),
+            "--logging-mode",
+            str(logging_mode),
+            "--num-aux-talons",
+            str(num_aux_talons),
+            "--num-i2c-talons",
+            str(num_i2c_talons),
+            "--num-sdi12-talons",
+            str(num_sdi12_talons),
+            "--num-et",
+            str(num_et),
+            "--num-haar",
+            str(num_haar),
+            "--num-soil",
+            str(num_soil),
+            "--num-apogee-solar",
+            str(num_apogee_solar),
+            "--num-co2",
+            str(num_co2),
+            "--num-o2",
+            str(num_o2),
+            "--num-pressure",
+            str(num_pressure),
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        # Parse the configuration from the output to show user
+        config_data = {
+            "config": {
+                "system": {
+                    "logPeriod": log_period,
+                    "backhaulCount": backhaul_count,
+                    "powerSaveMode": power_save_mode,
+                    "loggingMode": logging_mode,
+                    "numAuxTalons": num_aux_talons,
+                    "numI2CTalons": num_i2c_talons,
+                    "numSDI12Talons": num_sdi12_talons
+                },
+                "sensors": {
+                    "numET": num_et,
+                    "numHaar": num_haar,
+                    "numSoil": num_soil,
+                    "numApogeeSolar": num_apogee_solar,
+                    "numCO2": num_co2,
+                    "numO2": num_o2,
+                    "numPressure": num_pressure
+                }
+            }
+        }
+
+        # Get the absolute path to the created file
+        config_dir = PROJECT_ROOT / "src" / "rtgs_lab_tools" / "device_configuration" / "configurations"
+        absolute_file_path = str(config_dir / output)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+            "created_config": config_data,
+            "file_location": f"device_configuration/configurations/{output}",
+            "absolute_file_path": absolute_file_path,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Config creation failed: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+@mcp.tool("device_configuration_create_devices")
+async def device_configuration_create_devices(
+    output: str = "devices.txt",
+    devices: Optional[List[str]] = None,
+    devices_list: Optional[str] = None,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Create a devices.txt file with specified device IDs.
+
+    Args:
+        output: Output file path (default: devices.txt)
+        devices: List of device IDs to include (optional)
+        devices_list: Comma or space separated string of device IDs (optional)
+        note: Description for this operation (optional)
+
+    Returns:
+        Dict with success status and created file path
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            PYTHON_EXECUTABLE,
+            "-m",
+            "rtgs_lab_tools.cli",
+            "device-configuration",
+            "create-devices",
+            "--output",
+            output,
+        ]
+
+        # Add individual devices
+        if devices:
+            for device in devices:
+                cmd.extend(["--devices", device])
+
+        # Add devices list
+        if devices_list:
+            cmd.extend(["--devices-list", devices_list])
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        # Collect all devices for explicit display
+        all_devices = []
+        if devices:
+            all_devices.extend(devices)
+        if devices_list:
+            import re
+            parsed_devices = re.split(r'[,\s]+', devices_list.strip())
+            all_devices.extend([d.strip() for d in parsed_devices if d.strip()])
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_devices = []
+        for device_id in all_devices:
+            if device_id not in seen:
+                seen.add(device_id)
+                unique_devices.append(device_id)
+
+        # Get the absolute path to the created file
+        devices_dir = PROJECT_ROOT / "src" / "rtgs_lab_tools" / "device_configuration" / "devices"
+        absolute_file_path = str(devices_dir / output)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+            "created_device_list": unique_devices,
+            "device_count": len(unique_devices),
+            "file_location": f"device_configuration/devices/{output}",
+            "absolute_file_path": absolute_file_path,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Devices file creation failed: {str(e)}",
             "command": " ".join(cmd) if "cmd" in locals() else "N/A",
         }
 

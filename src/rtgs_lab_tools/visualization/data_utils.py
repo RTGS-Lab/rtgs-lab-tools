@@ -89,6 +89,11 @@ def load_and_prepare_data(
                 click.echo("   - First run: rtgs-lab-tools data-parser parse your_raw_file.csv")
                 click.echo("   - Then use the generated parsed file for visualization")
                 raise click.Abort()
+        else:
+            # Auto-parse mode: notify user that parsing is happening automatically
+            import click
+            click.echo(f"🔍 Detected raw GEMS data in: {file_path}")
+            click.echo("📊 Automatically parsing data for visualization...")
         
         # Parse the raw data using shared function
         from ..data_parser.core import parse_gems_data
@@ -105,11 +110,15 @@ def load_and_prepare_data(
         parsed_file_path = Path(parsing_results['output_file'])
         
         # Inform user about saved file
+        import click
         if not auto_parse:
-            import click
             click.echo(f"✅ Data parsed successfully!")
             click.echo(f"📁 Parsed data saved to: {parsed_file_path}")
             click.echo("💡 You can reuse this parsed file for future visualizations.")
+        else:
+            click.echo(f"✅ Data parsed successfully! Saved to: {parsed_file_path.name}")
+            if cli_ctx:
+                cli_ctx.logger.info(f"Parsed data saved to: {parsed_file_path}")
         
         # Log the parsing operation to git
         if cli_ctx:

@@ -329,5 +329,197 @@ def decode_both(ctx, system_uid, sensor_uid, verbose, log_file, no_git_log, note
         raise
 
 
+@device_configuration_cli.command()
+@click.option("--output", "-o", default="config.json", help="Output file path")
+@click.option("--log-period", type=int, default=300, help="Logging period in seconds")
+@click.option("--backhaul-count", type=int, default=1, help="Backhaul count")
+@click.option("--power-save-mode", type=int, default=2, help="Power save mode")
+@click.option("--logging-mode", type=int, default=2, help="Logging mode")
+@click.option("--num-aux-talons", type=int, default=1, help="Number of auxiliary talons")
+@click.option("--num-i2c-talons", type=int, default=1, help="Number of I2C talons")
+@click.option("--num-sdi12-talons", type=int, default=1, help="Number of SDI12 talons")
+@click.option("--num-et", type=int, default=0, help="Number of ET sensors")
+@click.option("--num-haar", type=int, default=0, help="Number of Haar sensors")
+@click.option("--num-soil", type=int, default=1, help="Number of soil sensors")
+@click.option("--num-apogee-solar", type=int, default=0, help="Number of Apogee solar sensors")
+@click.option("--num-co2", type=int, default=0, help="Number of CO2 sensors")
+@click.option("--num-o2", type=int, default=0, help="Number of O2 sensors")
+@click.option("--num-pressure", type=int, default=0, help="Number of pressure sensors")
+@add_common_options
+@click.pass_context
+@handle_common_errors("create-config")
+def create_config(ctx, output, log_period, backhaul_count, power_save_mode, logging_mode,
+                  num_aux_talons, num_i2c_talons, num_sdi12_talons, num_et, num_haar,
+                  num_soil, num_apogee_solar, num_co2, num_o2, num_pressure,
+                  verbose, log_file, no_git_log, note):
+    """Create a configuration JSON file with specified parameters."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("create-config", verbose, log_file, no_git_log)
+
+    try:
+        # Build configuration with provided parameters
+        config = {
+            "config": {
+                "system": {
+                    "logPeriod": log_period,
+                    "backhaulCount": backhaul_count,
+                    "powerSaveMode": power_save_mode,
+                    "loggingMode": logging_mode,
+                    "numAuxTalons": num_aux_talons,
+                    "numI2CTalons": num_i2c_talons,
+                    "numSDI12Talons": num_sdi12_talons
+                },
+                "sensors": {
+                    "numET": num_et,
+                    "numHaar": num_haar,
+                    "numSoil": num_soil,
+                    "numApogeeSolar": num_apogee_solar,
+                    "numCO2": num_co2,
+                    "numO2": num_o2,
+                    "numPressure": num_pressure
+                }
+            }
+        }
+
+        # Ensure we use the correct subdirectory
+        config_dir = Path(__file__).parent / "configurations"
+        config_dir.mkdir(exist_ok=True)
+        output_path = config_dir / output
+
+        with open(output_path, 'w') as f:
+            json.dump(config, f, indent=4)
+
+        click.echo(f"Configuration file created at: {output_path.absolute()}")
+        click.echo(f"Configuration contents:")
+        click.echo(json.dumps(config, indent=2))
+
+        # Log success
+        operation = f"Create configuration file"
+        parameters = {
+            "output": output,
+            "log_period": log_period,
+            "backhaul_count": backhaul_count,
+            "power_save_mode": power_save_mode,
+            "logging_mode": logging_mode,
+            "num_aux_talons": num_aux_talons,
+            "num_i2c_talons": num_i2c_talons,
+            "num_sdi12_talons": num_sdi12_talons,
+            "num_et": num_et,
+            "num_haar": num_haar,
+            "num_soil": num_soil,
+            "num_apogee_solar": num_apogee_solar,
+            "num_co2": num_co2,
+            "num_o2": num_o2,
+            "num_pressure": num_pressure,
+            "note": note
+        }
+        results = {
+            "success": True,
+            "output_file": str(output_path.absolute()),
+            "configuration": config,
+            "start_time": cli_ctx.start_time.isoformat(),
+            "end_time": datetime.now().isoformat(),
+            "note": note,
+        }
+
+        cli_ctx.log_success(
+            operation=operation,
+            parameters=parameters,
+            results=results,
+            script_path=__file__,
+        )
+
+    except Exception as e:
+        parameters = {"output": output, "note": note}
+        cli_ctx.log_error("Create config error", e, parameters, __file__)
+        raise
+
+
+@device_configuration_cli.command()
+@click.option("--output", "-o", default="devices.txt", help="Output file path")
+@click.option("--devices", "-d", multiple=True, help="Device IDs to include (can be used multiple times)")
+@click.option("--devices-list", help="Comma or space separated list of device IDs")
+@add_common_options
+@click.pass_context
+@handle_common_errors("create-devices")
+def create_devices(ctx, output, devices, devices_list, verbose, log_file, no_git_log, note):
+    """Create a devices.txt file with specified device IDs."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("create-devices", verbose, log_file, no_git_log)
+
+    try:
+        device_ids = []
+        
+        # Collect device IDs from multiple sources
+        if devices:
+            device_ids.extend(devices)
+        
+        if devices_list:
+            # Split by comma, space, or both
+            import re
+            parsed_devices = re.split(r'[,\s]+', devices_list.strip())
+            device_ids.extend([d.strip() for d in parsed_devices if d.strip()])
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_devices = []
+        for device_id in device_ids:
+            if device_id not in seen:
+                seen.add(device_id)
+                unique_devices.append(device_id)
+
+        # If no devices provided, create empty template
+        if not unique_devices:
+            device_lines = []
+            click.echo("No devices specified, creating empty devices file")
+        else:
+            device_lines = unique_devices
+            click.echo(f"Creating devices file with {len(unique_devices)} device IDs")
+
+        # Ensure we use the correct subdirectory  
+        devices_dir = Path(__file__).parent / "devices"
+        devices_dir.mkdir(exist_ok=True)
+        output_path = devices_dir / output
+
+        with open(output_path, 'w') as f:
+            f.write('\n'.join(device_lines) + '\n')
+
+        click.echo(f"Devices file created at: {output_path.absolute()}")
+        click.echo(f"Device list contents:")
+        for device_id in unique_devices:
+            click.echo(f"  {device_id}")
+
+        # Log success
+        operation = f"Create devices file"
+        parameters = {
+            "output": output,
+            "devices": list(devices) if devices else [],
+            "devices_list": devices_list,
+            "total_devices": len(device_ids),
+            "note": note
+        }
+        results = {
+            "success": True,
+            "output_file": str(output_path.absolute()),
+            "device_count": len(device_ids),
+            "device_ids": device_ids,
+            "start_time": cli_ctx.start_time.isoformat(),
+            "end_time": datetime.now().isoformat(),
+            "note": note,
+        }
+
+        cli_ctx.log_success(
+            operation=operation,
+            parameters=parameters,
+            results=results,
+            script_path=__file__,
+        )
+
+    except Exception as e:
+        parameters = {"output": output, "devices": devices, "devices_list": devices_list, "note": note}
+        cli_ctx.log_error("Create devices error", e, parameters, __file__)
+        raise
+
+
 if __name__ == "__main__":
     device_configuration_cli()

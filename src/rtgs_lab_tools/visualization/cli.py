@@ -59,7 +59,8 @@ def create(
         df, data_type, parsing_results = load_and_prepare_data(
             file_path=file,
             packet_types='all',  # Parse all packet types for visualization
-            cli_ctx=cli_ctx
+            cli_ctx=cli_ctx,
+            auto_parse=True  # Automatically parse without asking for confirmation
         )
         
         cli_ctx.logger.info(f"Loaded {len(df)} records from {file} (data type: {data_type})")
@@ -197,7 +198,8 @@ def list_parameters(ctx, file, verbose, log_file, no_git_log, note):
         df, data_type, parsing_results = load_and_prepare_data(
             file_path=file,
             packet_types='all',  # Parse all packet types for listing
-            cli_ctx=cli_ctx
+            cli_ctx=cli_ctx,
+            auto_parse=True  # Automatically parse without asking for confirmation
         )
         
         cli_ctx.logger.info(f"Loaded {len(df)} records from {file} (data type: {data_type})")
