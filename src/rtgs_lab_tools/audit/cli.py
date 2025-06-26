@@ -339,13 +339,76 @@ class AuditReporter:
             for section_title, section_content in additional_sections.items():
                 additional_content += f"\n## {section_title}\n{section_content}\n"
         
+        # Get system and git information
+        import platform
+        import socket
+        import os
+        import subprocess
+        import sys
+        
+        hostname = socket.gethostname()
+        platform_info = platform.platform()
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.patch}"
+        working_directory = os.getcwd()
+        
+        # Get git information
+        git_branch = "Unknown"
+        git_commit = "Unknown"
+        git_dirty = False
+        git_info_section = ""
+        
+        try:
+            git_branch = subprocess.check_output(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"], 
+                stderr=subprocess.DEVNULL
+            ).decode().strip()
+            
+            git_commit = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], 
+                stderr=subprocess.DEVNULL
+            ).decode().strip()
+            
+            # Check if git is dirty
+            git_status = subprocess.check_output(
+                ["git", "status", "--porcelain"], 
+                stderr=subprocess.DEVNULL
+            ).decode().strip()
+            git_dirty = bool(git_status)
+            
+            git_status_display = "✅ Clean" if not git_dirty else "⚠️ Dirty"
+            git_info_section = f"""
+## Git Information
+- **Branch**: {git_branch}
+- **Commit**: {git_commit[:8]}...
+- **Status**: {git_status_display}
+"""
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
+        
+        # Get execution source and triggered by info
+        execution_source = "CLI"
+        triggered_by = "Unknown"
+        
+        # Check for MCP environment variables
+        if os.getenv("MCP_SESSION") == "true":
+            execution_source = "LLM/MCP"
+            mcp_user = os.getenv("MCP_USER", "unknown")
+            triggered_by = f"{mcp_user} via {os.getenv('USER', 'unknown')}@{hostname}"
+        else:
+            triggered_by = f"{os.getenv('USER', 'unknown')}@{hostname}"
+
         # Create log content
         log_content = f"""# Audit Tool Execution Log
 
 ## Execution Context
 - **Timestamp**: {datetime.now().isoformat()}
 - **Operation**: {operation}
-- **Tool**: audit
+- **Execution Source**: {execution_source}
+- **Triggered By**: {triggered_by}
+- **Hostname**: {hostname}
+- **Platform**: {platform_info}
+- **Working Directory**: {working_directory}
+{git_info_section}
 {parameters_section}
 {results_section}
 {additional_content}
@@ -355,6 +418,37 @@ class AuditReporter:
 
 ```json
 {json.dumps(results, indent=2)}
+```
+</details>
+
+## Execution Environment
+<details>
+<summary>Environment Details</summary>
+
+```json
+{json.dumps({
+    "timestamp": datetime.now().isoformat(),
+    "tool_name": "audit",
+    "execution_source": execution_source,
+    "triggered_by": triggered_by,
+    "hostname": hostname,
+    "platform": platform_info,
+    "python_version": python_version,
+    "working_directory": working_directory,
+    "script_path": __file__,
+    "environment_variables": {
+        "CI": os.getenv("CI", "false"),
+        "GITHUB_ACTIONS": os.getenv("GITHUB_ACTIONS", "false"),
+        "GITHUB_ACTOR": os.getenv("GITHUB_ACTOR"),
+        "GITHUB_WORKFLOW": os.getenv("GITHUB_WORKFLOW"),
+        "GITHUB_RUN_ID": os.getenv("GITHUB_RUN_ID"),
+        "MCP_SESSION": os.getenv("MCP_SESSION", "false"),
+        "MCP_USER": os.getenv("MCP_USER")
+    },
+    "git_commit": git_commit,
+    "git_branch": git_branch,
+    "git_dirty": git_dirty
+}, indent=2)}
 ```
 </details>
 
