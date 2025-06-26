@@ -1849,7 +1849,7 @@ async def audit_get_recent_and_create_script(
             start_date=start_date_str,
             end_date=end_date_str,
             tool_name=tool_name,
-            output_dir="logs_recent"
+            output_dir="logs"
         )
         
         if not report_result["success"]:
@@ -1861,7 +1861,7 @@ async def audit_get_recent_and_create_script(
         
         # Step 2: Create reproduction script from the generated logs
         script_result = await audit_create_reproduction_script(
-            logs_dir="logs_recent",
+            logs_dir="logs",
             output_file=output_file
         )
         
@@ -1900,7 +1900,7 @@ async def audit_get_recent_and_create_script(
             "report_output": report_result["output"],
             "script_output": script_result["output"],
             "script_path": output_file,
-            "logs_directory": "logs_recent",
+            "logs_directory": "logs",
             "mcp_execution": True,
             "git_logging_enabled": True,
         }
