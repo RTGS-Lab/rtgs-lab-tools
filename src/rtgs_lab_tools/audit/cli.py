@@ -621,9 +621,9 @@ def recent(limit, tool_name):
 )
 @click.option(
     "--output-file",
-    type=click.Path(exists=False, file_okay=True, dir_okay=False, path_type=Path),
+    type=str,
     default="reproduce_commands.sh",
-    help="Output file for the reproduction script",
+    help="Output filename for the reproduction script (will be created in logs directory)",
 )
 def reproduce(logs_dir, output_file):
     """Generate a bash script to reproduce commands from log files.
@@ -642,11 +642,17 @@ def reproduce(logs_dir, output_file):
     
     The script will include git checkout commands to ensure the exact same 
     code version is used for each command, and shows who triggered each command.
+    The output script will be written to the logs directory to avoid making
+    the git repository dirty.
     """
     operation_start = time.time()
     
     try:
+        # Ensure output file is placed in logs directory
+        output_file_path = logs_dir / output_file
+        
         click.echo(f"Reading log files from: {logs_dir}")
+        click.echo(f"Output script will be written to: {output_file_path}")
         
         # Find all markdown log files in the directory
         log_files = list(logs_dir.glob("*.md"))
@@ -660,7 +666,7 @@ def reproduce(logs_dir, output_file):
         # Initialize parameters for logging
         parameters = {
             "logs_dir": str(logs_dir),
-            "output_file": str(output_file),
+            "output_file": str(output_file_path),
             "log_files_found": len(log_files),
         }
         
@@ -741,7 +747,7 @@ def reproduce(logs_dir, output_file):
             "success": True,
             "log_files_processed": len(commands),
             "log_files_found": len(log_files),
-            "output_file": str(output_file),
+            "output_file": str(output_file_path),
             "duration": duration,
         }
         
@@ -840,11 +846,11 @@ echo "✅ Reproduction script completed successfully!"
 """
         
         # Write script file
-        with open(output_file, "w") as f:
+        with open(output_file_path, "w") as f:
             f.write(script_content)
         
         # Make script executable
-        output_file.chmod(0o755)
+        output_file_path.chmod(0o755)
         
         results["script_content_lines"] = len(script_content.split('\n'))
         results["unique_commits"] = len(commits)
@@ -872,7 +878,7 @@ echo "✅ Reproduction script completed successfully!"
             }
         )
         
-        click.echo(f"✅ Generated reproduction script: {output_file}")
+        click.echo(f"✅ Generated reproduction script: {output_file_path}")
         click.echo(f"   Log files processed: {len(commands)}")
         click.echo(f"   Unique commits: {len(commits)}")
         click.echo(f"   Script is executable and ready to run")
@@ -882,10 +888,10 @@ echo "✅ Reproduction script completed successfully!"
         operation_end = time.time()
         duration = operation_end - operation_start
         
-        # Log the failed operation
+        # Log the failed operation  
         parameters = {
             "logs_dir": str(logs_dir),
-            "output_file": str(output_file),
+            "output_file": str(logs_dir / output_file),
         }
         
         results = {
