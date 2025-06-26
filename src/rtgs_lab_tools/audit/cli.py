@@ -812,13 +812,14 @@ echo ""
 """
                 for cmd in commit_info['commands']:
                     command = cmd.get('command', 'unknown')
+                    quoted_command = quote_command_for_bash(command)
                     timestamp = cmd.get('timestamp', 'unknown')
                     operation = cmd.get('operation', 'unknown')
                     triggered_by = cmd.get('triggered_by', 'unknown')
                     
                     script_content += f"""# {timestamp} - {operation} (by {triggered_by})
 echo "⚡ Running: {command}"
-{command}
+{quoted_command}
 echo ""
 
 """
@@ -827,13 +828,14 @@ echo ""
             script_content += "# Commands without git information\n"
             for cmd in commands:
                 command = cmd.get('command', 'unknown')
+                quoted_command = quote_command_for_bash(command)
                 timestamp = cmd.get('timestamp', 'unknown')
                 operation = cmd.get('operation', 'unknown')
                 triggered_by = cmd.get('triggered_by', 'unknown')
                 
                 script_content += f"""# {timestamp} - {operation} (by {triggered_by})
 echo "⚡ Running: {command}"
-{command}
+{quoted_command}
 echo ""
 
 """
@@ -923,6 +925,58 @@ echo "✅ Reproduction script completed successfully!"
         
         click.echo(f"❌ Error generating reproduction script: {e}", err=True)
         raise click.ClickException(str(e))
+
+
+def quote_command_for_bash(command: str) -> str:
+    """Quote a command properly for bash execution.
+    
+    Args:
+        command: The command string to quote
+        
+    Returns:
+        Properly quoted command string
+    """
+    import shlex
+    import re
+    
+    # Split the command into parts while preserving quotes
+    try:
+        # Parse the command using shlex to handle existing quotes
+        parts = shlex.split(command)
+        
+        # Quote each part that needs quoting
+        quoted_parts = []
+        for part in parts:
+            # If the part contains spaces, special characters, or is already quoted, quote it
+            if ' ' in part or '"' in part or "'" in part or any(c in part for c in ['&', '|', ';', '(', ')', '<', '>', '$', '`', '\\']):
+                # Use shlex.quote to properly escape the part
+                quoted_parts.append(shlex.quote(part))
+            else:
+                quoted_parts.append(part)
+        
+        return ' '.join(quoted_parts)
+    except ValueError:
+        # If shlex.split fails (malformed quotes), fall back to simple quoting
+        # Split on spaces but be careful about existing quotes
+        import re
+        
+        # Pattern to match arguments with values that might contain spaces
+        # This handles cases like --project "Gems Demo" or --note "Some note with spaces"
+        pattern = r'(--[\w-]+)\s+([^-][^\s]*(?:\s+[^-][^\s]*)*)'
+        
+        def quote_match(match):
+            flag = match.group(1)
+            value = match.group(2).strip()
+            
+            # If value contains spaces and isn't already quoted, quote it
+            if ' ' in value and not (value.startswith('"') and value.endswith('"')) and not (value.startswith("'") and value.endswith("'")):
+                return f'{flag} "{value}"'
+            else:
+                return f'{flag} {value}'
+        
+        # Apply the quoting pattern
+        quoted_command = re.sub(pattern, quote_match, command)
+        return quoted_command
 
 
 def parse_log_file(content: str, filename: str) -> Optional[Dict[str, Any]]:
