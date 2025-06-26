@@ -73,6 +73,40 @@ class Config:
         return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     @property
+    def logging_db_host(self) -> str:
+        """Logging database host."""
+        return os.getenv("LOGGING_DB_HOST", self.db_host)
+
+    @property
+    def logging_db_port(self) -> int:
+        """Logging database port."""
+        port = os.getenv("LOGGING_DB_PORT", str(self.db_port))
+        try:
+            return int(port)
+        except ValueError:
+            raise ConfigError(f"Invalid LOGGING_DB_PORT value: {port}")
+
+    @property
+    def logging_db_name(self) -> str:
+        """Logging database name."""
+        return os.getenv("LOGGING_DB_NAME", self.db_name)
+
+    @property
+    def logging_db_user(self) -> str:
+        """Logging database user."""
+        return os.getenv("LOGGING_DB_USER", self.db_user)
+
+    @property
+    def logging_db_password(self) -> str:
+        """Logging database password."""
+        return os.getenv("LOGGING_DB_PASSWORD", self.db_password)
+
+    @property
+    def logging_db_url(self) -> str:
+        """Complete logging database URL."""
+        return f"postgresql://{self.logging_db_user}:{self.logging_db_password}@{self.logging_db_host}:{self.logging_db_port}/{self.logging_db_name}"
+
+    @property
     def particle_access_token(self) -> Optional[str]:
         """Particle API access token."""
         return os.getenv("PARTICLE_ACCESS_TOKEN")

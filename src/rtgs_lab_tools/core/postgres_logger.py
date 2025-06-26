@@ -6,6 +6,8 @@ import logging
 import os
 import platform
 import socket
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -46,6 +48,10 @@ class ToolCallLog(Base):
     environment_variables = Column(Text, nullable=True)  # JSON string
     note = Column(Text, nullable=True)
     log_file_path = Column(Text, nullable=True)
+    git_commit = Column(String(40), nullable=True)
+    git_branch = Column(String(255), nullable=True)
+    git_dirty = Column(Boolean, nullable=True)
+    command = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
@@ -61,8 +67,6 @@ class PostgresLogger:
         """
         self.tool_name = tool_name
         self.config = config or Config()
-        self.logs_dir = Path("logs") / tool_name
-        self.ensure_logs_directory()
         self._engine = None
         self._Session = None
 
@@ -72,7 +76,7 @@ class PostgresLogger:
         if self._engine is None:
             try:
                 self._engine = create_engine(
-                    self.config.db_url,
+                    self.config.logging_db_url,
                     echo=False,
                     pool_pre_ping=True,
                     pool_recycle=3600,
@@ -91,10 +95,101 @@ class PostgresLogger:
             self._Session = sessionmaker(bind=self.engine)
         return self._Session
 
-    def ensure_logs_directory(self):
-        """Ensure the logs directory exists."""
-        self.logs_dir.mkdir(parents=True, exist_ok=True)
-        logger.debug(f"Ensured logs directory exists: {self.logs_dir}")
+    def get_git_info(self) -> Dict[str, Any]:
+        """Get git repository information.
+        
+        Returns:
+            Dictionary with git commit, branch, and dirty status
+        """
+        git_info = {
+            "commit": None,
+            "branch": None,
+            "dirty": None
+        }
+        
+        try:
+            # Get current commit hash
+            result = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=Path(__file__).parent.parent.parent.parent,
+                timeout=5
+            )
+            if result.returncode == 0:
+                git_info["commit"] = result.stdout.strip()
+            
+            # Get current branch
+            result = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=Path(__file__).parent.parent.parent.parent,
+                timeout=5
+            )
+            if result.returncode == 0:
+                git_info["branch"] = result.stdout.strip()
+            
+            # Check if repository is dirty
+            result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True,
+                text=True,
+                cwd=Path(__file__).parent.parent.parent.parent,
+                timeout=5
+            )
+            if result.returncode == 0:
+                git_info["dirty"] = bool(result.stdout.strip())
+            
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError) as e:
+            logger.debug(f"Failed to get git information: {e}")
+        
+        return git_info
+
+    def get_command_info(self) -> str:
+        """Get the current command that was executed.
+        
+        Returns:
+            The command string that was used to run this tool
+        """
+        try:
+            # Get the command line arguments
+            args = sys.argv.copy()
+            
+            # If the first argument is a full path to python script, just use the script name
+            if args and args[0].endswith('.py'):
+                args[0] = Path(args[0]).stem
+            
+            # For rtgs commands, reconstruct the proper format
+            if len(args) >= 2 and args[0] in ['rtgs', 'python', 'python3']:
+                if args[0] in ['python', 'python3'] and len(args) >= 3:
+                    # python -m rtgs_lab_tools.cli -> rtgs
+                    if '-m' in args and 'rtgs_lab_tools' in ' '.join(args):
+                        # Find the index after -m rtgs_lab_tools.cli
+                        try:
+                            m_index = args.index('-m')
+                            if m_index + 1 < len(args) and 'rtgs_lab_tools' in args[m_index + 1]:
+                                return 'rtgs ' + ' '.join(args[m_index + 2:])
+                        except ValueError:
+                            pass
+                
+                # Direct rtgs command
+                if args[0] == 'rtgs':
+                    return ' '.join(args)
+            
+            # For MCP or other contexts, try to reconstruct rtgs command
+            # Look for tool patterns in the arguments
+            for i, arg in enumerate(args):
+                if arg in ['sensing-data', 'data-parser', 'visualization', 'gridded-data', 
+                          'device-configuration', 'error-analysis', 'agricultural-modeling', 'audit']:
+                    return 'rtgs ' + ' '.join(args[i:])
+            
+            # Fallback - return the raw command
+            return ' '.join(args)
+            
+        except Exception as e:
+            logger.debug(f"Failed to get command info: {e}")
+            return "unknown"
 
     def ensure_table_exists(self):
         """Ensure the tool_call_logs table exists."""
@@ -116,6 +211,9 @@ class PostgresLogger:
         Returns:
             Dictionary with execution context information
         """
+        git_info = self.get_git_info()
+        command = self.get_command_info()
+        
         context = {
             "timestamp": datetime.now().isoformat(),
             "user": getpass.getuser(),
@@ -125,6 +223,10 @@ class PostgresLogger:
             "working_directory": os.getcwd(),
             "script_path": script_path or "unknown",
             "tool_name": self.tool_name,
+            "command": command,
+            "git_commit": git_info["commit"],
+            "git_branch": git_info["branch"],
+            "git_dirty": git_info["dirty"],
             "environment_variables": {
                 "CI": os.environ.get("CI", "false"),
                 "GITHUB_ACTIONS": os.environ.get("GITHUB_ACTIONS", "false"),
@@ -202,6 +304,14 @@ class PostgresLogger:
         duration = self._calculate_duration(results)
 
         # Create log content
+        git_status = "✅ Clean" if not context.get('git_dirty') else "⚠️ Dirty"
+        git_section = f"""
+## Git Information
+- **Branch**: {context.get('git_branch', 'Unknown')}
+- **Commit**: {context.get('git_commit', 'Unknown')[:8]}{'...' if context.get('git_commit') else ''}
+- **Status**: {git_status}
+""" if context.get('git_commit') else ""
+
         log_content = f"""# {self.tool_name.title()} Execution Log
 
 ## Execution Context
@@ -212,7 +322,7 @@ class PostgresLogger:
 - **Hostname**: {context['hostname']}
 - **Platform**: {context['platform']}
 - **Working Directory**: {context['working_directory']}
-
+{git_section}
 ## Parameters
 """
 
@@ -351,6 +461,10 @@ class PostgresLogger:
                 environment_variables=json.dumps(context["environment_variables"]),
                 note=results.get("note"),
                 log_file_path=log_file_path,
+                git_commit=context.get("git_commit"),
+                git_branch=context.get("git_branch"),
+                git_dirty=context.get("git_dirty"),
+                command=context.get("command"),
             )
 
             session = self.Session()
@@ -377,41 +491,26 @@ class PostgresLogger:
         results: Dict[str, Any],
         script_path: Optional[str] = None,
         additional_sections: Optional[Dict[str, str]] = None,
-        auto_save: bool = True,
-    ) -> str:
-        """Create execution log and optionally save to database.
-
-        This is a convenience method that combines create_execution_log and save_to_postgres.
+    ) -> bool:
+        """Log execution to database only.
 
         Args:
             operation: Description of the operation performed
             parameters: Parameters used for the operation
             results: Results of the operation
             script_path: Path to the script that was executed
-            additional_sections: Additional markdown sections to include
-            auto_save: Whether to automatically save the log to database
+            additional_sections: Additional markdown sections to include (ignored, for compatibility)
 
         Returns:
-            Path to the created log file
+            True if successfully saved to database, False otherwise
         """
-        log_path = self.create_execution_log(
+        return self.save_to_postgres(
             operation=operation,
             parameters=parameters,
             results=results,
             script_path=script_path,
-            additional_sections=additional_sections,
+            log_file_path=None,
         )
-
-        if auto_save:
-            self.save_to_postgres(
-                operation=operation,
-                parameters=parameters,
-                results=results,
-                script_path=script_path,
-                log_file_path=log_path,
-            )
-
-        return log_path
 
     def get_recent_logs(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent tool call logs from database.
@@ -440,6 +539,10 @@ class PostgresLogger:
                         "success": log.success,
                         "duration_seconds": log.duration_seconds,
                         "note": log.note,
+                        "git_commit": log.git_commit,
+                        "git_branch": log.git_branch,
+                        "git_dirty": log.git_dirty,
+                        "command": log.command,
                     }
                     for log in logs
                 ]

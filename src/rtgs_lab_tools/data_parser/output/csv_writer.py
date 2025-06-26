@@ -14,7 +14,7 @@ class CSVWriter:
     Writes parsed data to CSV format.
     """
     
-    def __init__(self, output_dir: str = "./parsed_data"):
+    def __init__(self, output_dir: str = "./data/parsed"):
         """
         Initialize CSV writer with output directory.
         

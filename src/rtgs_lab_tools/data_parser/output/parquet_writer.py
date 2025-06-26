@@ -14,7 +14,7 @@ class ParquetWriter:
     Writes parsed data to optimized Parquet format.
     """
     
-    def __init__(self, output_dir: str = "./parsed_data", compression: str = "snappy"):
+    def __init__(self, output_dir: str = "./data/parsed", compression: str = "snappy"):
         """
         Initialize Parquet writer with output directory and compression options.
         
