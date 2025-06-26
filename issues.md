@@ -7,3 +7,6 @@
 -the audit reproduce tool currently does not produce a runnable script because of file naming from reproduced tool calls
 -need to integrate device monitor tool - it should also be command line based so that it can be wrapped in mcp server
 -postgres needs to be migrated to google cloud instance rather than rtgs-test local db
+-postgres logging should use core database manager class to connect
+-error parsing should be worked on so it works
+-data/metadata/diagnostics parsers should be updated so multi indexed data like PORT_V and PORT_I are broken out 
