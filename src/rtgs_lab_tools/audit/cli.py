@@ -555,10 +555,10 @@ def report(start_date, end_date, tool_name, output_dir):
             click.echo(f"✅ Generated {len(created_files)} audit report files in {output_dir}")
             for file_path in created_files:
                 click.echo(f"   - {file_path}")
-            click.echo(f"📋 Audit operation logged: {log_path}")
+            click.echo(f"Audit operation logged: {log_path}")
         else:
             click.echo("No logs found for the specified criteria.")
-            click.echo(f"📋 Audit operation logged: {log_path}")
+            click.echo(f"Audit operation logged: {log_path}")
             
     except Exception as e:
         operation_end = time.time()
@@ -595,7 +595,7 @@ def report(start_date, end_date, tool_name, output_dir):
                 parameters=parameters,
                 results=results,
             )
-            click.echo(f"📋 Failed audit operation logged: {log_path}")
+            click.echo(f"Failed audit operation logged: {log_path}")
         except Exception:
             pass  # Don't fail if logging fails
         
@@ -805,7 +805,7 @@ def reproduce(logs_dir, output_file):
             click.echo("")
             
             for dirty in dirty_commands:
-                click.echo(f"🔴 {dirty['timestamp']} - {dirty['operation']}")
+                click.echo(f"❌ {dirty['timestamp']} - {dirty['operation']}")
                 click.echo(f"   Command: {dirty['command']}")
                 click.echo(f"   By: {dirty['triggered_by']}")
                 click.echo(f"   Commit: {dirty['git_commit'][:8]}... (DIRTY)")
@@ -978,7 +978,7 @@ echo "✅ Reproduction script completed successfully!"
         click.echo(f"   Log files processed: {len(commands)}")
         click.echo(f"   Unique commits: {len(commits)}")
         click.echo(f"   Script is executable and ready to run")
-        click.echo(f"📋 Audit operation logged: {log_path}")
+        click.echo(f"   Audit operation logged: {log_path}")
         
     except Exception as e:
         operation_end = time.time()
@@ -1013,7 +1013,7 @@ echo "✅ Reproduction script completed successfully!"
                 parameters=parameters,
                 results=results,
             )
-            click.echo(f"📋 Failed audit operation logged: {log_path}")
+            click.echo(f"Failed audit operation logged: {log_path}")
         except Exception:
             pass  # Don't fail if logging fails
         
