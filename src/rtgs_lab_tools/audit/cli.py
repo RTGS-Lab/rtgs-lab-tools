@@ -348,7 +348,7 @@ class AuditReporter:
         
         hostname = socket.gethostname()
         platform_info = platform.platform()
-        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.patch}"
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
         working_directory = os.getcwd()
         
         # Get git information
