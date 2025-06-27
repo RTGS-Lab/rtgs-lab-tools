@@ -107,4 +107,13 @@
 
 **Scope**: Implement Cloud SQL Auth Proxy or IAM database authentication to replace IP whitelisting. This involves setting up service accounts, configuring IAM roles, updating connection strings to use GCP authentication, and testing connectivity across all environments.
 
-**Effort**: Medium - Requires GCP service account setup, IAM configuration, code changes to use GCP authentication libraries, and thorough testing. May need to handle different authentication methods for different deployment scenarios. 
+**Effort**: Medium - Requires GCP service account setup, IAM configuration, code changes to use GCP authentication libraries, and thorough testing. May need to handle different authentication methods for different deployment scenarios.
+
+- add LOGGING_DB info to .env file generator
+
+**Analysis**: After postgres db support was added, the information for logging in was not added to the ,env file generator, It must be added to make logging enabling easier
+
+**Scope**: Need to add to the .env file generator and also add credentials to the credentials.docx google doc
+
+**Effort**: Low - Simple to add
+
