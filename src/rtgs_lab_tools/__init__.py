@@ -13,7 +13,6 @@ from .core.postgres_logger import PostgresLogger
 from .device_configuration import ParticleClient, ParticleConfigUpdater
 
 # Error analysis
-from .error_analysis import ErrorCodeParser
 
 # Climate data
 from .gridded_data import ERA5Client, download_era5_data, process_era5_data

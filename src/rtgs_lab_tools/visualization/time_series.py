@@ -35,7 +35,7 @@ def create_time_series_plot(
 
     Args:
         df: Parsed DataFrame with measurements
-        measurement_name: Name of measurement to plot (e.g., "Temperature")
+        measurement_name: Measurement specification to plot (e.g., "Temperature", "PORT_V[0]")
         node_ids: Optional list of node IDs to include
         title: Optional plot title
         output_file: Optional output filename
@@ -51,7 +51,7 @@ def create_time_series_plot(
         ValidationError: If measurement not found or data invalid
         RTGSLabToolsError: If plotting fails
     """
-    # Filter data for the specified measurement
+    # Filter data for the specified measurement (supports array indexing)
     filtered_df = filter_parsed_data(df, measurement_name, node_ids)
     
     if filtered_df.empty:
@@ -123,7 +123,7 @@ def create_time_series_plot(
 
 def create_multi_parameter_plot(
     df: pd.DataFrame,
-    measurements: List[Tuple[str, Optional[str]]],  # (measurement_name, node_id)
+    measurements: List[Tuple[str, Optional[str]]],  # (measurement_spec, node_id)
     title: Optional[str] = None,
     output_file: Optional[str] = None,
     output_dir: str = "figures",
@@ -135,7 +135,7 @@ def create_multi_parameter_plot(
 
     Args:
         df: Parsed DataFrame with measurements
-        measurements: List of (measurement_name, node_id) tuples to plot
+        measurements: List of (measurement_spec, node_id) tuples to plot (e.g., [("Temperature", "node1"), ("PORT_V[0]", "node2")])
         title: Optional plot title
         output_file: Optional output filename
         output_dir: Output directory for saved plots
@@ -154,13 +154,13 @@ def create_multi_parameter_plot(
     
     plot_data = []
     
-    for measurement_name, node_id in measurements:
-        # Filter data for this measurement and node
+    for measurement_spec, node_id in measurements:
+        # Filter data for this measurement and node (supports array indexing)
         node_ids = [node_id] if node_id else None
-        filtered_df = filter_parsed_data(df, measurement_name, node_ids)
+        filtered_df = filter_parsed_data(df, measurement_spec, node_ids)
         
         if filtered_df.empty:
-            logger.warning(f"No data found for measurement '{measurement_name}' on node '{node_id}'")
+            logger.warning(f"No data found for measurement '{measurement_spec}' on node '{node_id}'")
             continue
         
         # Convert timestamp to datetime if needed
@@ -173,9 +173,9 @@ def create_multi_parameter_plot(
         
         # Create label
         if node_id:
-            label = f"{measurement_name} (Node {node_id})"
+            label = f"{measurement_spec} (Node {node_id})"
         else:
-            label = measurement_name
+            label = measurement_spec
         
         # Plot the data
         if show_markers:
@@ -185,7 +185,7 @@ def create_multi_parameter_plot(
             plt.plot(filtered_df['timestamp'], filtered_df['value'], 
                     label=label, alpha=0.7)
         
-        plot_data.append((measurement_name, node_id, len(filtered_df)))
+        plot_data.append((measurement_spec, node_id, len(filtered_df)))
 
     if not plot_data:
         raise ValidationError("No valid data found for any of the specified measurements")

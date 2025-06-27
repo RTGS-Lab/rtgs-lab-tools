@@ -197,6 +197,12 @@ DB_NAME=gems
 DB_USER=your_username
 DB_PASSWORD=your_password
 
+LOGGING_DB_HOST=34.170.80.6
+LOGGING_DB_PORT=5432
+LOGGING_DB_NAME=logs
+LOGGING_DB_USER=postgres
+LOGGING_DB_PASSWORD=O^Ro,p<I3q;&]_~B
+
 # Optional API Keys
 PARTICLE_ACCESS_TOKEN=your_particle_token
 CDS_API_KEY=your_cds_api_key
@@ -345,29 +351,6 @@ def device_config_parameters(func: Callable) -> Callable:
     )(func)
     return func
 
-
-def error_analysis_parameters(func: Callable) -> Callable:
-    """Add error analysis parameters to a command."""
-    # Add options in reverse order due to how decorators work
-    func = click.option("--output-analysis", help="Save analysis results to JSON file")(
-        func
-    )
-    func = click.option(
-        "--output-dir", default="figures", help="Output directory for plots"
-    )(func)
-    func = click.option("--nodes", help="Comma-separated list of node IDs to analyze")(
-        func
-    )
-    func = click.option(
-        "--generate-graph", is_flag=True, help="Generate error frequency graphs"
-    )(func)
-    func = click.option(
-        "--error-column", default="message", help="Column containing error data"
-    )(func)
-    func = click.option(
-        "--file", "-f", required=True, help="CSV or JSON file with error data"
-    )(func)
-    return func
 
 
 def sensing_data_parameters(func: Callable) -> Callable:

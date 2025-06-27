@@ -89,7 +89,11 @@ class EventParser(abc.ABC):
                 json_str = json_str[1:-1]
             
             # Replace escaped quotes
-            json_str = json_str.replace('\\"', '"').replace('""', '"')
+            json_str = json_str.replace('\\"', '"')
+            
+            # Fix CSV-escaped empty strings: change "":"" to ":""
+            import re
+            json_str = re.sub(r'":""+', '":""', json_str)
             
             return json.loads(json_str)
         except (json.JSONDecodeError, TypeError) as e:

@@ -70,10 +70,50 @@ def create(
             measurements_by_node = get_available_measurements(df)
 
             click.echo("Available measurements by node:")
+            click.echo("(Array measurements show individual indices that can be plotted)")
+            
             for node, measurements in measurements_by_node.items():
-                click.echo(f"\n{node}:")
-                for measurement in sorted(measurements):
-                    click.echo(f"  {measurement}")
+                click.echo(f"\nNode: {node}")
+                
+                # Separate scalar and array measurements for better organization
+                scalar_measurements = set()
+                array_measurements = {}
+                
+                for measurement in measurements:
+                    if '[' in measurement and ']' in measurement:
+                        # This is an indexed measurement
+                        base_name = measurement.split('[')[0]
+                        if base_name not in array_measurements:
+                            array_measurements[base_name] = []
+                        array_measurements[base_name].append(measurement)
+                    else:
+                        # Check if this measurement has array indices
+                        has_array_version = any(m.startswith(f"{measurement}[") for m in measurements)
+                        if not has_array_version:
+                            scalar_measurements.add(measurement)
+                
+                # Display scalar measurements
+                if scalar_measurements:
+                    click.echo("  Scalar measurements:")
+                    for measurement in sorted(scalar_measurements):
+                        click.echo(f"    {measurement}")
+                
+                # Display array measurements with their indices
+                if array_measurements:
+                    click.echo("  Array measurements (with available indices):")
+                    for base_name in sorted(array_measurements.keys()):
+                        indices = sorted(array_measurements[base_name])
+                        click.echo(f"    {base_name}")
+                        for idx_measurement in indices:
+                            click.echo(f"      {idx_measurement}")
+                        
+                        # Show usage example
+                        if indices:
+                            click.echo(f"      Example: --parameter \"{indices[0]}\"")
+            
+            click.echo(f"\nUsage examples:")
+            click.echo(f"  Scalar: --parameter \"Temperature\" --node-id \"<node_id>\"")
+            click.echo(f"  Array:  --parameter \"PORT_V[0]\" --node-id \"<node_id>\"")
             return
 
         output_path = None

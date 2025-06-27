@@ -81,15 +81,6 @@
 
 ---
 
--data/metadata/diagnostics parsers should be updated so multi indexed data like PORT_V and PORT_I are broken out
-
-**Analysis**: The data parsers are not properly handling multi-indexed data structures. Data like PORT_V and PORT_I (which likely have multiple indices/channels) are being treated as single entities instead of being broken out into their component parts.
-
-**Scope**: Update the parsing logic to properly handle multi-indexed data structures. This likely involves updating the data parsing rules to recognize and separate indexed data into individual components.
-
-**Effort**: Medium - Requires understanding the data structure patterns and updating parsing logic. May require changes to data storage schema as well.
-
----
 
 -extract tool BETWEEN query is not inclusive of current time, should get data through current time instead of stopping at 00:00:00 of current day
 
@@ -116,4 +107,14 @@
 **Scope**: Need to add to the .env file generator and also add credentials to the credentials.docx google doc
 
 **Effort**: Low - Simple to add
+
+---
+
+- Add support for --project all to extract data from all projects at once
+
+**Analysis**: Currently the sensing data extract tool requires specifying a specific project name. Users need the ability to extract data from all available projects in a single operation by using --project all.
+
+**Scope**: Update the sensing data extract tool to recognize "all" as a special project name, query the database to get all available projects, and iterate through each project to extract data. Need to handle output file naming for multiple projects and provide consolidated reporting.
+
+**Effort**: Medium - Requires modifying the project selection logic, handling multiple project iterations, and updating output file management for multi-project extractions.
 
