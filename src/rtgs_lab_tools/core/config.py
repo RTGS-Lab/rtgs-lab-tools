@@ -115,3 +115,8 @@ class Config:
     def cds_api_key(self) -> Optional[str]:
         """Copernicus CDS API key."""
         return os.getenv("CDS_API_KEY")
+
+    @property
+    def logging_instance_connection_name(self) -> Optional[str]:
+        """GCP Cloud SQL instance connection name for logging database."""
+        return os.getenv("LOGGING_INSTANCE_CONNECTION_NAME")

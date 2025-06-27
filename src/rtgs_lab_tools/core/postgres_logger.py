@@ -12,12 +12,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, Boolean, create_engine
+from sqlalchemy import Column, DateTime, Integer, String, Text, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
 from .config import Config
+from .database import DatabaseManager
 from .exceptions import DatabaseError
 
 logger = logging.getLogger(__name__)
@@ -67,26 +68,17 @@ class PostgresLogger:
         """
         self.tool_name = tool_name
         self.config = config or Config()
-        self._engine = None
+        # Use GCP authentication if LOGGING_INSTANCE_CONNECTION_NAME is set
+        use_gcp = bool(self.config.logging_instance_connection_name)
+        self.db_manager = DatabaseManager(config=self.config, use_gcp=use_gcp)
         self._Session = None
+        self.logs_dir = Path("logs")
+        self.logs_dir.mkdir(exist_ok=True)
 
     @property
     def engine(self):
         """Get or create database engine."""
-        if self._engine is None:
-            try:
-                self._engine = create_engine(
-                    self.config.logging_db_url,
-                    echo=False,
-                    pool_pre_ping=True,
-                    pool_recycle=3600,
-                )
-                logger.debug("Database engine created for logging")
-            except SQLAlchemyError as e:
-                logger.error(f"Failed to create database engine for logging: {e}")
-                raise DatabaseError(f"Failed to create database engine: {e}")
-
-        return self._engine
+        return self.db_manager.engine
 
     @property
     def Session(self):

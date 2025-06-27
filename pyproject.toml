@@ -35,7 +35,7 @@ dependencies = [
     "click>=8.0.0",
     "pyarrow>=10.0.0",
     "matplotlib>=3.5.0",
-    "google-cloud-sql-connector>=1.0.0",
+    "cloud-sql-python-connector>=1.0.0",
     "google-auth>=2.0.0",
     "pg8000>=1.29.0",
 ]
