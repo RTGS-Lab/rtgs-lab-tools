@@ -47,10 +47,18 @@ class DatabaseManager:
         if not GCP_AVAILABLE:
             raise DatabaseError("GCP Cloud SQL dependencies not installed")
             
-        self._connector = Connector(
-            refresh_strategy="LAZY",
-            enable_iam_auth=False  # Using username/password auth
-        )
+        try:
+            self._connector = Connector(
+                refresh_strategy="LAZY",
+                enable_iam_auth=False  # Using username/password auth
+            )
+        except Exception as e:
+            if "default credentials were not found" in str(e):
+                raise DatabaseError(
+                    "GCP authentication failed. Please set up Application Default Credentials. "
+                    "Run: gcloud auth application-default login"
+                )
+            raise DatabaseError(f"Failed to initialize GCP Cloud SQL connector: {e}")
         
         def getconn():
             conn = self._connector.connect(
@@ -77,8 +85,18 @@ class DatabaseManager:
         if self._engine is None:
             try:
                 if self.use_gcp and self.config.logging_instance_connection_name:
-                    self._engine = self._create_gcp_engine(self.config.logging_instance_connection_name)
-                    logger.info("GCP Cloud SQL logging database connection established")
+                    try:
+                        self._engine = self._create_gcp_engine(self.config.logging_instance_connection_name)
+                        logger.info("GCP Cloud SQL logging database connection established")
+                    except DatabaseError as e:
+                        logger.warning(f"GCP connection failed, falling back to traditional connection: {e}")
+                        self._engine = create_engine(
+                            self.config.logging_db_url,
+                            echo=False,
+                            pool_pre_ping=True,
+                            pool_recycle=3600,
+                        )
+                        logger.info("Traditional logging database connection established (fallback)")
                 elif self.use_gcp:
                     self._engine = create_engine(
                         self.config.logging_db_url,
