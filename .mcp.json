@@ -1,0 +1,19 @@
+{
+    "mcpServers": {
+      "particle": {
+        "type": "stdio",
+        "command": "uv",
+        "args": [
+          "--directory",
+          "./src/rtgs_lab_tools/mcp_server/particle-mcp-server/",
+          "run",
+          "particle.py"
+        ]
+      },
+      "rtgs_lab_tools": {
+        "type": "stdio",
+        "command": "./venv/bin/python",
+        "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+      }
+    }
+  }

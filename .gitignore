@@ -16,6 +16,12 @@ __pycache__/
 # Log files
 *.log
 
+# Logs directory (logs are committed to logs branch)
+/logs/
+
+# Results directory
+/results/
+
 # OS generated files
 .DS_Store
 .DS_Store?

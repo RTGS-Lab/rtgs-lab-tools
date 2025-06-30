@@ -1,219 +1,412 @@
-# GEMS Sensing Data Access Tool
+# RTGS Lab Tools
 
-[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A repository of tools for common lab analysis.This includes a tool for extracting environmental sensor data from the GEMS database at the University of Minnesota, as well as analyzing error codes and visualizing data.
+A comprehensive Python package for environmental sensing data tools, gridded climate data access, IoT device management, and data visualization. Developed by the RTGS Lab at the University of Minnesota.
 
 ## Overview
 
-The GEMS Sensing Database Tools repo allows researchers to easily extract sensor data from the GEMS database by project, date range, and node IDs. It features robust error handling, data verification, and flexible output formats. it also provides error code analysis and data vizualization.
+RTGS Lab Tools consolidates multiple environmental data analysis workflows into a unified toolkit with both command-line and natural language interfaces. The package provides tools for extracting sensor data from the GEMS database, downloading climate reanalysis data, visualizing time series, managing IoT devices, and analyzing error codes.
 
 ## Features
 
-### Tools
+### Sensing Data Tools
+- **Data Extraction**: Query and export raw sensor data from the GEMS database
+- **Project Management**: List available projects and node configurations
+- **Multiple Formats**: Export data as CSV or Parquet with compression options
+- **Data Integrity**: SHA-256 hashing and metadata generation for archival
 
-- get_sensing_data.py - gets raw data from GEMS Sensing database
-   - Query sensor data by project name, date range, and specific nodes
-   - Export data in CSV or Parquet formats
-   - Compress outputs with metadata for archiving
-   - List available projects
-   - Verify data integrity through SHA-256 hashing
-   - Retry logic for handling network issues
-   - Detailed logging and verbose output options
+### Gridded Data Tools
+- **ERA5 Reanalysis**: Download and process ERA5 climate data via Copernicus CDS
+- **Variable Support**: Access temperature, precipitation, wind, radiation, and more
+- **Spatial/Temporal Filtering**: Custom bounding boxes and time ranges
+- **Data Processing**: Regridding, aggregation, and statistical analysis
 
-- gems_sensing_data_visualizer.py - visualizes data fom a CSV file
-   - Sort by node_id, parameter, etc
-   - Explore database if parameters are unknown
-   - List database parameters
+### Visualization Tools
+- **Time Series Plots**: Automated plotting of sensor parameters over time
+- **Multi-Parameter Comparison**: Compare data across nodes and variables
+- **Multiple Formats**: Export plots as PNG, PDF, or SVG
+- **Interactive Parameter Discovery**: Automatically detect available parameters in data
 
-- error_code_parser.py - parses and analyzes hex error codes in CSV files
-   - plot error code frequency bar graphs
-   - get list of most common errors
-   - translates hex to natural language error
+### Device Configuration
+- **Batch Operations**: Update multiple device configurations concurrently with verification
+- **Configuration Templates**: Pre-defined settings for different sensor types
+- **Audit Trails**: Comprehensive logging of all device operations
 
-### MCP Server
+### Error Analysis
+- **Error Code Parsing**: Decode and analyze hex error codes from GEMS devices using ERRORCODES.md database
+- **Pattern Recognition**: Identify common errors and temporal trends
+- **Visualization**: Generate frequency plots and statistical summaries
+- **Device Diagnostics**: Track errors by node and hardware component with full error translations
 
-   This repo also allows all of its command line tools to be attached to an MCP server to allow natual language analysis. See Installation details for how to use.
+### Packet Parser
+- **Universal**: Packet parser for parsing new and historical JSON packets from in field devices
+
+### Natural Language Interface
+- **MCP Server**: FastMCP-based server for natural language interaction
+- **Claude Integration**: Use conversational AI to operate all tools
+- **Automated Logging**: Every operation creates detailed audit logs
+- **Git Integration**: Automatic commit and tracking of all tool executions
+
+### Universal Logging
+- **Automatic Logging**: Automatically creates logs and commits them to dedicated `logs` branch for auditing purposes and tool use analysis
+- **Orphan Branch**: Logs are stored in a separate orphan branch to keep the main codebase clean
 
 ## Installation
 
 ### Prerequisites
-- Python 3.7+
-- PostgreSQL client libraries (required for psycopg2)
-- UMN VPN connection for database access
+- Python 3.8+
+- PostgreSQL client libraries (for GEMS database access)
+- UMN VPN connection (for database access)
 
-### Setup
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd gems_sensing_db_tools
-   ```
+### Quick Installation (Recommended)
 
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-   **Note:** If working on Minnesota Supercomputing Institute resources, python is only available after loading the module with `module load python`.
+Use the automated installation script for cross-platform setup:
 
-
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Set up credentials:
-   ```bash
-   python get_sensing_data.py --setup-credentials
-   ```
-   This will create a template `.env` file that you can edit with your database credentials.
-   
-   For credentials access, contact Bryan Runck (runck014@umn.edu).
-
-5. Connect to UMN VPN:
-   - Install the UMN VPN client from: https://it.umn.edu/services-technologies/virtual-private-network-vpn
-   - Connect using your UMN credentials
-   - The tool will not be able to access the database without an active VPN connection
-
-### Optional MCP Server steps
-
-6. Open Claude Desktop
-
-7. Navigate to Settings
-
-8. Click Developer
-
-9. Click Edit Config
-
-10. Paste this in:
+```bash
+git clone https://github.com/RTGS-Lab/rtgs-lab-tools.git
+cd rtgs-lab-tools
+bash install.sh
 ```
-{
-  "mcpServers": {
-    "particle": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "/ABSOLUTE_PATH_TO_WORKING_DIR/particle-mcp-server/",
-        "run",
-        "particle.py"
-      ]
-    },
-    "gems_sensing": {
-      "command": "/ABSOLUTE_PATH_TO_WORKING_DIR/venv/bin/python",
-      "args": [   
-        "/ABSOLUTE_PATH_TO_WORKING_DIR/gems_sensing_db_tools_mcp_server.py"
-      ]
+
+The install script will:
+- Detect your operating system (Windows/macOS/Linux)
+- Verify Python 3.8+ installation
+- Install `uv` package manager if needed
+- Initialize git submodules
+- Create and activate a virtual environment
+- Install the package in development mode
+- Set up credential templates
+
+After installation, edit the generated `.env` file with your actual credentials.
+
+### Manual Installation
+```bash
+git clone https://github.com/RTGS-Lab/rtgs-lab-tools.git
+cd rtgs-lab-tools
+python -m venv venv
+source venv/bin/activate
+pip install -e .[all]
+```
+
+### Optional Dependencies (only if you only want specific parts of the tool)
+```bash
+# For climate data access
+pip install rtgs-lab-tools[climate]
+
+# For visualization enhancements
+pip install rtgs-lab-tools[visualization]
+
+# For MCP server functionality
+pip install rtgs-lab-tools[mcp]
+
+# Install everything
+pip install rtgs-lab-tools[all]
+```
+
+## Quick Start
+
+### 1. Setup Credentials
+```bash
+rtgs data --setup-credentials
+```
+Edit the created `.env` file with your database credentials.
+
+### 2. List Available Projects
+```bash
+rtgs data --list-projects
+```
+
+### 3. Extract Sensor Data
+```bash
+rtgs data --project "Winter Turf - v3" --start-date 2023-01-01 --end-date 2023-01-31
+```
+
+### 4. Create Visualizations
+```bash
+rtgs visualize --file data/Winter_Turf_v3_2023-01-01_to_2023-01-31_20240407153045.csv --parameter "Data.Devices.0.Temperature"
+```
+
+### 5. Download Climate Data
+```bash
+rtgs era5 --variables 2m_temperature --start-date 2023-01-01 --end-date 2023-01-31 --area "45,-94,44,-93"
+```
+
+## Command Reference
+
+### Data Extraction
+```bash
+# Basic extraction
+rtgs data --project "My Project" --start-date 2023-01-01
+
+# Filter by specific nodes
+rtgs data --project "My Project" --node-id "node001,node002"
+
+# Create compressed archive
+rtgs data --project "My Project" --create-zip
+
+# Export as Parquet
+rtgs data --project "My Project" --output parquet
+```
+
+### Visualization
+```bash
+# Single parameter plot
+rtgs visualize --file data.csv --parameter "Data.Temperature" --node-id node001
+
+# Multi-parameter comparison
+rtgs visualize --file data.csv --multi-param "node001,Data.Temperature" --multi-param "node002,Data.Temperature"
+
+# List available parameters
+rtgs visualize --file data.csv --list-params
+```
+
+### ERA5 Climate Data
+```bash
+# Download temperature and precipitation
+rtgs era5 --variables 2m_temperature total_precipitation --start-date 2023-01-01 --end-date 2023-12-31
+
+# Specific region and time
+rtgs era5 --variables 2m_temperature --start-date 2023-06-01 --end-date 2023-08-31 --area "49,-97,43,-89" --time-hours "00:00,12:00"
+
+# List available variables
+rtgs era5 --list-variables
+```
+
+### Error Analysis
+```bash
+# Basic error analysis (shows all nodes by default)
+rtgs error-analysis analyze --file data.csv --generate-graph
+
+# Filter by specific nodes
+rtgs error-analysis analyze --file data.csv --nodes "node001,node002" --generate-graph
+
+# Decode a single error code
+rtgs error-analysis decode 0xF00C00F8
+
+# List error classes and hardware types
+rtgs error-analysis error-classes
+
+# Save analysis results
+rtgs error-analysis analyze --file data.csv --output-analysis error_report.json
+```
+
+## Natural Language Interface (MCP)
+
+The package includes a FastMCP server that enables natural language interaction with all tools through Claude or other LLM clients.
+
+### Dependencies
+1. The particle-mcp-server submodule requires uv package manager, install it with:
+mac/linux
+```
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+windows
+```
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+### Use with Claude Code
+1. Clone and install as normal
+2. Navigate to repository and start Claude Code with 'claude'
+3. .mcp.json includes all configuration and Claude Code should recognize
+4. verify the mcps are running with /mcp once in Claude Code
+
+### Setup with Claude Desktop
+1. Install the package with MCP support:
+   ```bash
+   pip install rtgs-lab-tools[mcp]
+   ```
+
+2. Add to Claude Desktop configuration:
+  ```json
+    {
+    "mcpServers": {
+      "particle": {
+        "command": "uv",
+        "args": [
+          "--directory",
+          "/ABSOLUTE_PATH_TO_REPOSITORY/src/rtgs_lab_tools/mcp_server/particle-mcp-server/",
+          "run",
+          "particle.py"
+        ]
+      },
+      "rtgs_lab_tools": {
+        "command": "/ABSOLUTE_PATH_TO_REPOSITORY/venv/bin/python",
+        "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+      }
+     }
     }
-  }
-}
-```
-11. Add this to your .env file
+  ```
 
-```
-# Particle API credentials
-PARTICLE_ACCESS_TOKEN = your_api_token
-```
+3. Use natural language to operate tools:
+   ```
+   "Extract temperature data from Winter Turf project for last week"
+   "Create a plot showing soil moisture trends for node001"
+   "Download ERA5 precipitation data for Minnesota in June 2023"
+   ```
 
-If you need a Particle access token, make sure the Particle CLI is installed and do this command:
+## Configuration
 
-```
-particle token create
-```
+### Database Connection
+The package requires connection to the GEMS PostgreSQL database. Create a `.env` file:
 
-## Usage
+```env
+# GEMS Database Configuration
+DB_HOST=sensing-0.msi.umn.edu
+DB_PORT=5433
+DB_NAME=gems
+DB_USER=your_username
+DB_PASSWORD=your_password
 
-### Basic Command
-```bash
-python get_sensing_data.py --project "Winter Turf - v3" --start-date 2023-01-01 --end-date 2023-01-31
-```
-
-### Available Parameters
-- `--project`: Project name to query (required)
-- `--start-date`: Start date in YYYY-MM-DD format (default: 2018-01-01)
-- `--end-date`: End date in YYYY-MM-DD format (default: today)
-- `--node-id`: Specify one or more node IDs to query (comma-separated)
-- `--output-dir`: Custom output directory for data files (default: ./data)
-- `--output`: Specify output format: csv or parquet (default: csv)
-- `--verbose`: Enable detailed output and data previews
-- `--retry-count`: Maximum number of retry attempts (default: 3)
-- `--zip`: Create a zip archive of the output files
-- `--setup-credentials`: Create a template .env file for database credentials
-- `--list-projects`: List all available projects and exit
-
-## Examples
-
-### List Available Projects
-```bash
-python get_sensing_data.py --list-projects
+# Optional API Keys
+PARTICLE_ACCESS_TOKEN=your_particle_token
+CDS_API_KEY=your_cds_api_key
 ```
 
-### Basic Data Extraction
-```bash
-python get_sensing_data.py --project "Winter Turf - v3" --start-date 2023-01-01 --end-date 2023-01-31
-```
-
-### Query Specific Node IDs
-```bash
-python get_sensing_data.py --project "Winter Turf - v3" --node-id node001,node002 --start-date 2023-01-01
-```
-
-### Create Compressed Output
-```bash
-python get_sensing_data.py --project "Winter Turf - v3" --start-date 2023-01-01 --end-date 2023-01-31 --zip
-```
-
-### Verbose Output with Custom Directory
-```bash
-python get_sensing_data.py --project "Winter Turf - v3" --start-date 2023-01-01 --verbose --output-dir /path/to/output
-```
+### Network Requirements
+- **UMN VPN**: Required for GEMS database access
+- **Internet**: Required for ERA5 downloads and Particle device management
 
 ## Data Output
 
-### Format
-By default, the tool exports data as CSV files with the following characteristics:
-- Located in a `/data` folder in the current directory (created if it doesn't exist)
-- Named according to the pattern: `YYYYMMDDSTART_YYYYMMDDEND_project_CURRENTTIMESTAMP.csv` (or .parquet)
-  (Example: `20230101_20230131_Winter Turf - v3_20240407153045.csv`)
-- Includes file integrity verification using SHA-256 hashing
-- Contains raw data records including node_id, event, message, and timestamps
+### File Naming Convention
+```
+Project_Name_YYYY-MM-DD_to_YYYY-MM-DD_YYYYMMDD_HHMMSS.csv
+```
 
-### Compression Options
-When using the `--zip` flag, the tool will:
-- Create the CSV/parquet file as described above
-- Compress the file into a zip archive with the same base name
-- Include a metadata file in the archive with query details and statistics
-- Provide a SHA-256 hash of the archive for verification
+### Supported Formats
+- **CSV**: Human-readable, Excel-compatible
+- **Parquet**: Efficient binary format for large datasets
+- **NetCDF**: For gridded climate data
+- **PNG/PDF/SVG**: For visualizations
+
+### Metadata and Integrity
+All outputs include:
+- SHA-256 hash verification
+- Detailed metadata files
+- Query parameters and statistics
+- Automated git logging for audit trails
+
+## Architecture
+
+```
+src/rtgs_lab_tools/
+├── core/                   # Shared utilities (database, config, logging)
+├── sensing_data/           # GEMS database extraction tools
+├── gridded_data/           # Climate data access (ERA5, etc.)
+├── visualization/          # Time series and spatial plotting
+├── device_configuration/   # Particle IoT device configuration tools
+├── device_monitoring/      # Reserved for future device monitoring tools
+├── error_analysis/         # Error code analysis and device diagnostics
+└── mcp_server/            # Natural language interface
+```
+
+## Development
+
+### Running Tests
+```bash
+pytest
+```
+
+### Code Formatting
+```bash
+black src/ tests/
+isort src/ tests/
+```
+
+### Building Documentation
+```bash
+# Documentation is auto-generated from docstrings
+python -m pydoc rtgs_lab_tools
+```
+
+## API Keys and Access
+
+### GEMS Database
+Contact Bryan Runck (runck014@umn.edu) for database credentials.
+
+### Copernicus CDS (ERA5)
+1. Register at [CDS](https://cds.climate.copernicus.eu/)
+2. Get your API key from the user profile
+3. Add to `.env` file or configure `~/.cdsapirc`
+
+### Particle Cloud API
+1. Create account at [Particle Console](https://console.particle.io/)
+2. Generate access token in settings
+3. Add to `.env` file
 
 ## Troubleshooting
 
 ### Database Connection Issues
-If you encounter database connection errors, make sure:
-1. You are connected to the UMN VPN
-2. Your credentials in the `.env` file are correct
-3. You have the appropriate permissions for the database
+- Ensure UMN VPN is connected
+- Verify credentials in `.env` file
+- Check firewall settings
 
-For VPN support, contact UMN Technology Help at 612-301-4357 or visit:
-https://it.umn.edu/services-technologies/virtual-private-network-vpn
+### ERA5 Download Issues
+- Verify CDS API key configuration
+- Check data availability (5-day delay for recent data)
+- Monitor CDS queue status
 
-For database access, contact Bryan Runck at runck014@umn.edu
+### Device Management Issues
+- Verify Particle access token
+- Ensure devices are online and responsive
+- Check device firmware compatibility
 
-### Running Tests
-To run the test suite:
+## Contributing
+
+We welcome contributions to RTGS Lab Tools! Whether you're fixing bugs, adding features, improving documentation, or suggesting enhancements, your help is appreciated.
+
+### Quick Start for Contributors
+
+1. Fork the repository and clone your fork
+2. Run `bash install.sh` to set up your development environment
+3. Create a feature branch following our naming conventions
+4. Make your changes with appropriate tests
+5. Run quality checks and ensure all tests pass
+6. Submit a pull request with a clear description
+
+### Development Setup
+
 ```bash
-cd tests
-python run_tests.py
+# Clone your fork
+git clone https://github.com/YOUR_USERNAME/rtgs-lab-tools.git
+cd rtgs-lab-tools
+
+# Install in development mode
+bash install.sh
+
+# Run tests
+pytest
+
+# Run quality checks
+black src/ tests/
+isort src/ tests/
+mypy src/
 ```
 
-### Notes
-
-This repo also pulls in particle-mcp-server as a submodule to allow Particle API functions to be called if you are using the MCP functionality.
+For detailed contributing guidelines, branch structure, PR formatting, and development workflows, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
 
-For questions or support, please contact:
-- Bryan Runck - runck014@umn.edu
+- **RTGS Lab**: https://rtgs.umn.edu/
+- **Repository**: https://github.com/RTGS-Lab/gems_sensing_db_tools
+- **Issues**: Use GitHub issue tracker
+- **Database Access**: Bryan Runck (runck014@umn.edu)
+
+## Acknowledgments
+
+- University of Minnesota RTGS Lab
+- Minnesota Supercomputing Institute (MSI)
+- Copernicus Climate Data Store
+- Particle IoT platform
+
+---
+
+*For detailed API documentation and advanced usage, see the inline documentation and examples in the source code.*
