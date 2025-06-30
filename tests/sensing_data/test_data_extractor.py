@@ -52,6 +52,27 @@ def test_check_project_exists(mock_database_manager):
     assert len(matches) == 0
 
 
+def test_get_raw_data_success(mock_database_manager, sample_raw_data):
+    """Test successful data extraction."""
+    # Mock project check
+    with patch(
+        "rtgs_lab_tools.sensing_data.data_extractor.check_project_exists"
+    ) as mock_check:
+        mock_check.return_value = (True, [("Test Project", 5)])
+
+        result = get_raw_data(
+            database_manager=mock_database_manager,
+            project="Test Project",
+            start_date="2023-01-01",
+            end_date="2023-01-02",
+        )
+
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 5
+        assert "node_id" in result.columns
+        assert "publish_time" in result.columns
+
+
 def test_get_raw_data_invalid_dates(mock_database_manager):
     """Test data extraction with invalid dates."""
     with pytest.raises(ValidationError, match="Invalid date format"):
@@ -81,6 +102,48 @@ def test_get_raw_data_project_not_found(mock_database_manager):
                 get_raw_data(
                     database_manager=mock_database_manager, project="NonExistent"
                 )
+
+
+def test_get_raw_data_with_node_filter(mock_database_manager, sample_raw_data):
+    """Test data extraction with node ID filter."""
+    with patch(
+        "rtgs_lab_tools.sensing_data.data_extractor.check_project_exists"
+    ) as mock_check:
+        mock_check.return_value = (True, [("Test Project", 5)])
+
+        # Filter to specific nodesAdd commentMore actions
+        filtered_data = sample_raw_data[
+            sample_raw_data["node_id"].isin(["node_001", "node_002"])
+        ]
+        mock_database_manager.execute_query.return_value = filtered_data
+
+        result = get_raw_data(
+            database_manager=mock_database_manager,
+            project="Test Project",
+            node_ids=["node_001", "node_002"],
+        )
+
+        assert len(result) == 4  # Only records from node_001 and node_002
+        unique_nodes = result["node_id"].unique()
+        assert "node_001" in unique_nodes
+        assert "node_002" in unique_nodes
+        assert "node_003" not in unique_nodes
+
+
+def test_get_raw_data_empty_result(mock_database_manager):
+    """Test data extraction with no results."""
+    with patch(
+        "rtgs_lab_tools.sensing_data.data_extractor.check_project_exists"
+    ) as mock_check:
+        mock_check.return_value = (True, [("Test Project", 5)])
+
+        mock_database_manager.execute_query.return_value = pd.DataFrame()
+
+        result = get_raw_data(
+            database_manager=mock_database_manager, project="Test Project"
+        )
+
+        assert result.empty
 
 
 def test_get_nodes_for_project(mock_database_manager):
