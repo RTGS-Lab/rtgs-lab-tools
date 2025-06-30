@@ -51,6 +51,7 @@ def test_check_project_exists(mock_database_manager):
     assert exists is False
     assert len(matches) == 0
 
+
 def test_get_raw_data_success(mock_database_manager, sample_raw_data):
     """Test successful data extraction."""
     # Mock project check
@@ -70,6 +71,7 @@ def test_get_raw_data_success(mock_database_manager, sample_raw_data):
         assert len(result) == 5
         assert "node_id" in result.columns
         assert "publish_time" in result.columns
+
 
 def test_get_raw_data_invalid_dates(mock_database_manager):
     """Test data extraction with invalid dates."""
@@ -101,6 +103,7 @@ def test_get_raw_data_project_not_found(mock_database_manager):
                     database_manager=mock_database_manager, project="NonExistent"
                 )
 
+
 def test_get_raw_data_with_node_filter(mock_database_manager, sample_raw_data):
     """Test data extraction with node ID filter."""
     with patch(
@@ -126,6 +129,7 @@ def test_get_raw_data_with_node_filter(mock_database_manager, sample_raw_data):
         assert "node_002" in unique_nodes
         assert "node_003" not in unique_nodes
 
+
 def test_get_raw_data_empty_result(mock_database_manager):
     """Test data extraction with no results."""
     with patch(
@@ -140,6 +144,7 @@ def test_get_raw_data_empty_result(mock_database_manager):
         )
 
         assert result.empty
+
 
 def test_get_nodes_for_project(mock_database_manager):
     """Test getting nodes for a project."""
