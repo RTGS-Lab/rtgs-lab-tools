@@ -8,9 +8,12 @@
 # input: csv filepath
 # output: dictionary with node id as key and error counter with battery and systme info added
 
-from error_code_parser import load_error_database, parse_json_file, parse_csv_file
+# from error_code_parser import load_error_database, parse_json_file, parse_csv_file
 import csv
 import json
+
+from ..data_parser import parse_gems_data
+import pprint
 
 def format_battery_data(battery_row):
     if not battery_row:
@@ -94,3 +97,17 @@ Node: e00fce682ec3d30c0141b86a
     Error: 0x80090020, Count: 1
     Error: 0x70020033, Count: 1
 '''
+
+def format_data_with_parser(data_frame):
+    # input: data_frame (pandas DataFrame)
+    # output: formatted data dictionary
+
+    # get parsed dataframe from parse_gems_data
+    parsed_df = parse_gems_data(data_frame, packet_types="all")
+
+    pprint.pprint(parsed_df)
+
+    return None
+
+
+# if __name__ == "__main__":
