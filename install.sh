@@ -255,9 +255,9 @@ show_next_steps() {
     echo -e "${YELLOW}Next Steps:${NC}"
     echo -e "1. ${BLUE}Activate the virtual environment:${NC}"
     if [[ "$OS" == "windows" ]]; then
-        echo -e "   ${BLUE}source .venv/Scripts/activate${NC}"
+        echo -e "   ${BLUE}source venv/Scripts/activate${NC}"
     else
-        echo -e "   ${BLUE}source .venv/bin/activate${NC}"
+        echo -e "   ${BLUE}source venv/bin/activate${NC}"
     fi
     
     echo -e "\n2. ${BLUE}Configure your credentials:${NC}"
