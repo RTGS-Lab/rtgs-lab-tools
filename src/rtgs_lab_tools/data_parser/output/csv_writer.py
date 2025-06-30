@@ -5,33 +5,34 @@ Outputs parsed data to CSV format.
 """
 
 import os
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
-from typing import List, Dict, Any, Optional
 
 
 class CSVWriter:
     """
     Writes parsed data to CSV format.
     """
-    
+
     def __init__(self, output_dir: str = "./data/parsed"):
         """
         Initialize CSV writer with output directory.
-        
+
         Args:
             output_dir: Directory to write CSV files
         """
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
-    
+
     def write(self, data, file_path: str) -> str:
         """
         Write parsed data to CSV file.
-        
+
         Args:
             data: DataFrame or list of normalized data records
             file_path: File path to write to
-            
+
         Returns:
             str: Path to written file
         """
@@ -48,12 +49,12 @@ class CSVWriter:
         else:
             print(f"Unsupported data type: {type(data)}")
             return None
-        
+
         # Ensure output directory exists
         os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
-        
+
         # Write to CSV
         df.to_csv(file_path, index=False)
         print(f"Wrote {len(df)} records to {file_path}")
-        
+
         return file_path

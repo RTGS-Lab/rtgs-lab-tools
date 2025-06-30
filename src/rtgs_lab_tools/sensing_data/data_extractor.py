@@ -203,7 +203,9 @@ def extract_data(
         if project.lower() == "all":
             filename = f"all_projects_{start_date}_to_{end_date}_{timestamp}"
         else:
-            filename = f"{project.replace(' ', '_')}_{start_date}_to_{end_date}_{timestamp}"
+            filename = (
+                f"{project.replace(' ', '_')}_{start_date}_to_{end_date}_{timestamp}"
+            )
 
         # Save data
         file_path = save_data(df, output_directory, filename, output_format)
@@ -305,11 +307,13 @@ def get_raw_data(
 
     # Check if project is "all" to handle special case
     all_projects_mode = project.lower() == "all"
-    
+
     # If all projects mode, we don't need to check for specific project existence
     if not all_projects_mode:
         # Check if project exists (single project case)
-        project_exists, matching_projects = check_project_exists(database_manager, project)
+        project_exists, matching_projects = check_project_exists(
+            database_manager, project
+        )
 
         if not project_exists:
             available_projects = list_projects(database_manager)
@@ -355,7 +359,11 @@ def get_raw_data(
         WHERE n.project LIKE :project
         AND r.publish_time BETWEEN :start_date AND :end_date
         """
-        params = {"project": f"%{project}%", "start_date": start_date, "end_date": end_date}
+        params = {
+            "project": f"%{project}%",
+            "start_date": start_date,
+            "end_date": end_date,
+        }
 
     if node_ids:
         if len(node_ids) == 1:
@@ -371,9 +379,13 @@ def get_raw_data(
     query += " ORDER BY r.publish_time"
 
     if all_projects_mode:
-        logger.info(f"Fetching raw data for all projects from {start_date} to {end_date}")
+        logger.info(
+            f"Fetching raw data for all projects from {start_date} to {end_date}"
+        )
     else:
-        logger.info(f"Fetching raw data for project '{project}' from {start_date} to {end_date}")
+        logger.info(
+            f"Fetching raw data for project '{project}' from {start_date} to {end_date}"
+        )
     if node_ids:
         logger.info(f"Filtering for nodes: {', '.join(node_ids)}")
 

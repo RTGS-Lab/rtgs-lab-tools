@@ -11,8 +11,9 @@ from .config import Config
 from .exceptions import DatabaseError
 
 try:
-    from google.cloud.sql.connector import Connector, IPTypes
     import pg8000
+    from google.cloud.sql.connector import Connector, IPTypes
+
     GCP_AVAILABLE = True
 except ImportError:
     GCP_AVAILABLE = False
@@ -37,20 +38,20 @@ class DatabaseManager:
 
     def _create_gcp_engine(self, instance_connection_name: str) -> Engine:
         """Create database engine using GCP Cloud SQL Connector.
-        
+
         Args:
             instance_connection_name: GCP Cloud SQL instance connection name
-            
+
         Returns:
             SQLAlchemy engine
         """
         if not GCP_AVAILABLE:
             raise DatabaseError("GCP Cloud SQL dependencies not installed")
-            
+
         try:
             self._connector = Connector(
                 refresh_strategy="LAZY",
-                enable_iam_auth=False  # Using username/password auth
+                enable_iam_auth=False,  # Using username/password auth
             )
         except Exception as e:
             if "default credentials were not found" in str(e):
@@ -59,7 +60,7 @@ class DatabaseManager:
                     "Run: gcloud auth application-default login"
                 )
             raise DatabaseError(f"Failed to initialize GCP Cloud SQL connector: {e}")
-        
+
         def getconn():
             conn = self._connector.connect(
                 instance_connection_name,
@@ -70,7 +71,7 @@ class DatabaseManager:
                 ip_type=IPTypes.PUBLIC,
             )
             return conn
-            
+
         return create_engine(
             "postgresql+pg8000://",
             creator=getconn,
@@ -86,17 +87,25 @@ class DatabaseManager:
             try:
                 if self.use_gcp and self.config.logging_instance_connection_name:
                     try:
-                        self._engine = self._create_gcp_engine(self.config.logging_instance_connection_name)
-                        logger.info("GCP Cloud SQL logging database connection established")
+                        self._engine = self._create_gcp_engine(
+                            self.config.logging_instance_connection_name
+                        )
+                        logger.info(
+                            "GCP Cloud SQL logging database connection established"
+                        )
                     except DatabaseError as e:
-                        logger.warning(f"GCP connection failed, falling back to traditional connection: {e}")
+                        logger.warning(
+                            f"GCP connection failed, falling back to traditional connection: {e}"
+                        )
                         self._engine = create_engine(
                             self.config.logging_db_url,
                             echo=False,
                             pool_pre_ping=True,
                             pool_recycle=3600,
                         )
-                        logger.info("Traditional logging database connection established (fallback)")
+                        logger.info(
+                            "Traditional logging database connection established (fallback)"
+                        )
                 elif self.use_gcp:
                     self._engine = create_engine(
                         self.config.logging_db_url,

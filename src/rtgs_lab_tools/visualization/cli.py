@@ -53,51 +53,57 @@ def create(
     cli_ctx.setup("visualization", verbose, log_file, no_postgres_log)
 
     try:
-        from .data_utils import load_and_prepare_data, get_available_measurements
-        
+        from .data_utils import get_available_measurements, load_and_prepare_data
+
         # Load and prepare data (handles both raw and parsed data)
         df, data_type, parsing_results = load_and_prepare_data(
             file_path=file,
-            packet_types='all',  # Parse all packet types for visualization
+            packet_types="all",  # Parse all packet types for visualization
             cli_ctx=cli_ctx,
-            auto_parse=True  # Automatically parse without asking for confirmation
+            auto_parse=True,  # Automatically parse without asking for confirmation
         )
-        
-        cli_ctx.logger.info(f"Loaded {len(df)} records from {file} (data type: {data_type})")
+
+        cli_ctx.logger.info(
+            f"Loaded {len(df)} records from {file} (data type: {data_type})"
+        )
 
         if list_params:
             # List available measurements from parsed data
             measurements_by_node = get_available_measurements(df)
 
             click.echo("Available measurements by node:")
-            click.echo("(Array measurements show individual indices that can be plotted)")
-            
+            click.echo(
+                "(Array measurements show individual indices that can be plotted)"
+            )
+
             for node, measurements in measurements_by_node.items():
                 click.echo(f"\nNode: {node}")
-                
+
                 # Separate scalar and array measurements for better organization
                 scalar_measurements = set()
                 array_measurements = {}
-                
+
                 for measurement in measurements:
-                    if '[' in measurement and ']' in measurement:
+                    if "[" in measurement and "]" in measurement:
                         # This is an indexed measurement
-                        base_name = measurement.split('[')[0]
+                        base_name = measurement.split("[")[0]
                         if base_name not in array_measurements:
                             array_measurements[base_name] = []
                         array_measurements[base_name].append(measurement)
                     else:
                         # Check if this measurement has array indices
-                        has_array_version = any(m.startswith(f"{measurement}[") for m in measurements)
+                        has_array_version = any(
+                            m.startswith(f"{measurement}[") for m in measurements
+                        )
                         if not has_array_version:
                             scalar_measurements.add(measurement)
-                
+
                 # Display scalar measurements
                 if scalar_measurements:
                     click.echo("  Scalar measurements:")
                     for measurement in sorted(scalar_measurements):
                         click.echo(f"    {measurement}")
-                
+
                 # Display array measurements with their indices
                 if array_measurements:
                     click.echo("  Array measurements (with available indices):")
@@ -106,14 +112,14 @@ def create(
                         click.echo(f"    {base_name}")
                         for idx_measurement in indices:
                             click.echo(f"      {idx_measurement}")
-                        
+
                         # Show usage example
                         if indices:
-                            click.echo(f"      Example: --parameter \"{indices[0]}\"")
-            
+                            click.echo(f'      Example: --parameter "{indices[0]}"')
+
             click.echo(f"\nUsage examples:")
-            click.echo(f"  Scalar: --parameter \"Temperature\" --node-id \"<node_id>\"")
-            click.echo(f"  Array:  --parameter \"PORT_V[0]\" --node-id \"<node_id>\"")
+            click.echo(f'  Scalar: --parameter "Temperature" --node-id "<node_id>"')
+            click.echo(f'  Array:  --parameter "PORT_V[0]" --node-id "<node_id>"')
             return
 
         output_path = None
@@ -232,17 +238,19 @@ def list_parameters(ctx, file, verbose, log_file, no_postgres_log, note):
     cli_ctx.setup("parameter-listing", verbose, log_file, no_postgres_log)
 
     try:
-        from .data_utils import load_and_prepare_data, get_available_measurements
-        
+        from .data_utils import get_available_measurements, load_and_prepare_data
+
         # Load and prepare data (handles both raw and parsed data)
         df, data_type, parsing_results = load_and_prepare_data(
             file_path=file,
-            packet_types='all',  # Parse all packet types for listing
+            packet_types="all",  # Parse all packet types for listing
             cli_ctx=cli_ctx,
-            auto_parse=True  # Automatically parse without asking for confirmation
+            auto_parse=True,  # Automatically parse without asking for confirmation
         )
-        
-        cli_ctx.logger.info(f"Loaded {len(df)} records from {file} (data type: {data_type})")
+
+        cli_ctx.logger.info(
+            f"Loaded {len(df)} records from {file} (data type: {data_type})"
+        )
 
         # List available measurements from parsed data
         measurements_by_node = get_available_measurements(df)

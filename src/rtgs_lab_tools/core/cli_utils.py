@@ -15,8 +15,8 @@ from .exceptions import (
     RTGSLabToolsError,
     ValidationError,
 )
-from .postgres_logger import PostgresLogger
 from .logging import setup_logging
+from .postgres_logger import PostgresLogger
 
 
 def setup_logging_for_tool(
@@ -37,7 +37,9 @@ def setup_logging_for_tool(
     return logger
 
 
-def setup_postgres_logger(tool_name: str, disable: bool = False) -> Optional[PostgresLogger]:
+def setup_postgres_logger(
+    tool_name: str, disable: bool = False
+) -> Optional[PostgresLogger]:
     """Set up postgres logger for a specific tool.
 
     Args:
@@ -352,7 +354,6 @@ def device_config_parameters(func: Callable) -> Callable:
     return func
 
 
-
 def sensing_data_parameters(func: Callable) -> Callable:
     """Add sensing data extraction parameters to a command."""
     # Add options in reverse order due to how decorators work
@@ -386,7 +387,11 @@ def sensing_data_parameters(func: Callable) -> Callable:
     func = click.option(
         "--list-projects", is_flag=True, help="List all available projects and exit"
     )(func)
-    func = click.option("--project", "-p", help="Project name to query (use 'all' to extract data from all projects)")(func)
+    func = click.option(
+        "--project",
+        "-p",
+        help="Project name to query (use 'all' to extract data from all projects)",
+    )(func)
     return func
 
 

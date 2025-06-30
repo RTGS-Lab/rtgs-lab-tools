@@ -586,7 +586,9 @@ def main():
         "--dry-run", action="store_true", help="Validate inputs without making changes"
     )
     parser.add_argument(
-        "--no-postgres-log", action="store_true", help="Disable automatic postgres logging"
+        "--no-postgres-log",
+        action="store_true",
+        help="Disable automatic postgres logging",
     )
     parser.add_argument(
         "--repo-path", help="Path to git repository (auto-detected if not specified)"

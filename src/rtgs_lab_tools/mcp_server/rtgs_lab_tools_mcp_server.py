@@ -384,35 +384,44 @@ async def device_configuration_update_config(
 
         # First, verify current configurations on devices before making changes
         verification_results = {}
-        
+
         # Parse devices to get device list for verification
         try:
-            from ..device_configuration.particle_client import parse_device_input, ParticleAPI
             from ..core.config import Config
-            
+            from ..device_configuration.particle_client import (
+                ParticleAPI,
+                parse_device_input,
+            )
+
             device_ids = parse_device_input(devices)
             app_config = Config()
             particle_api = ParticleAPI(app_config.particle_access_token)
-            
+
             # Verify a sample of devices (first 3) to avoid overwhelming the API
             sample_devices = device_ids[:3] if len(device_ids) > 3 else device_ids
-            
+
             for device_id in sample_devices:
                 try:
-                    system_config_result = particle_api.call_function(device_id, "getSystemConfig", "")
-                    sensor_config_result = particle_api.call_function(device_id, "getSensorConfig", "")
-                    
+                    system_config_result = particle_api.call_function(
+                        device_id, "getSystemConfig", ""
+                    )
+                    sensor_config_result = particle_api.call_function(
+                        device_id, "getSensorConfig", ""
+                    )
+
                     verification_results[device_id] = {
                         "system_config": {
-                            "success": system_config_result.get("return_value") is not None,
+                            "success": system_config_result.get("return_value")
+                            is not None,
                             "value": system_config_result.get("return_value"),
-                            "error": system_config_result.get("error")
+                            "error": system_config_result.get("error"),
                         },
                         "sensor_config": {
-                            "success": sensor_config_result.get("return_value") is not None,
+                            "success": sensor_config_result.get("return_value")
+                            is not None,
                             "value": sensor_config_result.get("return_value"),
-                            "error": sensor_config_result.get("error")
-                        }
+                            "error": sensor_config_result.get("error"),
+                        },
                     }
                 except Exception as device_error:
                     verification_results[device_id] = {
@@ -477,7 +486,9 @@ async def device_configuration_update_config(
             "success": False,
             "error": f"Device configuration update failed: {str(e)}",
             "command": " ".join(cmd) if "cmd" in locals() else "N/A",
-            "verification_results": verification_results if "verification_results" in locals() else None,
+            "verification_results": (
+                verification_results if "verification_results" in locals() else None
+            ),
         }
 
 
@@ -677,8 +688,8 @@ async def device_configuration_verify_config(
         Dict with success status and current device configuration
     """
     try:
-        from ..device_configuration.particle_client import ParticleAPI
         from ..core.config import Config
+        from ..device_configuration.particle_client import ParticleAPI
 
         original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
@@ -689,21 +700,25 @@ async def device_configuration_verify_config(
 
         # Call getSystemConfig and getSensorConfig functions
         try:
-            system_config_result = particle_api.call_function(device_id, "getSystemConfig", "")
-            sensor_config_result = particle_api.call_function(device_id, "getSensorConfig", "")
+            system_config_result = particle_api.call_function(
+                device_id, "getSystemConfig", ""
+            )
+            sensor_config_result = particle_api.call_function(
+                device_id, "getSensorConfig", ""
+            )
 
             verification_results = {
                 "device_id": device_id,
                 "system_config": {
                     "success": system_config_result.get("return_value") is not None,
                     "raw_value": system_config_result.get("return_value"),
-                    "error": system_config_result.get("error")
+                    "error": system_config_result.get("error"),
                 },
                 "sensor_config": {
                     "success": sensor_config_result.get("return_value") is not None,
                     "raw_value": sensor_config_result.get("return_value"),
-                    "error": sensor_config_result.get("error")
-                }
+                    "error": sensor_config_result.get("error"),
+                },
             }
 
             os.chdir(original_cwd)
@@ -840,7 +855,7 @@ async def device_configuration_create_config(
                     "loggingMode": logging_mode,
                     "numAuxTalons": num_aux_talons,
                     "numI2CTalons": num_i2c_talons,
-                    "numSDI12Talons": num_sdi12_talons
+                    "numSDI12Talons": num_sdi12_talons,
                 },
                 "sensors": {
                     "numET": num_et,
@@ -849,13 +864,19 @@ async def device_configuration_create_config(
                     "numApogeeSolar": num_apogee_solar,
                     "numCO2": num_co2,
                     "numO2": num_o2,
-                    "numPressure": num_pressure
-                }
+                    "numPressure": num_pressure,
+                },
             }
         }
 
         # Get the absolute path to the created file
-        config_dir = PROJECT_ROOT / "src" / "rtgs_lab_tools" / "device_configuration" / "configurations"
+        config_dir = (
+            PROJECT_ROOT
+            / "src"
+            / "rtgs_lab_tools"
+            / "device_configuration"
+            / "configurations"
+        )
         absolute_file_path = str(config_dir / output)
 
         return {
@@ -940,7 +961,8 @@ async def device_configuration_create_devices(
             all_devices.extend(devices)
         if devices_list:
             import re
-            parsed_devices = re.split(r'[,\s]+', devices_list.strip())
+
+            parsed_devices = re.split(r"[,\s]+", devices_list.strip())
             all_devices.extend([d.strip() for d in parsed_devices if d.strip()])
 
         # Remove duplicates while preserving order
@@ -952,7 +974,9 @@ async def device_configuration_create_devices(
                 unique_devices.append(device_id)
 
         # Get the absolute path to the created file
-        devices_dir = PROJECT_ROOT / "src" / "rtgs_lab_tools" / "device_configuration" / "devices"
+        devices_dir = (
+            PROJECT_ROOT / "src" / "rtgs_lab_tools" / "device_configuration" / "devices"
+        )
         absolute_file_path = str(devices_dir / output)
 
         return {
@@ -1447,28 +1471,28 @@ async def audit_recent_logs(
 ) -> Dict[str, Any]:
     """
     Get recent tool execution logs from the audit system.
-    
+
     This tool retrieves recent command executions with their full context including
     who triggered them, when they ran, and what commands were executed. Essential
     for understanding recent activity and for creating reproduction scripts.
-    
+
     Args:
         limit: Maximum number of recent logs to return (default: 10)
         tool_name: Filter by specific tool name (optional)
         minutes: Only show logs from the last N minutes (optional)
-        
+
     Returns:
         Dict with success status and formatted list of recent tool executions
     """
     try:
         original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
-        
+
         # Set MCP environment variables
         env = os.environ.copy()
         env["MCP_SESSION"] = "true"
         env["MCP_USER"] = "claude"
-        
+
         cmd = [
             PYTHON_EXECUTABLE,
             "-m",
@@ -1478,53 +1502,69 @@ async def audit_recent_logs(
             "--limit",
             str(limit),
         ]
-        
+
         if tool_name:
             cmd.extend(["--tool-name", tool_name])
-            
+
         stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
-        
+
         os.chdir(original_cwd)
-        
+
         # If minutes filter is specified, also get logs from database for filtering
         filtered_output = stdout
         if minutes:
             try:
                 from datetime import datetime, timedelta
+
                 from ..audit.cli import AuditReporter
-                
+
                 # Calculate cutoff time
                 cutoff_time = datetime.now() - timedelta(minutes=minutes)
-                
+
                 # Get logs from database
                 reporter = AuditReporter()
                 logs = reporter.get_logs_by_date_range(
-                    start_date=cutoff_time,
-                    end_date=datetime.now(),
-                    tool_name=tool_name
+                    start_date=cutoff_time, end_date=datetime.now(), tool_name=tool_name
                 )
-                
+
                 # Format filtered logs
                 if logs:
-                    filtered_lines = [f"Recent {len(logs)} log entries (last {minutes} minutes):", "=" * 60]
+                    filtered_lines = [
+                        f"Recent {len(logs)} log entries (last {minutes} minutes):",
+                        "=" * 60,
+                    ]
                     for log in logs[:limit]:
                         status = "✅" if log.get("success", True) else "❌"
-                        duration_display = f"{log.get('duration_seconds', 0)}s" if log.get('duration_seconds') else "Unknown"
-                        git_info = f" [{log.get('git_branch', 'Unknown')}:{log.get('git_commit', 'Unknown')[:8]}]" if log.get('git_commit') else ""
-                        triggered_by = log.get('triggered_by', 'Unknown')
-                        
-                        filtered_lines.append(f"{status} {log.get('timestamp')} - {log.get('tool_name')} - {log.get('operation')}")
-                        filtered_lines.append(f"   By: {triggered_by} | Source: {log.get('execution_source')} | Duration: {duration_display}{git_info}")
+                        duration_display = (
+                            f"{log.get('duration_seconds', 0)}s"
+                            if log.get("duration_seconds")
+                            else "Unknown"
+                        )
+                        git_info = (
+                            f" [{log.get('git_branch', 'Unknown')}:{log.get('git_commit', 'Unknown')[:8]}]"
+                            if log.get("git_commit")
+                            else ""
+                        )
+                        triggered_by = log.get("triggered_by", "Unknown")
+
+                        filtered_lines.append(
+                            f"{status} {log.get('timestamp')} - {log.get('tool_name')} - {log.get('operation')}"
+                        )
+                        filtered_lines.append(
+                            f"   By: {triggered_by} | Source: {log.get('execution_source')} | Duration: {duration_display}{git_info}"
+                        )
                         filtered_lines.append("")
-                    
+
                     filtered_output = "\n".join(filtered_lines)
                 else:
                     filtered_output = f"No logs found in the last {minutes} minutes."
-                    
+
             except Exception as filter_error:
                 # Fall back to original output if filtering fails
-                filtered_output = f"{stdout}\n\nNote: Time filtering failed: {filter_error}"
-        
+                filtered_output = (
+                    f"{stdout}\n\nNote: Time filtering failed: {filter_error}"
+                )
+
         return {
             "success": True,
             "output": filtered_output,
@@ -1532,11 +1572,11 @@ async def audit_recent_logs(
             "mcp_execution": True,
             "logs_retrieved": True,
         }
-        
+
     except Exception as e:
         if "original_cwd" in locals():
             os.chdir(original_cwd)
-            
+
         return {
             "success": False,
             "error": f"Failed to get recent logs: {str(e)}",
@@ -1553,30 +1593,30 @@ async def audit_generate_report(
 ) -> Dict[str, Any]:
     """
     Generate audit reports with markdown files for a specific date range.
-    
+
     This tool creates detailed markdown log files for all tool executions in the
     specified time period. Each log file contains the exact command, parameters,
     results, git information, and execution context. These files can then be
     curated by removing unwanted ones before creating reproduction scripts.
-    
+
     Args:
         start_date: Start date in YYYY-MM-DD format (required)
         end_date: End date in YYYY-MM-DD format (required)
         tool_name: Filter by specific tool name (optional)
         output_dir: Directory to save log files (default: logs)
-        
+
     Returns:
         Dict with success status and list of generated log files
     """
     try:
         original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
-        
+
         # Set MCP environment variables
         env = os.environ.copy()
         env["MCP_SESSION"] = "true"
         env["MCP_USER"] = "claude"
-        
+
         cmd = [
             PYTHON_EXECUTABLE,
             "-m",
@@ -1585,19 +1625,19 @@ async def audit_generate_report(
             "report",
             "--start-date",
             start_date,
-            "--end-date", 
+            "--end-date",
             end_date,
             "--output-dir",
             output_dir,
         ]
-        
+
         if tool_name:
             cmd.extend(["--tool-name", tool_name])
-            
+
         stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
-        
+
         os.chdir(original_cwd)
-        
+
         return {
             "success": True,
             "output": stdout,
@@ -1606,11 +1646,11 @@ async def audit_generate_report(
             "git_logging_enabled": True,
             "report_generated": True,
         }
-        
+
     except Exception as e:
         if "original_cwd" in locals():
             os.chdir(original_cwd)
-            
+
         return {
             "success": False,
             "error": f"Failed to generate audit report: {str(e)}",
@@ -1625,33 +1665,33 @@ async def audit_create_reproduction_script(
 ) -> Dict[str, Any]:
     """
     Create a bash script to reproduce commands from curated log files.
-    
+
     This tool reads markdown log files from the specified directory and generates
     an executable bash script that can reproduce the exact sequence of commands.
     The script includes git checkout commands to ensure the correct code version
     is used for each command.
-    
+
     Users should curate which commands to include by:
     1. First generating audit reports to create log files
     2. Reviewing the log files and removing any they don't want to reproduce
     3. Running this tool to generate the reproduction script
-    
+
     Args:
         logs_dir: Directory containing log files to process (default: logs)
         output_file: Name for the generated script file (default: reproduce_commands.sh)
-        
+
     Returns:
         Dict with success status and details about the generated script
     """
     try:
         original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
-        
+
         # Set MCP environment variables
         env = os.environ.copy()
         env["MCP_SESSION"] = "true"
         env["MCP_USER"] = "claude"
-        
+
         cmd = [
             PYTHON_EXECUTABLE,
             "-m",
@@ -1663,11 +1703,11 @@ async def audit_create_reproduction_script(
             "--output-file",
             output_file,
         ]
-        
+
         stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
-        
+
         os.chdir(original_cwd)
-        
+
         return {
             "success": True,
             "output": stdout,
@@ -1677,11 +1717,11 @@ async def audit_create_reproduction_script(
             "script_generated": True,
             "script_path": output_file,
         }
-        
+
     except Exception as e:
         if "original_cwd" in locals():
             os.chdir(original_cwd)
-            
+
         return {
             "success": False,
             "error": f"Failed to create reproduction script: {str(e)}",
@@ -1697,82 +1737,79 @@ async def audit_get_recent_and_create_script(
 ) -> Dict[str, Any]:
     """
     Get logs from the last N minutes and create a reproduction script.
-    
+
     This is a convenience tool that combines getting recent logs and creating
     a reproduction script in one step. It automatically:
     1. Gets logs from the last N minutes
     2. Creates log files for those commands
     3. Generates a reproduction script
-    
+
     Perfect for quickly creating scripts to reproduce recent work.
-    
+
     Args:
         minutes: Number of minutes to look back (default: 10)
-        tool_name: Filter by specific tool name (optional)  
+        tool_name: Filter by specific tool name (optional)
         output_file: Name for the generated script file (default: recent_commands.sh)
-        
+
     Returns:
         Dict with success status, recent logs, and reproduction script details
     """
     try:
         from datetime import datetime, timedelta
-        
+
         # Calculate date range
         end_date = datetime.now()
         start_date = end_date - timedelta(minutes=minutes)
-        
+
         # Format dates for the audit report command
         start_date_str = start_date.strftime("%Y-%m-%d %H:%M:%S")
         end_date_str = end_date.strftime("%Y-%m-%d %H:%M:%S")
-        
+
         # Step 1: Generate audit report for the time period
         report_result = await audit_generate_report(
             start_date=start_date_str,
             end_date=end_date_str,
             tool_name=tool_name,
-            output_dir="logs"
+            output_dir="logs",
         )
-        
+
         if not report_result["success"]:
             return {
                 "success": False,
                 "error": f"Failed to generate recent logs report: {report_result.get('error')}",
-                "step": "generate_report"
+                "step": "generate_report",
             }
-        
+
         # Step 2: Create reproduction script from the generated logs
         script_result = await audit_create_reproduction_script(
-            logs_dir="logs",
-            output_file=output_file
+            logs_dir="logs", output_file=output_file
         )
-        
+
         if not script_result["success"]:
             # Check if the failure was due to dirty git state
-            error_msg = script_result.get('error', '')
-            if 'dirty git state' in error_msg or 'uncommitted changes' in error_msg:
+            error_msg = script_result.get("error", "")
+            if "dirty git state" in error_msg or "uncommitted changes" in error_msg:
                 return {
                     "success": False,
                     "error": f"Reproduction script cannot be created: {script_result.get('error')}",
                     "step": "create_script",
                     "report_output": report_result["output"],
                     "reason": "git_repository_dirty",
-                    "solution": "Commands were executed with uncommitted changes. Either commit the changes before execution or remove the problematic log files."
+                    "solution": "Commands were executed with uncommitted changes. Either commit the changes before execution or remove the problematic log files.",
                 }
             else:
                 return {
                     "success": False,
                     "error": f"Failed to create reproduction script: {script_result.get('error')}",
                     "step": "create_script",
-                    "report_output": report_result["output"]
+                    "report_output": report_result["output"],
                 }
-        
+
         # Step 3: Get the recent logs for display
         recent_logs_result = await audit_recent_logs(
-            limit=20,
-            tool_name=tool_name,
-            minutes=minutes
+            limit=20, tool_name=tool_name, minutes=minutes
         )
-        
+
         return {
             "success": True,
             "minutes_searched": minutes,
@@ -1785,7 +1822,7 @@ async def audit_get_recent_and_create_script(
             "mcp_execution": True,
             "git_logging_enabled": True,
         }
-        
+
     except Exception as e:
         return {
             "success": False,

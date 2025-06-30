@@ -1,6 +1,6 @@
 """Core utilities for RTGS Lab Tools."""
 
-from .cli_utils import CLIContext, setup_postgres_logger, setup_logging_for_tool
+from .cli_utils import CLIContext, setup_logging_for_tool, setup_postgres_logger
 from .config import Config
 from .database import DatabaseManager
 from .exceptions import (
@@ -10,8 +10,8 @@ from .exceptions import (
     RTGSLabToolsError,
     ValidationError,
 )
-from .postgres_logger import PostgresLogger
 from .logging import setup_logging
+from .postgres_logger import PostgresLogger
 
 __all__ = [
     "DatabaseManager",

@@ -12,10 +12,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, Boolean
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import SQLAlchemyError
 
 from .config import Config
 from .database import DatabaseManager
@@ -89,16 +89,12 @@ class PostgresLogger:
 
     def get_git_info(self) -> Dict[str, Any]:
         """Get git repository information.
-        
+
         Returns:
             Dictionary with git commit, branch, and dirty status
         """
-        git_info = {
-            "commit": None,
-            "branch": None,
-            "dirty": None
-        }
-        
+        git_info = {"commit": None, "branch": None, "dirty": None}
+
         try:
             # Get current commit hash
             result = subprocess.run(
@@ -106,79 +102,94 @@ class PostgresLogger:
                 capture_output=True,
                 text=True,
                 cwd=Path(__file__).parent.parent.parent.parent,
-                timeout=5
+                timeout=5,
             )
             if result.returncode == 0:
                 git_info["commit"] = result.stdout.strip()
-            
+
             # Get current branch
             result = subprocess.run(
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"],
                 capture_output=True,
                 text=True,
                 cwd=Path(__file__).parent.parent.parent.parent,
-                timeout=5
+                timeout=5,
             )
             if result.returncode == 0:
                 git_info["branch"] = result.stdout.strip()
-            
+
             # Check if repository is dirty
             result = subprocess.run(
                 ["git", "status", "--porcelain"],
                 capture_output=True,
                 text=True,
                 cwd=Path(__file__).parent.parent.parent.parent,
-                timeout=5
+                timeout=5,
             )
             if result.returncode == 0:
                 git_info["dirty"] = bool(result.stdout.strip())
-            
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError) as e:
+
+        except (
+            subprocess.TimeoutExpired,
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+        ) as e:
             logger.debug(f"Failed to get git information: {e}")
-        
+
         return git_info
 
     def get_command_info(self) -> str:
         """Get the current command that was executed.
-        
+
         Returns:
             The command string that was used to run this tool
         """
         try:
             # Get the command line arguments
             args = sys.argv.copy()
-            
+
             # If the first argument is a full path to python script, just use the script name
-            if args and args[0].endswith('.py'):
+            if args and args[0].endswith(".py"):
                 args[0] = Path(args[0]).stem
-            
+
             # For rtgs commands, reconstruct the proper format
-            if len(args) >= 2 and args[0] in ['rtgs', 'python', 'python3']:
-                if args[0] in ['python', 'python3'] and len(args) >= 3:
+            if len(args) >= 2 and args[0] in ["rtgs", "python", "python3"]:
+                if args[0] in ["python", "python3"] and len(args) >= 3:
                     # python -m rtgs_lab_tools.cli -> rtgs
-                    if '-m' in args and 'rtgs_lab_tools' in ' '.join(args):
+                    if "-m" in args and "rtgs_lab_tools" in " ".join(args):
                         # Find the index after -m rtgs_lab_tools.cli
                         try:
-                            m_index = args.index('-m')
-                            if m_index + 1 < len(args) and 'rtgs_lab_tools' in args[m_index + 1]:
-                                return 'rtgs ' + ' '.join(args[m_index + 2:])
+                            m_index = args.index("-m")
+                            if (
+                                m_index + 1 < len(args)
+                                and "rtgs_lab_tools" in args[m_index + 1]
+                            ):
+                                return "rtgs " + " ".join(args[m_index + 2 :])
                         except ValueError:
                             pass
-                
+
                 # Direct rtgs command
-                if args[0] == 'rtgs':
-                    return ' '.join(args)
-            
+                if args[0] == "rtgs":
+                    return " ".join(args)
+
             # For MCP or other contexts, try to reconstruct rtgs command
             # Look for tool patterns in the arguments
             for i, arg in enumerate(args):
-                if arg in ['sensing-data', 'data-parser', 'visualization', 'gridded-data', 
-                          'device-configuration', 'error-analysis', 'agricultural-modeling', 'audit']:
-                    return 'rtgs ' + ' '.join(args[i:])
-            
+                if arg in [
+                    "sensing-data",
+                    "data-parser",
+                    "visualization",
+                    "gridded-data",
+                    "device-configuration",
+                    "error-analysis",
+                    "agricultural-modeling",
+                    "audit",
+                ]:
+                    return "rtgs " + " ".join(args[i:])
+
             # Fallback - return the raw command
-            return ' '.join(args)
-            
+            return " ".join(args)
+
         except Exception as e:
             logger.debug(f"Failed to get command info: {e}")
             return "unknown"
@@ -205,7 +216,7 @@ class PostgresLogger:
         """
         git_info = self.get_git_info()
         command = self.get_command_info()
-        
+
         context = {
             "timestamp": datetime.now().isoformat(),
             "user": getpass.getuser(),
@@ -296,13 +307,17 @@ class PostgresLogger:
         duration = self._calculate_duration(results)
 
         # Create log content
-        git_status = "✅ Clean" if not context.get('git_dirty') else "⚠️ Dirty"
-        git_section = f"""
+        git_status = "✅ Clean" if not context.get("git_dirty") else "⚠️ Dirty"
+        git_section = (
+            f"""
 ## Git Information
 - **Branch**: {context.get('git_branch', 'Unknown')}
 - **Commit**: {context.get('git_commit', 'Unknown')[:8]}{'...' if context.get('git_commit') else ''}
 - **Status**: {git_status}
-""" if context.get('git_commit') else ""
+"""
+            if context.get("git_commit")
+            else ""
+        )
 
         log_content = f"""# {self.tool_name.title()} Execution Log
 
@@ -412,9 +427,9 @@ class PostgresLogger:
             return None
 
     def save_to_postgres(
-        self, 
-        operation: str, 
-        parameters: Dict[str, Any], 
+        self,
+        operation: str,
+        parameters: Dict[str, Any],
         results: Dict[str, Any],
         script_path: Optional[str] = None,
         log_file_path: Optional[str] = None,
@@ -434,7 +449,7 @@ class PostgresLogger:
         try:
             self.ensure_table_exists()
             context = self.get_execution_context(script_path)
-            
+
             log_entry = ToolCallLog(
                 timestamp=datetime.fromisoformat(context["timestamp"]),
                 tool_name=self.tool_name,
@@ -463,7 +478,9 @@ class PostgresLogger:
             try:
                 session.add(log_entry)
                 session.commit()
-                logger.info(f"Successfully saved tool call log to database: {operation}")
+                logger.info(
+                    f"Successfully saved tool call log to database: {operation}"
+                )
                 return True
             except SQLAlchemyError as e:
                 session.rollback()
@@ -516,10 +533,13 @@ class PostgresLogger:
         try:
             session = self.Session()
             try:
-                logs = session.query(ToolCallLog).order_by(
-                    ToolCallLog.timestamp.desc()
-                ).limit(limit).all()
-                
+                logs = (
+                    session.query(ToolCallLog)
+                    .order_by(ToolCallLog.timestamp.desc())
+                    .limit(limit)
+                    .all()
+                )
+
                 return [
                     {
                         "id": log.id,

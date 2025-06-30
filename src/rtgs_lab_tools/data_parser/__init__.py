@@ -2,4 +2,4 @@
 
 from .core import parse_gems_data
 
-__all__ = ['parse_gems_data']
+__all__ = ["parse_gems_data"]
