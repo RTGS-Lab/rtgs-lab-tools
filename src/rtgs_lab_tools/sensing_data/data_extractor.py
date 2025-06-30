@@ -322,18 +322,18 @@ def get_raw_data(
                 projects_list = [f"{p} ({c} nodes)" for p, c in available_projects[:10]]
                 projects_str = ", ".join(projects_list)
 
-            if len(available_projects) > 10:
-                total_remaining_nodes = sum(
-                    count for _, count in available_projects[10:]
-                )
-                projects_str += f", ... and {len(available_projects) - 10} more projects with {total_remaining_nodes} nodes"
+                if len(available_projects) > 10:
+                    total_remaining_nodes = sum(
+                        count for _, count in available_projects[10:]
+                    )
+                    projects_str += f", ... and {len(available_projects) - 10} more projects with {total_remaining_nodes} nodes"
 
-            error_msg = f"Project '{project}' not found. Available projects include: {projects_str}"
-        else:
-            error_msg = f"Project '{project}' not found and no projects are available. Please check database connection and permissions."
+                error_msg = f"Project '{project}' not found. Available projects include: {projects_str}"
+            else:
+                error_msg = f"Project '{project}' not found and no projects are available. Please check database connection and permissions."
 
-        logger.error(error_msg)
-        raise ValidationError(error_msg)
+            logger.error(error_msg)
+            raise ValidationError(error_msg)
 
     # Log matching projects if multiple (only for single project mode)
     if not all_projects_mode and len(matching_projects) > 1:
