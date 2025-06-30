@@ -200,7 +200,10 @@ def extract_data(
 
         # Generate filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{project.replace(' ', '_')}_{start_date}_to_{end_date}_{timestamp}"
+        if project.lower() == "all":
+            filename = f"all_projects_{start_date}_to_{end_date}_{timestamp}"
+        else:
+            filename = f"{project.replace(' ', '_')}_{start_date}_to_{end_date}_{timestamp}"
 
         # Save data
         file_path = save_data(df, output_directory, filename, output_format)
@@ -274,7 +277,7 @@ def get_raw_data(
 
     Args:
         database_manager: Database manager instance
-        project: Project name to query
+        project: Project name to query, 'all' for all projects
         start_date: Start date string (YYYY-MM-DD). Defaults to 2018-01-01
         end_date: End date string (YYYY-MM-DD). Defaults to today
         node_ids: Optional list of specific node IDs to query
@@ -300,15 +303,20 @@ def get_raw_data(
     except ValueError as e:
         raise ValidationError(f"Invalid date format: {e}")
 
-    # Check if project exists
-    project_exists, matching_projects = check_project_exists(database_manager, project)
+    # Check if project is "all" to handle special case
+    all_projects_mode = project.lower() == "all"
+    
+    # If all projects mode, we don't need to check for specific project existence
+    if not all_projects_mode:
+        # Check if project exists (single project case)
+        project_exists, matching_projects = check_project_exists(database_manager, project)
 
-    if not project_exists:
-        available_projects = list_projects(database_manager)
-        if available_projects:
-            # Format first 10 projects with node counts
-            projects_list = [f"{p} ({c} nodes)" for p, c in available_projects[:10]]
-            projects_str = ", ".join(projects_list)
+        if not project_exists:
+            available_projects = list_projects(database_manager)
+            if available_projects:
+                # Format first 10 projects with node counts
+                projects_list = [f"{p} ({c} nodes)" for p, c in available_projects[:10]]
+                projects_str = ", ".join(projects_list)
 
             if len(available_projects) > 10:
                 total_remaining_nodes = sum(
@@ -323,24 +331,31 @@ def get_raw_data(
         logger.error(error_msg)
         raise ValidationError(error_msg)
 
-    # Log matching projects if multiple
-    if len(matching_projects) > 1:
+    # Log matching projects if multiple (only for single project mode)
+    if not all_projects_mode and len(matching_projects) > 1:
         logger.info(f"Multiple projects match '{project}':")
         for proj, count in matching_projects:
             logger.info(f"  - {proj} ({count} nodes)")
         logger.info(f"Using pattern '%{project}%' to match all of them")
 
     # Build query for raw data
-    query = """
-    SELECT r.id, r.node_id, r.publish_time, r.ingest_time, r.event, r.message, r.message_id
-    FROM raw r
-    JOIN node n ON r.node_id = n.node_id
-    WHERE n.project LIKE :project
-    AND r.publish_time BETWEEN :start_date AND :end_date
-    """
-
-    # Add node_id filter if specified
-    params = {"project": f"%{project}%", "start_date": start_date, "end_date": end_date}
+    if all_projects_mode:
+        query = """
+        SELECT r.id, r.node_id, r.publish_time, r.ingest_time, r.event, r.message, r.message_id
+        FROM raw r
+        JOIN node n ON r.node_id = n.node_id
+        WHERE r.publish_time BETWEEN :start_date AND :end_date
+        """
+        params = {"start_date": start_date, "end_date": end_date}
+    else:
+        query = """
+        SELECT r.id, r.node_id, r.publish_time, r.ingest_time, r.event, r.message, r.message_id
+        FROM raw r
+        JOIN node n ON r.node_id = n.node_id
+        WHERE n.project LIKE :project
+        AND r.publish_time BETWEEN :start_date AND :end_date
+        """
+        params = {"project": f"%{project}%", "start_date": start_date, "end_date": end_date}
 
     if node_ids:
         if len(node_ids) == 1:
@@ -355,9 +370,10 @@ def get_raw_data(
 
     query += " ORDER BY r.publish_time"
 
-    logger.info(
-        f"Fetching raw data for project '{project}' from {start_date} to {end_date}"
-    )
+    if all_projects_mode:
+        logger.info(f"Fetching raw data for all projects from {start_date} to {end_date}")
+    else:
+        logger.info(f"Fetching raw data for project '{project}' from {start_date} to {end_date}")
     if node_ids:
         logger.info(f"Filtering for nodes: {', '.join(node_ids)}")
 

@@ -386,7 +386,7 @@ def sensing_data_parameters(func: Callable) -> Callable:
     func = click.option(
         "--list-projects", is_flag=True, help="List all available projects and exit"
     )(func)
-    func = click.option("--project", "-p", help="Project name to query")(func)
+    func = click.option("--project", "-p", help="Project name to query (use 'all' to extract data from all projects)")(func)
     return func
 
 
