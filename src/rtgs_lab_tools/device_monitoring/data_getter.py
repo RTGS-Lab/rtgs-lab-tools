@@ -1,6 +1,6 @@
 # should uitlize get_raw_data from sensing_data module
 # should return a df
-
+# To run: python -m rtgs_lab_tools.device_monitoring.data_getter
 
 # gets data from a database
 # inputs: timeframe, database, project, credentials, node_ids
@@ -129,4 +129,4 @@ if __name__ == "__main__":
         node_ids=None  # Example node ID
     )
 
-    pprint.pprint(data)
+    # pprint.pprint(data)
