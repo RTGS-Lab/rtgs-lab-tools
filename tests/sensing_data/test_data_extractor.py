@@ -51,6 +51,7 @@ def test_check_project_exists(mock_database_manager):
     assert exists is False
     assert len(matches) == 0
 
+
 def test_get_raw_data_invalid_dates(mock_database_manager):
     """Test data extraction with invalid dates."""
     with pytest.raises(ValidationError, match="Invalid date format"):
@@ -80,6 +81,7 @@ def test_get_raw_data_project_not_found(mock_database_manager):
                 get_raw_data(
                     database_manager=mock_database_manager, project="NonExistent"
                 )
+
 
 def test_get_nodes_for_project(mock_database_manager):
     """Test getting nodes for a project."""
