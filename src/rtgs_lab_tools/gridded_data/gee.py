@@ -12,7 +12,8 @@ from ..core.exceptions import APIError, ValidationError
 
 logger = logging.getLogger(__name__)
 
-GEE_PROJECT =  #TODO: IMPORT FROM ENV!
+cfg = Config()
+GEE_PROJECT = cfg.GEE_PROJECT 
 
 try:
     import ee
@@ -39,26 +40,49 @@ def load_roi(path: str):
     roi = ee.FeatureCollection(geojson_dict)
     return roi
 
-def download_GEE_data( #TODO: rebuild the function
-    variables: List[str],
-    start_date: str,
-    end_date: str,
-    area: Optional[List[float]] = None,
-    output_file: Optional[str] = None,
-    **kwargs,
-) -> str:
-    """Convenience function to download ERA5 data.
+def download_GEE_data(source, bands, roi, start_date, end_date, 
+                      out_dest, folder, clouds):
+    """A function to download GEE data.
 
     Args:
-        variables: List of variable names
+        source: GEE path to the dataset to download
+        bands: List of variable names
+        roi: GEE FeatureCollection with region of interest
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
-        area: Bounding box [north, west, south, east]
-        output_file: Output file path
-        **kwargs: Additional arguments for ERA5Client.download_era5_reanalysis
-
+        output_file: Output files destination type
+        folder: Output files destination folder
+        clouds: Minimum cloud percentage threshold
     Returns:
         Path to downloaded file
     """
-    # TODO: if variables==None, then parse ALL
+    collection = ee.ImageCollection(source)\
+              .filterBounds(roi)\
+              .filterDate(start_date, end_date)
+    if bands is not None:
+        collection = collection.select(bands)
+
+    #TODO: export logic
+    if out_dest=='drive':
+        task = ee.batch.Export.image.toDrive(
+            image=image,
+            folder=folder,
+            fileNamePrefix='my_image',
+            region=roi,
+            scale=30 #TODO: create native res dict or alternative
+        )
+    elif out_dest=='bucket':
+        task = ee.batch.Export.image.toCloudStorage(
+            image=image,
+            bucket='your-bucket-name',  # TODO: Replace with your bucket
+            fileNamePrefix=folder, 
+            scale=30,
+            region=roi,
+            maxPixels=1e9,
+            fileFormat='GeoTIFF',
+            formatOptions={
+                'cloudOptimized': True  # Optional: creates Cloud Optimized GeoTIFF
+            }
+        )
+
     print('Done!')

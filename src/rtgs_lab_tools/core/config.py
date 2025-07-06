@@ -112,9 +112,9 @@ class Config:
         return os.getenv("PARTICLE_ACCESS_TOKEN")
 
     @property
-    def cds_api_key(self) -> Optional[str]:
+    def GEE_PROJECT(self) -> Optional[str]:
         """Copernicus CDS API key."""
-        return os.getenv("CDS_API_KEY")
+        return os.getenv("GEE_PROJECT")
 
     @property
     def logging_instance_connection_name(self) -> Optional[str]:
