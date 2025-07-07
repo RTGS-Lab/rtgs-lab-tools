@@ -38,10 +38,11 @@ def gridded_data_cli(ctx):
 @click.option("--clouds", help='Cloud percentage threshold')
 @click.option("--out-dest", "-o", required=True, help="Output destination: drive (google-drive) or bucket (google-bucket)")
 @click.option("--folder", "-o", help="Output destination folder")
+@click.option("--scale", "-o", help="Image resolution. When not set, the image is downloaded in native resolution")
 @add_common_options
 @click.pass_context
 @handle_common_errors("gee-data")
-def get_gee_data(ctx, source, variables, start_date, end_date, roi_type, roi, clouds, out_dest, folder,
+def get_gee_data(ctx, source, variables, start_date, end_date, roi_type, roi, clouds, out_dest, folder, scale,
     verbose, log_file, no_postgres_log, note,
 ):
     """Download and process GEE data."""
@@ -58,17 +59,21 @@ def get_gee_data(ctx, source, variables, start_date, end_date, roi_type, roi, cl
         # Parse variables
         if variables:
             variable_list = list(variables)
-            
+        
+        #TODO: roi_type logic, i.e. pixel vs region download
+
         # Download data 
         cli_ctx.logger.info(f"Downloading from {source}: {variables}")
         output_path = download_GEE_data(
+            name=source,
             source=sources[source],
             bands=variable_list,
             roi=roi_bounds,
+            scale=scale,
             start_date=start_date,
             end_date=end_date,
             out_dest=out_dest,
-            folder,
+            folder=folder,
             clouds=clouds
         )
 

@@ -1,5 +1,6 @@
 """GEE Datasets access using python API"""
 
+import time
 import logging
 import os
 import geopandas as gpd
@@ -40,14 +41,16 @@ def load_roi(path: str):
     roi = ee.FeatureCollection(geojson_dict)
     return roi
 
-def download_GEE_data(source, bands, roi, start_date, end_date, 
+def download_GEE_data(name, source, bands, roi, scale, start_date, end_date, 
                       out_dest, folder, clouds):
     """A function to download GEE data.
 
     Args:
+        name: Short dataset name
         source: GEE path to the dataset to download
         bands: List of variable names
         roi: GEE FeatureCollection with region of interest
+        scale: Image resolution
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
         output_file: Output files destination type
@@ -56,33 +59,66 @@ def download_GEE_data(source, bands, roi, start_date, end_date,
     Returns:
         Path to downloaded file
     """
+    def clip_img(img):
+        return img.clip(roi)
+
     collection = ee.ImageCollection(source)\
               .filterBounds(roi)\
               .filterDate(start_date, end_date)
     if bands is not None:
         collection = collection.select(bands)
+    collection = collection.map(clip_img)
+    collection_list = collection.toList(collection.size())
+    size = collection.size().getInfo()
+    print(f"Found {size} files to export")
+
+    if scale is None:
+        img_bands = list_GEE_vars(source)
+        scale = collection.first().select(img_bands[0]).projection().nominalScale().getInfo()
 
     #TODO: export logic
     if out_dest=='drive':
-        task = ee.batch.Export.image.toDrive(
-            image=image,
-            folder=folder,
-            fileNamePrefix='my_image',
-            region=roi,
-            scale=30 #TODO: create native res dict or alternative
-        )
-    elif out_dest=='bucket':
-        task = ee.batch.Export.image.toCloudStorage(
-            image=image,
-            bucket='your-bucket-name',  # TODO: Replace with your bucket
-            fileNamePrefix=folder, 
-            scale=30,
-            region=roi,
-            maxPixels=1e9,
-            fileFormat='GeoTIFF',
-            formatOptions={
-                'cloudOptimized': True  # Optional: creates Cloud Optimized GeoTIFF
-            }
-        )
+        for i in range(size):
+            img = ee.Image(collection_list.get(i))
+            img_id = img.id().getInfo() or f"image_{i}"
 
-    print('Done!')
+            task = ee.batch.Export.image.toDrive(
+                image=img,
+                folder=folder,
+                description=f'rtgs_export_{name}_{img_id}',
+                fileNamePrefix='my_image',
+                region=roi,
+                scale=scale
+            )
+
+            task.start()
+
+            while task.active():
+                print(f'Processing file {img_id}...')
+                time.sleep(30)
+
+    elif out_dest=='bucket':
+        for i in range(size):
+            img = ee.Image(collection_list.get(i))
+            img_id = img.id().getInfo() or f"image_{i}"
+
+            task = ee.batch.Export.image.toCloudStorage(
+                image=img,
+                bucket='your-bucket-name',  # TODO: Replace with your bucket
+                description=f'rtgs_export_{name}_{img_id}',
+                fileNamePrefix=folder, 
+                scale=scale,
+                region=roi,
+                maxPixels=1e9,
+                fileFormat='GeoTIFF',
+                formatOptions={
+                    'cloudOptimized': True  
+                }
+            )
+            task.start()
+
+            while task.active():
+                print(f'Processing file {img_id}...')
+                time.sleep(30)
+
+    print("Exporting is complete!")
