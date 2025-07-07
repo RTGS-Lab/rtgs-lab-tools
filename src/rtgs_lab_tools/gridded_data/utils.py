@@ -10,3 +10,12 @@ sources = {
     'NLCD': "USGS/NLCD_RELEASES/2021_REL/NLCD",
     #... extend as needed
 }
+
+qa_bands = {
+    'Sentinel-2': "QA60",
+    'Landsat-8': "QA_PIXEL",
+    'Landsat-9': "QA_PIXEL",
+    'MOD': "state_1km", # Terra
+    'MYD': "state_1km", # Aqua
+    'VIIRS': "QF1",
+}

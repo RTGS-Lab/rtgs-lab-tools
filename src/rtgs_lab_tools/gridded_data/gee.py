@@ -10,11 +10,13 @@ from typing import Dict, List, Optional, Tuple, Union
 
 from ..core import Config
 from ..core.exceptions import APIError, ValidationError
+from .utils import qa_bands
 
 logger = logging.getLogger(__name__)
 
 cfg = Config()
 GEE_PROJECT = cfg.GEE_PROJECT 
+BUCKET_NAME = cfg.BUCKET_NAME
 
 try:
     import ee
@@ -29,13 +31,66 @@ except ImportError:
         "Gridded data functionality requires earthegine and xarray. Install with: pip install rtgs-lab-tools[climate]"
     )
 
+def compute_clouds(img, mask, roi):
+    pixel_area = mask.unmask(0).reduceRegion(
+        reducer=ee.Reducer.count(),
+        geometry=roi,
+        scale=img.projection().nominalScale(),
+        maxPixels=1e13
+    )
+    total_pixels = pixel_area.getInfo()['mask']
 
-def list_GEE_vars(source: str):
+    valid_area = mask.reduceRegion(
+        reducer=ee.Reducer.sum(),
+        geometry=roi,
+        scale=img.projection().nominalScale(),
+        maxPixels=1e13
+    )
+    valid_pixels = valid_area.getInfo()['mask']
+
+    masked_pct = 100 * (1 - valid_pixels / total_pixels)
+    return masked_pct
+
+def filter_clouds(name, img, qa_band):
+    qa = img.select(qa_band).rename('mask')
+    if name=='MOD' or name=='MYD':
+        cloud  = qa.bitwiseAnd(1 << 0).eq(1)
+        shadow = qa.bitwiseAnd(1 << 1).eq(1)
+        cirrus = qa.bitwiseAnd(1 << 2).eq(1)
+        return cloud.Or(shadow).Or(cirrus)      \
+                    .rename('clouds')          \
+                    .toInt16()
+    elif name=='Sentinel-2':
+        cloud  = qa.bitwiseAnd(1 << 10).gt(0)
+        cirrus = qa.bitwiseAnd(1 << 11).gt(0)
+        return cloud.Or(cirrus).rename('clouds').toInt16()
+    elif name=='Landsat-8' or name=='Landsat-9':
+        cloud_bit   = 1 << 3   # Cloud
+        cloud_shadow_bit = 1 << 4  # Cloud Shadow
+        cirrus_bit  = 1 << 2   # Cirrus 
+
+        cloud = qa.bitwiseAnd(cloud_bit).gt(0)
+        shadow = qa.bitwiseAnd(cloud_shadow_bit).gt(0)
+        cirrus = qa.bitwiseAnd(cirrus_bit).gt(0)
+
+        combined_mask = cloud.Or(shadow).Or(cirrus)
+
+        return combined_mask.rename('clouds').toInt16()
+
+    elif name=='VIIRS':
+        cloud_conf = qa.rightShift(2).bitwiseAnd(3)
+        is_cloud = cloud_conf.gte(2)
+        return is_cloud.rename('clouds').toInt16()
+
+    return img
+
+
+def list_GEE_vars(source):
     dataset = ee.ImageCollection(source).first()
     band_names = dataset.bandNames().getInfo()
     return band_names
 
-def load_roi(path: str):
+def load_roi(path):
     gdf = gpd.read_file(path)
     geojson_dict = gdf.__geo_interface__
     roi = ee.FeatureCollection(geojson_dict)
@@ -62,6 +117,9 @@ def download_GEE_data(name, source, bands, roi, scale, start_date, end_date,
     def clip_img(img):
         return img.clip(roi)
 
+    qa_band = qa_bands[name]
+    bands += qa_band if qa_band not in bands else []
+
     collection = ee.ImageCollection(source)\
               .filterBounds(roi)\
               .filterDate(start_date, end_date)
@@ -76,49 +134,64 @@ def download_GEE_data(name, source, bands, roi, scale, start_date, end_date,
         img_bands = list_GEE_vars(source)
         scale = collection.first().select(img_bands[0]).projection().nominalScale().getInfo()
 
-    #TODO: export logic
+
     if out_dest=='drive':
         for i in range(size):
             img = ee.Image(collection_list.get(i))
             img_id = img.id().getInfo() or f"image_{i}"
 
-            task = ee.batch.Export.image.toDrive(
-                image=img,
-                folder=folder,
-                description=f'rtgs_export_{name}_{img_id}',
-                fileNamePrefix='my_image',
-                region=roi,
-                scale=scale
-            )
+            if clouds is not None:
+                mask = filter_clouds(name, img)
+                cloud_percentage = compute_clouds(img, mask)
+                cloud_flag = True if cloud_percentage <= clouds else False
+            else:
+                cloud_flag = True 
+                
+            if cloud_flag:
+                task = ee.batch.Export.image.toDrive(
+                    image=img,
+                    folder=folder,
+                    fileNamePrefix=f'rtgs_export_{name}_{img_id}',
+                    region=roi,
+                    scale=scale
+                )
 
-            task.start()
+                task.start()
 
-            while task.active():
-                print(f'Processing file {img_id}...')
-                time.sleep(30)
+                while task.active():
+                    print(f'Processing file {img_id}...')
+                    time.sleep(30)
 
     elif out_dest=='bucket':
         for i in range(size):
             img = ee.Image(collection_list.get(i))
             img_id = img.id().getInfo() or f"image_{i}"
 
-            task = ee.batch.Export.image.toCloudStorage(
-                image=img,
-                bucket='your-bucket-name',  # TODO: Replace with your bucket
-                description=f'rtgs_export_{name}_{img_id}',
-                fileNamePrefix=folder, 
-                scale=scale,
-                region=roi,
-                maxPixels=1e9,
-                fileFormat='GeoTIFF',
-                formatOptions={
-                    'cloudOptimized': True  
-                }
-            )
-            task.start()
+            if clouds:
+                mask = filter_clouds(name, img)
+                cloud_percentage = compute_clouds(img, mask)
+                cloud_flag = True if cloud_percentage <= clouds else False
+            else:
+                cloud_flag = True 
+                
+            if cloud_flag:
+                task = ee.batch.Export.image.toCloudStorage(
+                    image=img,
+                    bucket=BUCKET_NAME,  
+                    description=f'rtgs_export_{name}_{img_id}',
+                    fileNamePrefix=folder, 
+                    scale=scale,
+                    region=roi,
+                    maxPixels=1e9,
+                    fileFormat='GeoTIFF',
+                    formatOptions={
+                        'cloudOptimized': True  
+                    }
+                )
+                task.start()
 
-            while task.active():
-                print(f'Processing file {img_id}...')
-                time.sleep(30)
+                while task.active():
+                    print(f'Processing file {img_id}...')
+                    time.sleep(30)
 
     print("Exporting is complete!")
