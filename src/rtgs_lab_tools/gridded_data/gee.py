@@ -3,6 +3,7 @@
 import time
 import logging
 import os
+import pandas as pd
 import geopandas as gpd
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -99,20 +100,123 @@ def list_GEE_vars(source):
 def load_roi(path):
     gdf = gpd.read_file(path)
     geojson_dict = gdf.__geo_interface__
-    fc = ee.FeatureCollection(geojson_dict)
-    geom = fc.geometry()
+    geom = ee.FeatureCollection(geojson_dict)
     return geom
 
-def download_GEE_raster(name, source, bands, roi, scale, start_date, end_date, 
-                      out_dest, folder, clouds):
-    """A function to download GEE data.
+def make_reducer(roi, scale):
+    def _fn(img):
+        vals = img.reduceRegion(
+            ee.Reducer.first(),
+            roi,
+            scale,
+            bestEffort=True,
+            maxPixels=1e13
+        )
+        
+        date_str = ee.Date(img.get('system:time_start')).format('YYYY-MM-dd')
+        return ee.Feature(roi, vals) \
+            .set('date', date_str)
+    return _fn
+
+def search_images(name, source, roi, start_date, end_date, 
+                      out_dir):
+    """A function to get all available images for a give date range.
+
+    Args:
+        name: Short dataset name
+        source: GEE path to the dataset to download
+        roi: GEE FeatureCollection with region of interest
+        start_date: Start date (YYYY-MM-DD)
+        end_date: End date (YYYY-MM-DD)
+        out_dir: Local output directory
+    Returns:
+        Path to downloaded file
+    """
+    def clip_img(img):
+        return img.clip(roi)
+    assert roi.geometry().getInfo()['type'] in  ['Polygon', 'MultiPolygon'], f"ERROR: The Region of Interest (roi) should be POLYGON or MULTIPOLYGON. Now it is: {roi.geometry().getInfo()['type']}"
+    assert name in qa_bands.keys(), f"ERROR: The selected dataset, {name}, is not listed as satellite imagery: {list(qa_bands.keys())}"
+    
+    if name in qa_bands.keys():
+        qa_band = qa_bands[name]
+
+    collection = ee.ImageCollection(source)\
+            .filterBounds(roi)\
+            .filterDate(start_date, end_date)
+    collection_list = collection.toList(collection.size())
+    size = collection.size().getInfo()
+    print(f"Found {size} files to export")
+
+    for i in range(size):
+        img = clip_img(ee.Image(collection_list.get(i)))
+        img_id = img.id().getInfo() or f"image_{i}"
+
+        mask = filter_clouds(name, img, qa_band)
+        cloud_percentage = compute_clouds(img, mask, roi)
+        print(img_id, ee.Date(img.get('system:time_start')).format('YYYY-MM-dd').getInfo(), cloud_percentage)
+
+
+def download_GEE_point(name, source, bands, roi, start_date, end_date, 
+                      out_dir):
+    """A function to download GEE pixel for a given point.
 
     Args:
         name: Short dataset name
         source: GEE path to the dataset to download
         bands: List of variable names
         roi: GEE FeatureCollection with region of interest
-        scale: Image resolution
+        start_date: Start date (YYYY-MM-DD)
+        end_date: End date (YYYY-MM-DD)
+        out_dir: Local output directory
+    Returns:
+        Path to downloaded file
+    """
+    def clip_img(img):
+        return img.clip(roi)
+
+    if name in qa_bands.keys():
+        qa_band = qa_bands[name]
+    
+    if len(bands)>0 and qa_band:
+        bands += [qa_band] if qa_band not in bands else [] #adding QA band if not included
+    else:
+        bands = list_GEE_vars(source)
+
+    collection = ee.ImageCollection(source)\
+            .filterBounds(roi)\
+            .filterDate(start_date, end_date)
+    if bands is not None:
+        collection = collection.select(bands)
+
+    size = collection.size().getInfo()
+    print(f"Found {size} images to process")
+
+    scale = collection.first().select(bands[0]).projection().nominalScale().getInfo()
+
+    os.makedirs(out_dir, exist_ok=True)
+    features = []
+    points = roi.toList(roi.size())
+    for i in range(roi.size().getInfo()):
+        point = ee.Feature(points.get(i)).geometry()
+        reducer = make_reducer(point, scale)
+        feature_collection = collection.map(reducer)
+        for feature in feature_collection.getInfo()['features']:
+            row = {**{'lon': feature['geometry']['coordinates'][0], 'lat': feature['geometry']['coordinates'][1]}, **feature['properties']}
+            features.append(row)
+    df = pd.DataFrame(features).drop_duplicates()
+    df.to_csv(os.path.join(out_dir, f'{name}_{start_date}_{end_date}.csv'), index=None)
+    print("Exporting is complete!")
+
+
+def download_GEE_raster(name, source, bands, roi, start_date, end_date, 
+                      out_dest, folder, clouds):
+    """A function to download GEE raster.
+
+    Args:
+        name: Short dataset name
+        source: GEE path to the dataset to download
+        bands: List of variable names
+        roi: GEE FeatureCollection with region of interest
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
         output_file: Output files destination type
@@ -123,9 +227,16 @@ def download_GEE_raster(name, source, bands, roi, scale, start_date, end_date,
     """
     def clip_img(img):
         return img.clip(roi)
-
-    qa_band = qa_bands[name]
-    bands += [qa_band] if qa_band not in bands else []
+    
+    roi = roi.geometry()
+    
+    if name in qa_bands.keys():
+        qa_band = qa_bands[name]
+    
+    if len(bands)>0 and qa_band:
+        bands += [qa_band] if qa_band not in bands else [] #adding QA band if not included
+    else:
+        bands = list_GEE_vars(source)
 
     collection = ee.ImageCollection(source)\
             .filterBounds(roi)\
@@ -135,10 +246,6 @@ def download_GEE_raster(name, source, bands, roi, scale, start_date, end_date,
     collection_list = collection.toList(collection.size())
     size = collection.size().getInfo()
     print(f"Found {size} files to export")
-
-    if scale is None:
-        img_bands = list_GEE_vars(source)
-        scale = collection.first().select(img_bands[0]).projection().nominalScale().getInfo()
 
     if out_dest=='drive':
         for i in range(size):
