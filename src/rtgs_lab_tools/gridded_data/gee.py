@@ -32,27 +32,33 @@ except ImportError:
     )
 
 def compute_clouds(img, mask, roi):
+    scale = mask.projection().nominalScale().getInfo()
+
     pixel_area = mask.unmask(0).reduceRegion(
         reducer=ee.Reducer.count(),
         geometry=roi,
-        scale=img.projection().nominalScale(),
+        scale=scale,
         maxPixels=1e13
-    )
-    total_pixels = pixel_area.getInfo()['mask']
+    ).getInfo()  # <-- Move .getInfo() here
+    total_pixels = pixel_area.get('clouds', None)
+    if not total_pixels:
+        return 100.0
 
     valid_area = mask.reduceRegion(
         reducer=ee.Reducer.sum(),
         geometry=roi,
-        scale=img.projection().nominalScale(),
+        scale=scale,
         maxPixels=1e13
-    )
-    valid_pixels = valid_area.getInfo()['mask']
+    ).getInfo()  # <-- Move .getInfo() here
+    valid_pixels = valid_area.get('clouds', 0)
+    if not valid_pixels:
+        valid_pixels = 0
 
     masked_pct = 100 * (1 - valid_pixels / total_pixels)
     return masked_pct
 
 def filter_clouds(name, img, qa_band):
-    qa = img.select(qa_band).rename('mask')
+    qa = img.select(qa_band)
     if name=='MOD' or name=='MYD':
         cloud  = qa.bitwiseAnd(1 << 0).eq(1)
         shadow = qa.bitwiseAnd(1 << 1).eq(1)
@@ -93,10 +99,11 @@ def list_GEE_vars(source):
 def load_roi(path):
     gdf = gpd.read_file(path)
     geojson_dict = gdf.__geo_interface__
-    roi = ee.FeatureCollection(geojson_dict)
-    return roi
+    fc = ee.FeatureCollection(geojson_dict)
+    geom = fc.geometry()
+    return geom
 
-def download_GEE_data(name, source, bands, roi, scale, start_date, end_date, 
+def download_GEE_raster(name, source, bands, roi, scale, start_date, end_date, 
                       out_dest, folder, clouds):
     """A function to download GEE data.
 
@@ -118,14 +125,13 @@ def download_GEE_data(name, source, bands, roi, scale, start_date, end_date,
         return img.clip(roi)
 
     qa_band = qa_bands[name]
-    bands += qa_band if qa_band not in bands else []
+    bands += [qa_band] if qa_band not in bands else []
 
     collection = ee.ImageCollection(source)\
-              .filterBounds(roi)\
-              .filterDate(start_date, end_date)
+            .filterBounds(roi)\
+            .filterDate(start_date, end_date)
     if bands is not None:
         collection = collection.select(bands)
-    collection = collection.map(clip_img)
     collection_list = collection.toList(collection.size())
     size = collection.size().getInfo()
     print(f"Found {size} files to export")
@@ -134,26 +140,24 @@ def download_GEE_data(name, source, bands, roi, scale, start_date, end_date,
         img_bands = list_GEE_vars(source)
         scale = collection.first().select(img_bands[0]).projection().nominalScale().getInfo()
 
-
     if out_dest=='drive':
         for i in range(size):
-            img = ee.Image(collection_list.get(i))
+            img = clip_img(ee.Image(collection_list.get(i)))
             img_id = img.id().getInfo() or f"image_{i}"
 
             if clouds is not None:
-                mask = filter_clouds(name, img)
-                cloud_percentage = compute_clouds(img, mask)
-                cloud_flag = True if cloud_percentage <= clouds else False
+                mask = filter_clouds(name, img, qa_band)
+                cloud_percentage = compute_clouds(img, mask, roi)
+                cloud_flag = True if cloud_percentage <= int(clouds) else False
             else:
                 cloud_flag = True 
                 
             if cloud_flag:
                 task = ee.batch.Export.image.toDrive(
-                    image=img,
+                    image=img.select(bands[:-1]).toFloat(),
                     folder=folder,
                     fileNamePrefix=f'rtgs_export_{name}_{img_id}',
-                    region=roi,
-                    scale=scale
+                    region=roi
                 )
 
                 task.start()
@@ -168,19 +172,18 @@ def download_GEE_data(name, source, bands, roi, scale, start_date, end_date,
             img_id = img.id().getInfo() or f"image_{i}"
 
             if clouds:
-                mask = filter_clouds(name, img)
-                cloud_percentage = compute_clouds(img, mask)
-                cloud_flag = True if cloud_percentage <= clouds else False
+                mask = filter_clouds(name, img, qa_band)
+                cloud_percentage = compute_clouds(img, mask, roi)
+                cloud_flag = True if cloud_percentage <= int(clouds) else False
             else:
                 cloud_flag = True 
                 
             if cloud_flag:
                 task = ee.batch.Export.image.toCloudStorage(
-                    image=img,
+                    image=img.select(bands[:-1]).toFloat(),
                     bucket=BUCKET_NAME,  
                     description=f'rtgs_export_{name}_{img_id}',
                     fileNamePrefix=folder, 
-                    scale=scale,
                     region=roi,
                     maxPixels=1e9,
                     fileFormat='GeoTIFF',

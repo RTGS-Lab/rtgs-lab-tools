@@ -45,12 +45,12 @@ def gridded_data_cli(ctx):
 def get_gee_data(ctx, source, variables, start_date, end_date, roi_type, roi, clouds, out_dest, folder, scale,
     verbose, log_file, no_postgres_log, note,
 ):
-    """Download and process GEE data."""
+    """Download GEE raster data to the google drive or google bucket."""
     cli_ctx = ctx.obj
     cli_ctx.setup("gee-data", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import  download_GEE_data, load_roi, sources
+        from ..gridded_data import  download_GEE_raster, load_roi, sources
 
         # Load ROI from file
         if roi:
@@ -58,26 +58,27 @@ def get_gee_data(ctx, source, variables, start_date, end_date, roi_type, roi, cl
 
         # Parse variables
         if variables:
-            variable_list = list(variables)
-        
-        #TODO: roi_type logic, i.e. pixel vs region download
-
+            variable_list = list(variables)[0].replace(" ", "").split(',')
+        #TODO: roi_type logic, i.e. pixel vs region download: for a pixel download csv locally, for a bbox export a tiff to the cloud
+        #TODO: a func to create a csv of image meta info (clouds)
+        #TODO: a func to upload images from the csv
         # Download data 
-        cli_ctx.logger.info(f"Downloading from {source}: {variables}")
-        output_path = download_GEE_data(
-            name=source,
-            source=sources[source],
-            bands=variable_list,
-            roi=roi_bounds,
-            scale=scale,
-            start_date=start_date,
-            end_date=end_date,
-            out_dest=out_dest,
-            folder=folder,
-            clouds=clouds
-        )
+        if roi_type=='bbox':
+            cli_ctx.logger.info(f"Downloading from {source}: {variables}")
+            output_path = download_GEE_raster(
+                name=source,
+                source=sources[source],
+                bands=variable_list,
+                roi=roi_bounds,
+                scale=scale,
+                start_date=start_date,
+                end_date=end_date,
+                out_dest=out_dest,
+                folder=folder,
+                clouds=clouds
+            )
 
-        click.echo(f"GEE data downloaded to: {output_path}")
+        click.echo(f"GEE data downloaded to: {out_dest}/{folder}")
 
         # Log success to git
         operation = f"Download GEE data for variables: {', '.join(variables)}"
@@ -122,8 +123,9 @@ def get_gee_data(ctx, source, variables, start_date, end_date, roi_type, roi, cl
             "end_date": end_date,
             "roi_type": roi_type,
             "roi": roi,
-            "output_dir": output_dir,
+            "out_dest": out_dest,
             "clouds": clouds,
+            "folder": folder,
             "note": note,
         }
         #cli_ctx.log_error("ERA5 error", e, parameters, __file__)

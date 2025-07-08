@@ -206,6 +206,7 @@ LOGGING_DB_USER=postgres
 LOGGING_DB_PASSWORD=O^Ro,p<I3q;&]_~B
 
 GEE_PROJECT = your_gee_project
+BUCKET_NAME = google_bucket_name
 
 # Optional API Keys
 PARTICLE_ACCESS_TOKEN=your_particle_token

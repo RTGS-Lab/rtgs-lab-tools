@@ -115,6 +115,11 @@ class Config:
     def GEE_PROJECT(self) -> Optional[str]:
         """Copernicus CDS API key."""
         return os.getenv("GEE_PROJECT")
+    
+    @property
+    def BUCKET_NAME(self) -> Optional[str]:
+        """Copernicus CDS API key."""
+        return os.getenv("BUCKET_NAME")
 
     @property
     def logging_instance_connection_name(self) -> Optional[str]:
