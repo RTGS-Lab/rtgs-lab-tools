@@ -5,9 +5,11 @@ sources = {
     'MOD': "MODIS/061/MOD09GA", # Terra
     'MYD': "MODIS/006/MYDOCGA", # Aqua
     'VIIRS': "NASA/VIIRS/002/VNP09GA",
+    "SMAP": "NASA/SMAP/SPL3SMP_E/005",
     'ERA5-Land': "ECMWF/ERA5_LAND/DAILY_AGGR",
     'OpenET': "OpenET/ENSEMBLE/CONUS/GRIDMET/MONTHLY/v2_0",
     'NLCD': "USGS/NLCD_RELEASES/2021_REL/NLCD",
+    "ESA": "ESA/WorldCover/v200",
     #... extend as needed
 }
 

@@ -146,15 +146,17 @@ def search_images(name, source, roi, start_date, end_date,
     collection_list = collection.toList(collection.size())
     size = collection.size().getInfo()
     print(f"Found {size} files to export")
-
+    d = []
     for i in range(size):
         img = clip_img(ee.Image(collection_list.get(i)))
         img_id = img.id().getInfo() or f"image_{i}"
 
         mask = filter_clouds(name, img, qa_band)
         cloud_percentage = compute_clouds(img, mask, roi)
-        print(img_id, ee.Date(img.get('system:time_start')).format('YYYY-MM-dd').getInfo(), cloud_percentage)
-
+        d.append([img_id, ee.Date(img.get('system:time_start')).format('YYYY-MM-dd').getInfo(), cloud_percentage])
+    df = pd.DataFrame(data=d, columns=['ID', 'date', 'clouds'])
+    df.to_csv(os.path.join(out_dir, f'search_results_{name}_{start_date}_{end_date}.csv'), index=None)
+    print("Search is complete!")
 
 def download_GEE_point(name, source, bands, roi, start_date, end_date, 
                       out_dir):
@@ -171,15 +173,8 @@ def download_GEE_point(name, source, bands, roi, start_date, end_date,
     Returns:
         Path to downloaded file
     """
-    def clip_img(img):
-        return img.clip(roi)
-
-    if name in qa_bands.keys():
-        qa_band = qa_bands[name]
     
-    if len(bands)>0 and qa_band:
-        bands += [qa_band] if qa_band not in bands else [] #adding QA band if not included
-    else:
+    if len(bands)<0:
         bands = list_GEE_vars(source)
 
     collection = ee.ImageCollection(source)\

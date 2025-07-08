@@ -21,6 +21,8 @@ def gridded_data_cli(ctx):
     """Gridded climate data tools."""
     ctx.ensure_object(CLIContext)
 
+#TODO: add SMAP and ESA LC 2021
+
 ########################################################
 # SEARCH FOR IMAGES
 ########################################################
