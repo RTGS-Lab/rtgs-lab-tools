@@ -58,5 +58,5 @@ __all__ = [
     "ParticleClient",
     "ErrorCodeParser",
     # Climate data
-    'download_GEE_raster',
+    "download_GEE_raster",
 ]
