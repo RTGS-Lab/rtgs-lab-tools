@@ -63,7 +63,7 @@ def gee_search(
     cli_ctx.setup("gee-point", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import search_images, load_roi, sources
+        from ..gridded_data import load_roi, search_images, sources
 
         # Load ROI from file
         if roi:
@@ -375,7 +375,7 @@ def list_gee_variables(ctx, source, verbose, log_file, no_postgres_log, note):
     cli_ctx.setup("gee-dataset-varaibles", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import sources, list_GEE_vars
+        from ..gridded_data import list_GEE_vars, sources
 
         band_names = list_GEE_vars(sources[source])
         click.echo(f"Available GEE variables for {source}:")
