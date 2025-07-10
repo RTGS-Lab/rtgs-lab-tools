@@ -19,7 +19,6 @@ def test_config_from_env_file(temp_env_file):
     assert config.db_user == "test_user"
     assert config.db_password == "test_password"
     assert config.particle_access_token == "test_token"
-    assert config.cds_api_key == "test_cds_key"
 
 
 def test_config_missing_required_vars():
@@ -56,4 +55,3 @@ def test_config_optional_values():
         config = Config(env_file="/nonexistent/.env")
 
         assert config.particle_access_token is None
-        assert config.cds_api_key is None

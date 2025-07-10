@@ -17,7 +17,7 @@ from .data_parser.parsers.factory import ParserFactory
 from .device_configuration import ParticleClient, ParticleConfigUpdater
 
 # Climate data
-from .gridded_data import ERA5Client, download_era5_data, process_era5_data
+from .gridded_data import download_GEE_raster
 
 # High-level data extraction functions
 from .sensing_data import extract_data, get_raw_data, list_available_projects
@@ -58,7 +58,5 @@ __all__ = [
     "ParticleClient",
     "ErrorCodeParser",
     # Climate data
-    "ERA5Client",
-    "download_era5_data",
-    "process_era5_data",
+    "download_GEE_raster",
 ]

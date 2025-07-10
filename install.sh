@@ -220,6 +220,16 @@ run_setup_credentials() {
     fi
 }
 
+# Google Earth Engine Authentication
+auth_gee() {
+    if command -v python &> /dev/null && python -c "import rtgs_lab_tools" 2>/dev/null; then
+        python -c "import ee; ee.Authenticate()"
+        print_success "GEE Authentication is completed"
+    else
+        print_warning "Could not run setup credentials command. Package may not be properly installed."
+    fi
+}
+
 # Check if required directories exist
 check_directories() {
     print_status "Checking project structure..."
@@ -255,9 +265,9 @@ show_next_steps() {
     echo -e "${YELLOW}Next Steps:${NC}"
     echo -e "1. ${BLUE}Activate the virtual environment:${NC}"
     if [[ "$OS" == "windows" ]]; then
-        echo -e "   ${BLUE}source .venv/Scripts/activate${NC}"
+        echo -e "   ${BLUE}source venv/Scripts/activate${NC}"
     else
-        echo -e "   ${BLUE}source .venv/bin/activate${NC}"
+        echo -e "   ${BLUE}source venv/bin/activate${NC}"
     fi
     
     echo -e "\n2. ${BLUE}Configure your credentials:${NC}"
@@ -295,7 +305,8 @@ main() {
     upgrade_pip
     install_package
     run_setup_credentials
-    
+    auth_gee
+
     show_next_steps
 }
 

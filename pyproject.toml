@@ -27,6 +27,7 @@ classifiers = [
 ]
 dependencies = [
     "pandas>=1.5.0",
+    'geopandas',
     "numpy>=1.21.0",
     "sqlalchemy>=1.4.0",
     "psycopg2-binary>=2.9.0",
@@ -45,6 +46,9 @@ climate = [
     "xarray>=2022.3.0",
     "cdsapi>=0.5.0",
     "netcdf4>=1.6.0",
+    "earthengine-api>=0.1.375,<0.2",
+    "geemap>=0.22.0",
+    'geopandas'
 ]
 visualization = [
     "matplotlib>=3.5.0",
