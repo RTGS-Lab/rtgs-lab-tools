@@ -162,16 +162,19 @@ rtgs visualize --file data.csv --multi-param "node001,Data.Temperature" --multi-
 rtgs visualize --file data.csv --list-params
 ```
 
-### ERA5 Climate Data
+### Google Earth Engine (GEE) Data
 ```bash
-# Download temperature and precipitation
-rtgs era5 --variables 2m_temperature total_precipitation --start-date 2023-01-01 --end-date 2023-12-31
+# Download MOD09GA band 1 and 2 imagery between 06/25/25 and 07/01/2025 for a selected region of interest (roi) with cloud percentage less or equal to 50 to a Google Drive into test_tiff folder
+rtgs gridded-data get-gee-raster --source MOD --variables "sur_refl_b01, sur_refl_b02" --start-date 2025-06-25 --end-date 2025-07-01 --roi ./data/test_bbox_roi.json --clouds 50 --out-dest drive --folder test_tiff 
 
-# Specific region and time
-rtgs era5 --variables 2m_temperature --start-date 2023-06-01 --end-date 2023-08-31 --area "49,-97,43,-89" --time-hours "00:00,12:00"
+# Download MOD09GA band 1 and 2 point-like pixel data between 06/25/25 and 07/01/2025 for a selected region of interest (roi) to a local folder ./data as a csv file
+rtgs gridded-data get-gee-point --source MOD --variables "sur_refl_b01, sur_refl_b02" --start-date 2025-06-25 --end-date 2025-07-01 --roi ./data/test_point_roi.json --out-dir ./data
 
-# List available variables
-rtgs era5 --list-variables
+# List available GEE datasets
+rtgs gridded-data list-gee-datasets
+
+# List available variables for MOD09GA dataset
+rtgs gridded-data list-gee-variables -s MOD
 ```
 
 ### Error Analysis
@@ -328,10 +331,11 @@ python -m pydoc rtgs_lab_tools
 ### GEMS Database
 Contact Bryan Runck (runck014@umn.edu) for database credentials.
 
-### Copernicus CDS (ERA5)
-1. Register at [CDS](https://cds.climate.copernicus.eu/)
-2. Get your API key from the user profile
-3. Add to `.env` file or configure `~/.cdsapirc`
+### Google Earth Engine (GEE)
+1. Register at [Google Cloud](https://cloud.google.com/)
+2. Create a project
+3. Allow GEE API
+3. Add the project name to `.env` file 
 
 ### Particle Cloud API
 1. Create account at [Particle Console](https://console.particle.io/)
@@ -344,11 +348,6 @@ Contact Bryan Runck (runck014@umn.edu) for database credentials.
 - Ensure UMN VPN is connected
 - Verify credentials in `.env` file
 - Check firewall settings
-
-### ERA5 Download Issues
-- Verify CDS API key configuration
-- Check data availability (5-day delay for recent data)
-- Monitor CDS queue status
 
 ### Device Management Issues
 - Verify Particle access token
