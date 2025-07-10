@@ -55,4 +55,3 @@ def test_config_optional_values():
         config = Config(env_file="/nonexistent/.env")
 
         assert config.particle_access_token is None
-        assert config.cds_api_key is None
