@@ -87,6 +87,9 @@ git clone https://github.com/RTGS-Lab/rtgs-lab-tools.git
 cd rtgs-lab-tools
 python -m venv venv
 source venv/bin/activate
+# On macOS with zsh, use quotes:
+pip install -e ".[all]"
+# On other systems:
 pip install -e .[all]
 ```
 

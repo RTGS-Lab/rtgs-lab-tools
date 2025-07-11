@@ -203,7 +203,8 @@ install_package() {
     print_status "Installing RTGS Lab Tools in development mode..."
     
     # Install in editable mode with all dependencies
-    python -m pip install -e .[all]
+    # Use quotes for zsh compatibility on macOS
+    python -m pip install -e ".[all]"
     
     print_success "Package installed successfully"
 }
