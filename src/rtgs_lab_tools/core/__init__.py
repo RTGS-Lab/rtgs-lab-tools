@@ -11,6 +11,12 @@ from .exceptions import (
     ValidationError,
 )
 from .logging import setup_logging
+from .postgres_control import (
+    disable_postgres_logging,
+    enable_postgres_logging,
+    get_postgres_logging_status,
+    is_postgres_logging_enabled,
+)
 from .postgres_logger import PostgresLogger
 
 __all__ = [
@@ -26,4 +32,8 @@ __all__ = [
     "CLIContext",
     "setup_logging_for_tool",
     "setup_postgres_logger",
+    "enable_postgres_logging",
+    "disable_postgres_logging",
+    "is_postgres_logging_enabled",
+    "get_postgres_logging_status",
 ]

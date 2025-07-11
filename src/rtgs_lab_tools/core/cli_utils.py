@@ -49,6 +49,15 @@ def setup_postgres_logger(
     Returns:
         PostgresLogger instance or None if disabled/failed
     """
+    # Check global postgres logging flag first
+    from .postgres_control import is_postgres_logging_enabled
+
+    if not is_postgres_logging_enabled():
+        logging.getLogger().debug(
+            f"Postgres logging disabled globally - skipping postgres logger setup for {tool_name}"
+        )
+        return None
+
     if disable:
         return None
 
@@ -202,8 +211,10 @@ DB_PASSWORD=your_password
 LOGGING_DB_HOST=34.170.80.6
 LOGGING_DB_PORT=5432
 LOGGING_DB_NAME=logs
-LOGGING_DB_USER=postgres
-LOGGING_DB_PASSWORD=O^Ro,p<I3q;&]_~B
+LOGGING_DB_USER=your_logging_username
+LOGGING_DB_PASSWORD=your_logging_password
+LOGGING_INSTANCE_CONNECTION_NAME=your_gcp_instance_connection_name
+POSTGRES_LOGGING_STATUS=False
 
 GEE_PROJECT = your_gee_project
 BUCKET_NAME = google_bucket_name
@@ -240,12 +251,16 @@ def validate_date_format(date_str: str, param_name: str) -> str:
         ValidationError: If date format is invalid
     """
     try:
-        # Try parsing the date
-        datetime.strptime(date_str, "%Y-%m-%d")
-        return date_str
+        # Try parsing as datetime first, then as date
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+            return date_str
+        except ValueError:
+            datetime.strptime(date_str, "%Y-%m-%d")
+            return date_str
     except ValueError:
         raise ValidationError(
-            f"Invalid {param_name} format. Use YYYY-MM-DD (e.g., 2023-01-01)"
+            f"Invalid {param_name} format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS (e.g., 2023-01-01 or 2023-01-01 14:30:00)"
         )
 
 
@@ -503,6 +518,30 @@ class CLIContext:
                     script_path=script_path,
                     additional_sections=additional_sections,
                 )
+                # Close connections after successful logging to prevent connection leaks
+                self.postgres_logger.close()
             except Exception as e:
                 if self.logger:
                     self.logger.error(f"Failed to create postgres log: {e}")
+                # Close connections even on error to prevent leaks
+                try:
+                    self.postgres_logger.close()
+                except:
+                    pass
+
+    def cleanup(self):
+        """Clean up resources, especially database connections."""
+        if self.postgres_logger:
+            try:
+                self.postgres_logger.close()
+            except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Failed to close postgres logger: {e}")
+
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - ensures cleanup."""
+        self.cleanup()

@@ -446,6 +446,15 @@ class PostgresLogger:
         Returns:
             True if successful, False otherwise
         """
+        # Check global postgres logging flag
+        from .postgres_control import is_postgres_logging_enabled
+
+        if not is_postgres_logging_enabled():
+            logger.debug(
+                f"Postgres logging disabled globally - skipping postgres save for {self.tool_name} operation: {operation}"
+            )
+            return False
+
         try:
             self.ensure_table_exists()
             context = self.get_execution_context(script_path)
@@ -513,6 +522,15 @@ class PostgresLogger:
         Returns:
             True if successfully saved to database, False otherwise
         """
+        # Check global postgres logging flag
+        from .postgres_control import is_postgres_logging_enabled
+
+        if not is_postgres_logging_enabled():
+            logger.debug(
+                f"Postgres logging disabled globally - skipping postgres log execution for {self.tool_name} operation: {operation}"
+            )
+            return False
+
         return self.save_to_postgres(
             operation=operation,
             parameters=parameters,
@@ -563,3 +581,20 @@ class PostgresLogger:
         except Exception as e:
             logger.error(f"Failed to get recent logs: {e}")
             return []
+
+    def close(self):
+        """Close database connections and clean up resources."""
+        try:
+            if self.db_manager:
+                self.db_manager.close()
+                logger.debug(f"Closed database connections for {self.tool_name}")
+        except Exception as e:
+            logger.error(f"Error closing database connections: {e}")
+
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - ensures cleanup."""
+        self.close()

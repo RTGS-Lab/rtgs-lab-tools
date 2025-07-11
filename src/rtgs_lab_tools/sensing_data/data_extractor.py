@@ -155,10 +155,21 @@ def extract_data(
     if start_date is None:
         start_date = "2018-01-01"
     if end_date is None:
-        end_date = datetime.now().strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     validate_date_format(start_date, "start-date")
     validate_date_format(end_date, "end-date")
+
+    # Normalize end_date to end of day if it's in date-only format
+    # This ensures that when user specifies same date for start and end, they get the whole day
+    try:
+        # Check if end_date is in date-only format (YYYY-MM-DD)
+        datetime.strptime(end_date, "%Y-%m-%d")
+        # If it is, convert to end of day
+        end_date = end_date + " 23:59:59"
+    except ValueError:
+        # end_date already includes time, use as-is
+        pass
 
     # Parse node IDs if provided as string
     if isinstance(node_ids, str):
@@ -296,14 +307,24 @@ def get_raw_data(
     if start_date is None:
         start_date = "2018-01-01"
     if end_date is None:
-        end_date = datetime.now().strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Validate date format
+    # Validate date format (accept both YYYY-MM-DD and YYYY-MM-DD HH:MM:SS)
     try:
-        datetime.strptime(start_date, "%Y-%m-%d")
-        datetime.strptime(end_date, "%Y-%m-%d")
+        # Try datetime format first, then date format
+        try:
+            datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            datetime.strptime(start_date, "%Y-%m-%d")
+
+        try:
+            datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            datetime.strptime(end_date, "%Y-%m-%d")
     except ValueError as e:
-        raise ValidationError(f"Invalid date format: {e}")
+        raise ValidationError(
+            f"Invalid date format: {e}. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS"
+        )
 
     # Check if project is "all" to handle special case
     all_projects_mode = project.lower() == "all"
@@ -341,6 +362,17 @@ def get_raw_data(
         for proj, count in matching_projects:
             logger.info(f"  - {proj} ({count} nodes)")
         logger.info(f"Using pattern '%{project}%' to match all of them")
+
+    # Normalize end_date to end of day if it's in date-only format
+    # This ensures that when user specifies same date for start and end, they get the whole day
+    try:
+        # Check if end_date is in date-only format (YYYY-MM-DD)
+        datetime.strptime(end_date, "%Y-%m-%d")
+        # If it is, convert to end of day
+        end_date = end_date + " 23:59:59"
+    except ValueError:
+        # end_date already includes time, use as-is
+        pass
 
     # Build query for raw data
     if all_projects_mode:
