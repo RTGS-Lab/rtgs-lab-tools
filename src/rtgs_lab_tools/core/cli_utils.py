@@ -213,6 +213,7 @@ LOGGING_DB_PORT=5432
 LOGGING_DB_NAME=logs
 LOGGING_DB_USER=your_logging_username
 LOGGING_DB_PASSWORD=your_logging_password
+LOGGING_INSTANCE_CONNECTION_NAME=your_gcp_instance_connection_name
 POSTGRES_LOGGING_STATUS=False
 
 GEE_PROJECT = your_gee_project

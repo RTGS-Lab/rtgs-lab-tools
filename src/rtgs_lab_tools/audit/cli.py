@@ -52,6 +52,7 @@ def report(start_date, end_date, tool_name, output_dir):
     """Generate audit report with markdown files for the specified date range."""
     operation_start = time.time()
 
+    audit_service = None
     try:
         click.echo(f"Generating audit report from {start_date} to {end_date}")
         if tool_name:
@@ -161,9 +162,9 @@ def report(start_date, end_date, tool_name, output_dir):
         }
 
         try:
-            audit_service = AuditService()
+            error_audit_service = AuditService()
             report_service = ReportService()
-            audit_service.log_audit_operation(
+            error_audit_service.log_audit_operation(
                 "Generate audit report", parameters, results
             )
 
@@ -174,11 +175,16 @@ def report(start_date, end_date, tool_name, output_dir):
                 results=results,
             )
             click.echo(f"Failed audit operation logged: {log_path}")
+            error_audit_service.close()
         except Exception:
             pass  # Don't fail if logging fails
 
         click.echo(f"❌ Error generating audit report: {e}", err=True)
         raise click.ClickException(str(e))
+    finally:
+        # Clean up database connections
+        if audit_service:
+            audit_service.close()
 
 
 @audit_cli.command()
@@ -202,7 +208,11 @@ def recent(limit, tool_name, minutes):
     """Show recent log entries."""
     operation_start = time.time()
 
+    audit_service = None
     try:
+        # Show status to user immediately
+        click.echo("Retrieving recent audit logs...")
+        
         # Use audit service for business logic
         audit_service = AuditService()
 
@@ -231,6 +241,8 @@ def recent(limit, tool_name, minutes):
 
         if not logs:
             click.echo("No logs found.")
+            click.echo("\nNote: If PostgreSQL logging is disabled, no audit logs will be available.")
+            click.echo("Check POSTGRES_LOGGING_STATUS in your .env file to enable logging.")
             return
 
         click.echo(f"Recent {len(logs)} log entries:")
@@ -283,6 +295,10 @@ def recent(limit, tool_name, minutes):
 
         click.echo(f"❌ Error retrieving recent logs: {e}", err=True)
         raise click.ClickException(str(e))
+    finally:
+        # Clean up database connections
+        if audit_service:
+            audit_service.close()
 
 
 @audit_cli.command()
@@ -320,6 +336,7 @@ def reproduce(logs_dir, output_file):
     """
     operation_start = time.time()
 
+    audit_service = None
     try:
         # Ensure output file is placed in logs directory
         output_file_path = logs_dir / output_file
@@ -457,9 +474,9 @@ def reproduce(logs_dir, output_file):
         }
 
         try:
-            audit_service = AuditService()
+            error_audit_service = AuditService()
             report_service = ReportService()
-            audit_service.log_audit_operation(
+            error_audit_service.log_audit_operation(
                 "Generate reproduction script from files", parameters, results
             )
 
@@ -470,11 +487,16 @@ def reproduce(logs_dir, output_file):
                 results=results,
             )
             click.echo(f"Failed audit operation logged: {log_path}")
+            error_audit_service.close()
         except Exception:
             pass  # Don't fail if logging fails
 
         click.echo(f"❌ Error generating reproduction script: {e}", err=True)
         raise click.ClickException(str(e))
+    finally:
+        # Clean up database connections
+        if audit_service:
+            audit_service.close()
 
 
 @audit_cli.command("enable-postgres-logging")

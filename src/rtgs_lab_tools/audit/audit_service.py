@@ -139,3 +139,8 @@ class AuditService:
             results=results,
             script_path=__file__,
         )
+
+    def close(self):
+        """Close database connections and cleanup resources."""
+        if hasattr(self.logger, 'db_manager') and self.logger.db_manager:
+            self.logger.db_manager.close()
