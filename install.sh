@@ -165,25 +165,29 @@ init_submodules() {
 create_venv() {
     print_status "Creating virtual environment..."
     
-    VENV_NAME="venv"
+    # Always create venv in the project root directory
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    VENV_PATH="$SCRIPT_DIR/venv"
     
-    if [[ -d "$VENV_NAME" ]]; then
+    if [[ -d "$VENV_PATH" ]]; then
         print_warning "Virtual environment already exists. Removing old one..."
-        rm -rf "$VENV_NAME"
+        rm -rf "$VENV_PATH"
     fi
     
-    $PYTHON_CMD -m venv "$VENV_NAME"
-    print_success "Virtual environment created: $VENV_NAME"
+    $PYTHON_CMD -m venv "$VENV_PATH"
+    print_success "Virtual environment created: $VENV_PATH"
 }
 
 # Activate virtual environment
 activate_venv() {
     print_status "Activating virtual environment..."
     
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
     if [[ "$OS" == "windows" ]]; then
-        source "venv/Scripts/activate"
+        source "$SCRIPT_DIR/venv/Scripts/activate"
     else
-        source "venv/bin/activate"
+        source "$SCRIPT_DIR/venv/bin/activate"
     fi
     
     print_success "Virtual environment activated"
@@ -265,10 +269,11 @@ show_next_steps() {
     
     echo -e "${YELLOW}Next Steps:${NC}"
     echo -e "1. ${BLUE}Activate the virtual environment:${NC}"
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     if [[ "$OS" == "windows" ]]; then
-        echo -e "   ${BLUE}source venv/Scripts/activate${NC}"
+        echo -e "   ${BLUE}source $SCRIPT_DIR/venv/Scripts/activate${NC}"
     else
-        echo -e "   ${BLUE}source venv/bin/activate${NC}"
+        echo -e "   ${BLUE}source $SCRIPT_DIR/venv/bin/activate${NC}"
     fi
     
     echo -e "\n2. ${BLUE}Configure your credentials:${NC}"
@@ -294,6 +299,10 @@ show_next_steps() {
 # Main installation process
 main() {
     print_header
+    
+    # Change to script directory to ensure we're in the project root
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    cd "$SCRIPT_DIR"
     
     detect_os
     check_directories

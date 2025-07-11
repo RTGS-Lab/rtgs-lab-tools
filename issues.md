@@ -59,14 +59,3 @@
 **Effort**: Medium - Requires understanding the existing device monitor functionality and adapting it to fit the established CLI patterns. Integration work rather than new development.
 
 ---
-
-
--extract tool BETWEEN query is not inclusive of current time, should get data through current time instead of stopping at 00:00:00 of current day
-
-**Analysis**: The extract tool's BETWEEN query has a time inclusivity issue where it only extracts data up to the start of the current day (00:00:00) rather than including data through the current time. This results in incomplete data extraction when running the tool during the day.
-
-**Scope**: Update the BETWEEN query logic in the extract tool to use the current timestamp instead of just the current date at 00:00:00. This ensures all available data up to the moment of extraction is included.
-
-**Effort**: Low - Simple query modification to change the end time from current date at midnight to current timestamp. Requires updating the SQL query generation logic.
-
----

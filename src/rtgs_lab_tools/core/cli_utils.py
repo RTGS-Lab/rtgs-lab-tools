@@ -249,12 +249,16 @@ def validate_date_format(date_str: str, param_name: str) -> str:
         ValidationError: If date format is invalid
     """
     try:
-        # Try parsing the date
-        datetime.strptime(date_str, "%Y-%m-%d")
-        return date_str
+        # Try parsing as datetime first, then as date
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+            return date_str
+        except ValueError:
+            datetime.strptime(date_str, "%Y-%m-%d")
+            return date_str
     except ValueError:
         raise ValidationError(
-            f"Invalid {param_name} format. Use YYYY-MM-DD (e.g., 2023-01-01)"
+            f"Invalid {param_name} format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS (e.g., 2023-01-01 or 2023-01-01 14:30:00)"
         )
 
 
