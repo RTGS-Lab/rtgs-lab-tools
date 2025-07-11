@@ -212,7 +212,7 @@ def recent(limit, tool_name, minutes):
     try:
         # Show status to user immediately
         click.echo("Retrieving recent audit logs...")
-        
+
         # Use audit service for business logic
         audit_service = AuditService()
 
@@ -241,8 +241,12 @@ def recent(limit, tool_name, minutes):
 
         if not logs:
             click.echo("No logs found.")
-            click.echo("\nNote: If PostgreSQL logging is disabled, no audit logs will be available.")
-            click.echo("Check POSTGRES_LOGGING_STATUS in your .env file to enable logging.")
+            click.echo(
+                "\nNote: If PostgreSQL logging is disabled, no audit logs will be available."
+            )
+            click.echo(
+                "Check POSTGRES_LOGGING_STATUS in your .env file to enable logging."
+            )
             return
 
         click.echo(f"Recent {len(logs)} log entries:")
