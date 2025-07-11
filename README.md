@@ -70,6 +70,19 @@ cd rtgs-lab-tools
 bash install.sh
 ```
 
+#### MSI (Minnesota Supercomputing Institute) Users
+
+Before running the installation script on MSI infrastructure, load the required modules:
+
+```bash
+module load python
+module load git
+# Then proceed with installation
+git clone https://github.com/RTGS-Lab/rtgs-lab-tools.git
+cd rtgs-lab-tools
+bash install.sh
+```
+
 The install script will:
 - Detect your operating system (Windows/macOS/Linux)
 - Verify Python 3.10+ installation
