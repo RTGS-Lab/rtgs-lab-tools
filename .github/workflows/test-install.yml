@@ -1,0 +1,91 @@
+name: Install Script Tests
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test-install:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            shell: bash
+          - os: windows-latest
+            shell: bash
+    
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    
+    - name: Run install script
+      run: |
+        bash install.sh
+    
+    - name: Verify installation and CLI commands
+      run: |
+        # Activate virtual environment
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          source venv/Scripts/activate
+        else
+          source venv/bin/activate
+        fi
+        
+        # Test that the package was installed
+        python -c "import rtgs_lab_tools; print('Package imported successfully')"
+        
+        # Test main CLI is available
+        rtgs --help
+        
+        # Test specific subcommands
+        rtgs sensing-data --help
+        rtgs visualization --help
+        rtgs gridded-data --help
+        rtgs device-configuration --help
+        rtgs error-analysis --help
+    
+    - name: Verify package installation
+      run: |
+        # Activate virtual environment
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          source venv/Scripts/activate
+        else
+          source venv/bin/activate
+        fi
+        
+        # Check package installation details
+        pip show rtgs-lab-tools
+        
+        # Verify key dependencies are available
+        python -c "
+        import sys
+        print(f'Python version: {sys.version}')
+        
+        try:
+            import rtgs_lab_tools
+            print('✓ rtgs_lab_tools package imported successfully')
+        except ImportError as e:
+            print(f'✗ Failed to import rtgs_lab_tools: {e}')
+            sys.exit(1)
+        
+        try:
+            from rtgs_lab_tools.cli import main
+            print('✓ CLI module imported successfully')
+        except ImportError as e:
+            print(f'✗ Failed to import CLI: {e}')
+            sys.exit(1)
+        "

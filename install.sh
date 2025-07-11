@@ -254,8 +254,7 @@ configure_claude_desktop() {
             CLAUDE_CONFIG_DIR="$USERPROFILE/AppData/Roaming/Claude"
             CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/claude_desktop_config.json"
             PYTHON_PATH="$SCRIPT_DIR/venv/Scripts/python.exe"
-            # Convert Windows path format
-            PARTICLE_PATH="$(cygpath -w "$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/" 2>/dev/null || echo "$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/")"
+            PARTICLE_PATH="$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/"
             ;;
         "linux")
             CLAUDE_CONFIG_DIR="$HOME/.config/Claude"
@@ -285,30 +284,8 @@ configure_claude_desktop() {
     # Generate the configuration
     print_status "Writing Claude Desktop MCP configuration..."
     
-    if [[ "$OS" == "windows" ]]; then
-        # Windows format with escaped backslashes
-        cat > "$CLAUDE_CONFIG_FILE" << EOF
-{
-  "mcpServers": {
-    "particle": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "${PARTICLE_PATH//\//\\\\}",
-        "run",
-        "particle.py"
-      ]
-    },
-    "rtgs_lab_tools": {
-      "command": "${PYTHON_PATH//\//\\\\}",
-      "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
-    }
-  }
-}
-EOF
-    else
-        # macOS and Linux format with forward slashes
-        cat > "$CLAUDE_CONFIG_FILE" << EOF
+    # Use forward slashes for all platforms (JSON accepts forward slashes on Windows)
+    cat > "$CLAUDE_CONFIG_FILE" << EOF
 {
   "mcpServers": {
     "particle": {
@@ -327,7 +304,6 @@ EOF
   }
 }
 EOF
-    fi
     
     if [[ $? -eq 0 ]]; then
         print_success "Claude Desktop MCP configuration created: $CLAUDE_CONFIG_FILE"
