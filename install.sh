@@ -253,8 +253,9 @@ configure_claude_desktop() {
         "windows")
             CLAUDE_CONFIG_DIR="$USERPROFILE/AppData/Roaming/Claude"
             CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/claude_desktop_config.json"
-            PYTHON_PATH="$SCRIPT_DIR/venv/Scripts/python.exe"
-            PARTICLE_PATH="$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/"
+            # Convert Unix-style paths to Windows-style paths (e.g., /c/path -> C:/path)
+            PYTHON_PATH="$(echo "$SCRIPT_DIR/venv/Scripts/python.exe" | sed 's|^/\([a-z]\)/|\U\1:/|')"
+            PARTICLE_PATH="$(echo "$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/" | sed 's|^/\([a-z]\)/|\U\1:/|')"
             ;;
         "linux")
             CLAUDE_CONFIG_DIR="$HOME/.config/Claude"
