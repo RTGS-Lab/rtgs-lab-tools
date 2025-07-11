@@ -9,6 +9,11 @@ import click
 
 from .audit_service import AuditService
 from .report_service import ReportService
+from ..core.postgres_control import (
+    enable_postgres_logging,
+    disable_postgres_logging,
+    get_postgres_logging_status,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -469,4 +474,56 @@ def reproduce(logs_dir, output_file):
             pass  # Don't fail if logging fails
 
         click.echo(f"❌ Error generating reproduction script: {e}", err=True)
+        raise click.ClickException(str(e))
+
+
+@audit_cli.command("enable-postgres-logging")
+def enable_postgres_logging_cmd():
+    """Enable postgres logging globally for all RTGS tools."""
+    try:
+        enable_postgres_logging()
+        click.echo("To enable postgres logging globally, add this to your .env file:")
+        click.echo("POSTGRES_LOGGING_STATUS=true")
+        click.echo("")
+        click.echo("After adding this setting, all RTGS tools will log to postgres when possible")
+    except Exception as e:
+        click.echo(f"❌ Error enabling postgres logging: {e}", err=True)
+        raise click.ClickException(str(e))
+
+
+@audit_cli.command("disable-postgres-logging")
+def disable_postgres_logging_cmd():
+    """Disable postgres logging globally for all RTGS tools."""
+    try:
+        disable_postgres_logging()
+        click.echo("To disable postgres logging globally, add this to your .env file:")
+        click.echo("POSTGRES_LOGGING_STATUS=false")
+        click.echo("")
+        click.echo("After adding this setting, RTGS tools will skip postgres logging")
+    except Exception as e:
+        click.echo(f"❌ Error disabling postgres logging: {e}", err=True)
+        raise click.ClickException(str(e))
+
+
+@audit_cli.command("postgres-logging-status")
+def postgres_logging_status_cmd():
+    """Show the current postgres logging status."""
+    try:
+        import os
+        status = get_postgres_logging_status()
+        env_value = os.getenv("POSTGRES_LOGGING_STATUS", "not set")
+        
+        status_icon = "✅" if status["enabled"] else "❌"
+        click.echo(f"Postgres logging status: {status_icon} {status['status'].upper()}")
+        click.echo(f"POSTGRES_LOGGING_STATUS in .env: {env_value}")
+        click.echo("")
+        
+        if status["enabled"]:
+            click.echo("All RTGS tools will log to postgres database when possible")
+        else:
+            click.echo("RTGS tools will skip postgres logging (default)")
+            click.echo("To enable postgres logging, add 'POSTGRES_LOGGING_STATUS=true' to your .env file")
+            
+    except Exception as e:
+        click.echo(f"❌ Error checking postgres logging status: {e}", err=True)
         raise click.ClickException(str(e))

@@ -49,6 +49,15 @@ def setup_postgres_logger(
     Returns:
         PostgresLogger instance or None if disabled/failed
     """
+    # Check global postgres logging flag first
+    from .postgres_control import is_postgres_logging_enabled
+    
+    if not is_postgres_logging_enabled():
+        logging.getLogger().debug(
+            f"Postgres logging disabled globally - skipping postgres logger setup for {tool_name}"
+        )
+        return None
+    
     if disable:
         return None
 
@@ -503,6 +512,30 @@ class CLIContext:
                     script_path=script_path,
                     additional_sections=additional_sections,
                 )
+                # Close connections after successful logging to prevent connection leaks
+                self.postgres_logger.close()
             except Exception as e:
                 if self.logger:
                     self.logger.error(f"Failed to create postgres log: {e}")
+                # Close connections even on error to prevent leaks
+                try:
+                    self.postgres_logger.close()
+                except:
+                    pass
+
+    def cleanup(self):
+        """Clean up resources, especially database connections."""
+        if self.postgres_logger:
+            try:
+                self.postgres_logger.close()
+            except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Failed to close postgres logger: {e}")
+
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - ensures cleanup."""
+        self.cleanup()
