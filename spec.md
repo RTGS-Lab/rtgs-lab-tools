@@ -456,7 +456,7 @@ Configuration:     config_update_results_YYYYMMDD_HHMMSS.json
 ## Dependencies & Requirements
 
 ### System Requirements
-- **Python**: 3.8+
+- **Python**: 3.10+
 - **Database**: PostgreSQL client libraries
 - **Network**: UMN VPN for database access
 - **Storage**: Variable based on data volume

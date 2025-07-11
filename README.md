@@ -1,6 +1,6 @@
 # RTGS Lab Tools
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A comprehensive Python package for environmental sensing data tools, gridded climate data access, IoT device management, and data visualization. Developed by the RTGS Lab at the University of Minnesota.
@@ -56,7 +56,7 @@ RTGS Lab Tools consolidates multiple environmental data analysis workflows into 
 ## Installation
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.10+
 - PostgreSQL client libraries (for GEMS database access)
 - UMN VPN connection (for database access)
 
@@ -72,7 +72,7 @@ bash install.sh
 
 The install script will:
 - Detect your operating system (Windows/macOS/Linux)
-- Verify Python 3.8+ installation
+- Verify Python 3.10+ installation
 - Install `uv` package manager if needed
 - Initialize git submodules
 - Create and activate a virtual environment

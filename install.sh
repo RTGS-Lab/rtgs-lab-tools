@@ -58,7 +58,7 @@ check_python() {
         PYTHON_CMD="python"
     else
         print_error "Python is not installed or not in PATH"
-        print_error "Please install Python 3.8+ before running this script"
+        print_error "Please install Python 3.10+ before running this script"
         exit 1
     fi
     
@@ -66,12 +66,12 @@ check_python() {
     PYTHON_VERSION=$($PYTHON_CMD --version 2>&1 | awk '{print $2}')
     print_success "Found Python $PYTHON_VERSION at $(which $PYTHON_CMD)"
     
-    # Verify minimum version (3.8+)
+    # Verify minimum version (3.10+)
     PYTHON_MAJOR=$($PYTHON_CMD -c "import sys; print(sys.version_info.major)")
     PYTHON_MINOR=$($PYTHON_CMD -c "import sys; print(sys.version_info.minor)")
     
-    if [[ $PYTHON_MAJOR -lt 3 ]] || [[ $PYTHON_MAJOR -eq 3 && $PYTHON_MINOR -lt 8 ]]; then
-        print_error "Python 3.8 or higher is required. Found Python $PYTHON_VERSION"
+    if [[ $PYTHON_MAJOR -lt 3 ]] || [[ $PYTHON_MAJOR -eq 3 && $PYTHON_MINOR -lt 10 ]]; then
+        print_error "Python 3.10 or higher is required. Found Python $PYTHON_VERSION"
         exit 1
     fi
 }
