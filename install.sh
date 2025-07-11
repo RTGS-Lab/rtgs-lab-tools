@@ -235,6 +235,108 @@ auth_gee() {
     fi
 }
 
+# Configure Claude Desktop MCP servers
+configure_claude_desktop() {
+    print_status "Configuring Claude Desktop MCP servers..."
+    
+    # Get absolute path to repository
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
+    # Determine Claude Desktop config path based on OS
+    case "$OS" in
+        "macos")
+            CLAUDE_CONFIG_DIR="$HOME/Library/Application Support/Claude"
+            CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/claude_desktop_config.json"
+            PYTHON_PATH="$SCRIPT_DIR/venv/bin/python"
+            PARTICLE_PATH="$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/"
+            ;;
+        "windows")
+            CLAUDE_CONFIG_DIR="$USERPROFILE/AppData/Roaming/Claude"
+            CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/claude_desktop_config.json"
+            PYTHON_PATH="$SCRIPT_DIR/venv/Scripts/python.exe"
+            # Convert Windows path format
+            PARTICLE_PATH="$(cygpath -w "$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/" 2>/dev/null || echo "$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/")"
+            ;;
+        "linux")
+            CLAUDE_CONFIG_DIR="$HOME/.config/Claude"
+            CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/claude_desktop_config.json"
+            PYTHON_PATH="$SCRIPT_DIR/venv/bin/python"
+            PARTICLE_PATH="$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/"
+            ;;
+        *)
+            print_warning "Unknown OS. Skipping Claude Desktop MCP configuration."
+            return
+            ;;
+    esac
+    
+    # Check if Claude Desktop is installed by looking for the config directory
+    if [[ ! -d "$CLAUDE_CONFIG_DIR" ]]; then
+        print_warning "Claude Desktop not found (directory doesn't exist: $CLAUDE_CONFIG_DIR)"
+        print_warning "Skipping Claude Desktop MCP configuration. Install Claude Desktop first if you want MCP integration."
+        return
+    fi
+    
+    # Create or update claude_desktop_config.json
+    if [[ -f "$CLAUDE_CONFIG_FILE" ]]; then
+        print_status "Backing up existing Claude Desktop config..."
+        cp "$CLAUDE_CONFIG_FILE" "${CLAUDE_CONFIG_FILE}.backup.$(date +%Y%m%d_%H%M%S)"
+    fi
+    
+    # Generate the configuration
+    print_status "Writing Claude Desktop MCP configuration..."
+    
+    if [[ "$OS" == "windows" ]]; then
+        # Windows format with escaped backslashes
+        cat > "$CLAUDE_CONFIG_FILE" << EOF
+{
+  "mcpServers": {
+    "particle": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "${PARTICLE_PATH//\//\\\\}",
+        "run",
+        "particle.py"
+      ]
+    },
+    "rtgs_lab_tools": {
+      "command": "${PYTHON_PATH//\//\\\\}",
+      "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+    }
+  }
+}
+EOF
+    else
+        # macOS and Linux format with forward slashes
+        cat > "$CLAUDE_CONFIG_FILE" << EOF
+{
+  "mcpServers": {
+    "particle": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "$PARTICLE_PATH",
+        "run",
+        "particle.py"
+      ]
+    },
+    "rtgs_lab_tools": {
+      "command": "$PYTHON_PATH",
+      "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+    }
+  }
+}
+EOF
+    fi
+    
+    if [[ $? -eq 0 ]]; then
+        print_success "Claude Desktop MCP configuration created: $CLAUDE_CONFIG_FILE"
+        print_status "Restart Claude Desktop to load the new MCP servers"
+    else
+        print_error "Failed to create Claude Desktop MCP configuration"
+    fi
+}
+
 # Check if required directories exist
 check_directories() {
     print_status "Checking project structure..."
@@ -316,6 +418,7 @@ main() {
     install_package
     run_setup_credentials
     auth_gee
+    configure_claude_desktop
 
     show_next_steps
 }
