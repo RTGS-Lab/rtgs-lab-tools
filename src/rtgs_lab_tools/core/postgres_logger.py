@@ -448,13 +448,13 @@ class PostgresLogger:
         """
         # Check global postgres logging flag
         from .postgres_control import is_postgres_logging_enabled
-        
+
         if not is_postgres_logging_enabled():
             logger.debug(
                 f"Postgres logging disabled globally - skipping postgres save for {self.tool_name} operation: {operation}"
             )
             return False
-        
+
         try:
             self.ensure_table_exists()
             context = self.get_execution_context(script_path)
@@ -524,13 +524,13 @@ class PostgresLogger:
         """
         # Check global postgres logging flag
         from .postgres_control import is_postgres_logging_enabled
-        
+
         if not is_postgres_logging_enabled():
             logger.debug(
                 f"Postgres logging disabled globally - skipping postgres log execution for {self.tool_name} operation: {operation}"
             )
             return False
-        
+
         return self.save_to_postgres(
             operation=operation,
             parameters=parameters,

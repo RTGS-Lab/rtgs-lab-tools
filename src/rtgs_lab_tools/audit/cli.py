@@ -7,13 +7,13 @@ from pathlib import Path
 
 import click
 
-from .audit_service import AuditService
-from .report_service import ReportService
 from ..core.postgres_control import (
-    enable_postgres_logging,
     disable_postgres_logging,
+    enable_postgres_logging,
     get_postgres_logging_status,
 )
+from .audit_service import AuditService
+from .report_service import ReportService
 
 logger = logging.getLogger(__name__)
 
@@ -485,7 +485,9 @@ def enable_postgres_logging_cmd():
         click.echo("To enable postgres logging globally, add this to your .env file:")
         click.echo("POSTGRES_LOGGING_STATUS=true")
         click.echo("")
-        click.echo("After adding this setting, all RTGS tools will log to postgres when possible")
+        click.echo(
+            "After adding this setting, all RTGS tools will log to postgres when possible"
+        )
     except Exception as e:
         click.echo(f"❌ Error enabling postgres logging: {e}", err=True)
         raise click.ClickException(str(e))
@@ -510,20 +512,23 @@ def postgres_logging_status_cmd():
     """Show the current postgres logging status."""
     try:
         import os
+
         status = get_postgres_logging_status()
         env_value = os.getenv("POSTGRES_LOGGING_STATUS", "not set")
-        
+
         status_icon = "✅" if status["enabled"] else "❌"
         click.echo(f"Postgres logging status: {status_icon} {status['status'].upper()}")
         click.echo(f"POSTGRES_LOGGING_STATUS in .env: {env_value}")
         click.echo("")
-        
+
         if status["enabled"]:
             click.echo("All RTGS tools will log to postgres database when possible")
         else:
             click.echo("RTGS tools will skip postgres logging (default)")
-            click.echo("To enable postgres logging, add 'POSTGRES_LOGGING_STATUS=true' to your .env file")
-            
+            click.echo(
+                "To enable postgres logging, add 'POSTGRES_LOGGING_STATUS=true' to your .env file"
+            )
+
     except Exception as e:
         click.echo(f"❌ Error checking postgres logging status: {e}", err=True)
         raise click.ClickException(str(e))

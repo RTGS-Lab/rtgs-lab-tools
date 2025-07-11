@@ -12,10 +12,10 @@ from .exceptions import (
 )
 from .logging import setup_logging
 from .postgres_control import (
-    enable_postgres_logging,
     disable_postgres_logging,
-    is_postgres_logging_enabled,
+    enable_postgres_logging,
     get_postgres_logging_status,
+    is_postgres_logging_enabled,
 )
 from .postgres_logger import PostgresLogger
 

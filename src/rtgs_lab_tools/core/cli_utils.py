@@ -51,13 +51,13 @@ def setup_postgres_logger(
     """
     # Check global postgres logging flag first
     from .postgres_control import is_postgres_logging_enabled
-    
+
     if not is_postgres_logging_enabled():
         logging.getLogger().debug(
             f"Postgres logging disabled globally - skipping postgres logger setup for {tool_name}"
         )
         return None
-    
+
     if disable:
         return None
 

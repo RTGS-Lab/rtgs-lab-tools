@@ -316,13 +316,15 @@ def get_raw_data(
             datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         except ValueError:
             datetime.strptime(start_date, "%Y-%m-%d")
-        
+
         try:
             datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
         except ValueError:
             datetime.strptime(end_date, "%Y-%m-%d")
     except ValueError as e:
-        raise ValidationError(f"Invalid date format: {e}. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS")
+        raise ValidationError(
+            f"Invalid date format: {e}. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS"
+        )
 
     # Check if project is "all" to handle special case
     all_projects_mode = project.lower() == "all"

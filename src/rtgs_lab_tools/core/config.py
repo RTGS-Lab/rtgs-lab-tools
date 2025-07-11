@@ -20,11 +20,13 @@ class Config:
         """
         if env_file:
             env_path = Path(env_file)
+            if env_path.exists():
+                load_dotenv(env_path, override=True)
         else:
+            # Only load default .env if no specific file is provided
             env_path = Path.cwd() / ".env"
-
-        if env_path.exists():
-            load_dotenv(env_path)
+            if env_path.exists():
+                load_dotenv(env_path)
 
     @property
     def db_host(self) -> str:
