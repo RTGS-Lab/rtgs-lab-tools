@@ -211,8 +211,9 @@ DB_PASSWORD=your_password
 LOGGING_DB_HOST=34.170.80.6
 LOGGING_DB_PORT=5432
 LOGGING_DB_NAME=logs
-LOGGING_DB_USER=postgres
-LOGGING_DB_PASSWORD=O^Ro,p<I3q;&]_~B
+LOGGING_DB_USER=your_logging_username
+LOGGING_DB_PASSWORD=your_logging_password
+POSTGRES_LOGGING_STATUS=False
 
 GEE_PROJECT = your_gee_project
 BUCKET_NAME = google_bucket_name
