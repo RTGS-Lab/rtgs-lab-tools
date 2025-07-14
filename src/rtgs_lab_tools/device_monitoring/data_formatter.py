@@ -172,10 +172,10 @@ def format_data_with_parser(data_frame):
     # pprint.pprint(parsed_df)
 
     # Comprehensive data analysis
-    print("Starting comprehensive data analysis...")
+    # print("Starting comprehensive data analysis...")
     
     # 1. Explore the basic structure and content of the data
-    explore_data_structure(parsed_df)
+    # explore_data_structure(parsed_df)
     
     # # 2. Filter and analyze different types of sensor data
     # data_records, soil_sensor_data = filter_sensor_data(parsed_df)
@@ -210,7 +210,7 @@ def format_data_with_parser(data_frame):
     # print("\nSystem usage by node_id:")
     # pprint.pprint(system_usage_df)
     
-    print("\nData analysis complete!")
+    # print("\nData analysis complete!")
     
     # TODO: Return properly formatted data for the analyzer
     final_dict = { "parsed_data" : parsed_df,

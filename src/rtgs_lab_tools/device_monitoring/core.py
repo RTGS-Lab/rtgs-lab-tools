@@ -13,7 +13,7 @@
 # from data_formater import format_battery_data, format_data
 from .data_getter import get_data
 from .data_formatter import format_data_with_parser
-from .data_analyzer import analyze_battery_data, analyze_data
+from .data_analyzer import analyze_data
 from .notification_system import notify
 from datetime import datetime, timedelta
 import pprint
@@ -50,6 +50,7 @@ formatted_data = format_data_with_parser(data_frame)
 analysis_result = analyze_data(formatted_data)
 print("\n--Analysis Results--\n")
 pprint.pprint(analysis_result)
+print("\n--End of Analysis Results--\n")
 
 # Step 4: Notify the user with the analysis result
 print("\n--Notification Results--\n")
