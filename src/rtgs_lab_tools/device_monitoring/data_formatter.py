@@ -232,7 +232,7 @@ def create_battery_voltage_dataframe(df):
         return ast.literal_eval(str(x))[0] 
     
     kestrel_portv['port_v_0'] = kestrel_portv['value'].apply(extract_first_value)
-    return kestrel_portv.sort_values('timestamp').groupby('node_id').last().reset_index()[['node_id', 'port_v_0', 'timestamp']]
+    return kestrel_portv.sort_values('timestamp').groupby('node_id').last()[['port_v_0', 'timestamp']]
 
 
 def create_system_usage_dataframe(df):
@@ -245,7 +245,7 @@ def create_system_usage_dataframe(df):
         return ast.literal_eval(str(x))[1]
     
     kestrel_porti['port_i_1'] = kestrel_porti['value'].apply(extract_second_value)
-    return kestrel_porti.sort_values('timestamp').groupby('node_id').last().reset_index()[['node_id', 'port_i_1', 'timestamp']]
+    return kestrel_porti.sort_values('timestamp').groupby('node_id').last()[['port_i_1', 'timestamp']]
 
 
 def filter_sensor_data(df):

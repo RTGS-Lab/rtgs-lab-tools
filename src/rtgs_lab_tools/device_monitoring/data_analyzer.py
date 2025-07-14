@@ -24,8 +24,10 @@ def analyze_data(data):
     system_df = data.get("system_current_data")
 
     # DELETE
-    print("\nBattery Data:")
-    pprint.pprint(battery_df)
+    # print("\nerror_df: ")
+    # pprint.pprint(error_df)
+    # print("\nBattery Data:")
+    # pprint.pprint(battery_df)
     
     # Get all unique node_ids from all DataFrames
     all_node_ids = set()
@@ -48,14 +50,14 @@ def analyze_data(data):
         # Get battery voltage
         if battery_df is not None and node_id in battery_df.index:
             battery_val = float(battery_df.loc[node_id, "port_v_0"])
-            print(f"Battery voltage for {node_id}: {battery_val}")
+            # print(f"Battery voltage for {node_id}: {battery_val}")
             if battery_val < 3.6:
                 flagged = True
         
         # Get system usage
         if system_df is not None and node_id in system_df.index:
             system_val = float(system_df.loc[node_id, "port_i_1"])
-            print(f"System current for {node_id}: {system_val}")
+            # print(f"System current for {node_id}: {system_val}")
             if system_val > 200:  # 200mA threshold
                 flagged = True
         
@@ -65,8 +67,8 @@ def analyze_data(data):
             # Convert to dict, excluding NaN values
             errors_dict = {col: int(val) for col, val in error_row.items() 
                           if not pd.isna(val) and val > 0}
-            print("\nErrors dict:")
-            pprint.pprint(errors_dict)
+            # print("\nErrors dict:")
+            # pprint.pprint(errors_dict)
             
             # Check for critical errors
             for critical_error in critical_errors:

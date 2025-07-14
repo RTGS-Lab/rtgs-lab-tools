@@ -47,11 +47,11 @@ formatted_data = format_data_with_parser(data_frame)
 # pprint.pprint(formatted_data)
 
 # Step 3: Analyze the data
-analysis_result = analyze_data(formatted_data)
+analysis_dict = analyze_data(formatted_data)
 print("\n--Analysis Results--\n")
-pprint.pprint(analysis_result)
+pprint.pprint(analysis_dict)
 print("\n--End of Analysis Results--\n")
 
 # Step 4: Notify the user with the analysis result
 print("\n--Notification Results--\n")
-notify(analysis_result)
+notify(analysis_dict)
