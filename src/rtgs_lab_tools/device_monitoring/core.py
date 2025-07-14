@@ -26,7 +26,8 @@ start_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
 end_date = datetime.now().strftime('%Y-%m-%d')
 node_ids = None  # Example node ID
 # project = 'Roadside Turf'
-project = "ALL"
+# project = "ALL"
+project = "Roadside Turf"  # Example project
 
 
 # Step 1: Get the data
