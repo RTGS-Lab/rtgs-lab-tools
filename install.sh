@@ -394,7 +394,7 @@ main() {
     upgrade_pip
     install_package
     run_setup_credentials
-    auth_gee
+    #auth_gee
     configure_claude_desktop
 
     show_next_steps
