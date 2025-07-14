@@ -16,6 +16,7 @@ from .data_formatter import format_data_with_parser
 from .data_analyzer import analyze_battery_data, analyze_data
 from .notification_system import notify
 from datetime import datetime, timedelta
+import pprint
 
 # node_id = "e00fce68243ac35987c6c910" 
 
@@ -32,29 +33,23 @@ project = "Roadside Turf"  # Example project
 
 # Step 1: Get the data
 data_frame = get_data(start_date, end_date, project, node_ids)
-# if data_path:
-#     print(f"Data file created: {data_path}")
-# else:
-#     print("No data was retrieved.")
-
 
 # Step 2: Format the data
-# formatted_battery_data = format_battery_data(raw_battery_data)
 formatted_data = format_data_with_parser(data_frame)
-
-# Print the formatted data for debugging
-# for node, data in formatted_data.items():
-#     print(f"Node: {node}")
-#     print(f"  Battery Voltage: {data['battery_voltage']}")
-#     for error, count in sorted(data['errors'].items(), key=lambda x: x[1], reverse=True):
-#         print(f"    Error: {error}, Count: {count}")
-#     print("\n")
-
+'''
+{ "parsed_data": pandas_df,
+  "battery_data": pandas_df,
+  "error_data": pandas_df,
+  "system_current_data": pandas_df,
+}
+'''
+# print("TEST: \n")
+# pprint.pprint(formatted_data)
 
 # Step 3: Analyze the data
-# analysis_result = analyze_battery_data(formatted_battery_data)
 analysis_result = analyze_data(formatted_data)
-
+print("\n--Analysis Results--\n")
+pprint.pprint(analysis_result)
 
 # Step 4: Notify the user with the analysis result
 print("\n--Notification Results--\n")

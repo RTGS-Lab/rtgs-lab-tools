@@ -25,7 +25,7 @@ def analyze_battery_data(data):
             "message": f"Battery is healthy at {data['voltage']}V on node {data['node_id']}."
         }
 
-
+# prev
 def analyze_data(data):
     if not data:
         return {"status": "no_data", "message": "No data available."}
@@ -56,3 +56,5 @@ def analyze_data(data):
         }
 
     return analysis_results
+
+

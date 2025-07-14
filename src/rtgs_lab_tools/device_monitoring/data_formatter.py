@@ -154,7 +154,7 @@ def format_data_with_parser(data_frame):
     # parsed_df = parse_gems_data(data_frame, packet_types="all")
     parsed_result = parse_gems_data(data_frame, packet_types="all")
 
-    pprint.pprint(parsed_result)
+    # pprint.pprint(parsed_result)
     
     # Check if parse_gems_data returns a tuple or DataFrame
     if isinstance(parsed_result, tuple):
@@ -177,29 +177,75 @@ def format_data_with_parser(data_frame):
     # 1. Explore the basic structure and content of the data
     explore_data_structure(parsed_df)
     
-    # 2. Filter and analyze different types of sensor data
-    data_records, soil_sensor_data = filter_sensor_data(parsed_df)
+    # # 2. Filter and analyze different types of sensor data
+    # data_records, soil_sensor_data = filter_sensor_data(parsed_df)
     
-    # 3. Analyze time-based patterns
-    analyze_time_series(parsed_df)
+    # # 3. Analyze time-based patterns
+    # analyze_time_series(parsed_df)
     
-    # 4. Analyze numeric sensor values
-    analyze_numeric_values(parsed_df)
+    # # 4. Analyze numeric sensor values
+    # analyze_numeric_values(parsed_df)
     
-    # 5. Analyze data by device type
-    analyze_by_device_type(parsed_df)
+    # # 5. Analyze data by device type
+    # analyze_by_device_type(parsed_df)
     
-    # 6. Parse and analyze metadata
-    parse_metadata(parsed_df)
+    # # 6. Parse and analyze metadata
+    # parse_metadata(parsed_df)
     
-    # 7. Create visualizations
-    create_visualizations(parsed_df)
+    # # 7. Create visualizations
+    # create_visualizations(parsed_df)
+
+    # error counts
+    error_counts_df = create_error_count_dataframe(parsed_df)
+    # print("\nError counts by node_id:")
+    # pprint.pprint(error_counts_df)
+
+    # battery voltages
+    battery_voltages = create_battery_voltage_dataframe(parsed_df)
+    # print("\nBattery voltages by node_id:")
+    # pprint.pprint(battery_voltages)
+
+    # system usage
+    system_usage_df = create_system_usage_dataframe(parsed_df)
+    # print("\nSystem usage by node_id:")
+    # pprint.pprint(system_usage_df)
     
     print("\nData analysis complete!")
     
     # TODO: Return properly formatted data for the analyzer
-    # For now, return the parsed dataframe for further processing
-    return parsed_df
+    final_dict = { "parsed_data" : parsed_df,
+             "battery_data" : battery_voltages,
+             "error_data" : error_counts_df,
+             "system_current_data" : system_usage_df
+            }
+    
+    return final_dict
+
+
+def create_battery_voltage_dataframe(df):
+    """Extract battery voltage (index 0 of PORT_V array) from Kestrel devices by node_id."""
+    kestrel_portv = df[(df['device_type'] == 'Kestrel') & (df['measurement_name'] == 'PORT_V')].copy()
+    kestrel_portv['timestamp'] = pd.to_datetime(kestrel_portv['timestamp'])
+    
+    # Used below in place of a lambda function
+    def extract_first_value(x):
+        return ast.literal_eval(str(x))[0] 
+    
+    kestrel_portv['port_v_0'] = kestrel_portv['value'].apply(extract_first_value)
+    return kestrel_portv.sort_values('timestamp').groupby('node_id').last().reset_index()[['node_id', 'port_v_0', 'timestamp']]
+
+
+def create_system_usage_dataframe(df):
+    """Extract system usage (index 1 of PORT_I array) from Kestrel devices by node_id."""
+    kestrel_porti = df[(df['device_type'] == 'Kestrel') & (df['measurement_name'] == 'PORT_I')].copy()
+    kestrel_porti['timestamp'] = pd.to_datetime(kestrel_porti['timestamp'])
+    
+    # Used below in place of a lambda function
+    def extract_second_value(x):
+        return ast.literal_eval(str(x))[1]
+    
+    kestrel_porti['port_i_1'] = kestrel_porti['value'].apply(extract_second_value)
+    return kestrel_porti.sort_values('timestamp').groupby('node_id').last().reset_index()[['node_id', 'port_i_1', 'timestamp']]
 
 
 def filter_sensor_data(df):
@@ -391,6 +437,25 @@ def analyze_by_device_type(df):
                 print(measurements.head(10))
             else:
                 print(f"  Total records: {len(device_data)}")
+
+# Create a DataFrame with error counts by node_id
+def create_error_count_dataframe(df):
+    """
+    Create a DataFrame with error counts by node_id.
+    
+    Args:
+        df (pandas.DataFrame): Input dataframe with columns including 'node_id' and 'error_name'
+    
+    Returns:
+        pandas.DataFrame: DataFrame with node_ids as index and error types as columns with counts
+    """
+    # Filter out rows where error_name is null/empty
+    error_df = df[df['error_name'].notna() & (df['error_name'] != '')]
+    
+    # Create pivot table with node_id as index, error_name as columns, and count as values
+    error_counts = error_df.groupby(['node_id', 'error_name']).size().unstack(fill_value=0)
+
+    return error_counts
 
 def parse_metadata(df):
     """Parse and analyze metadata column."""
