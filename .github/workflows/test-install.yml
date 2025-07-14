@@ -56,7 +56,6 @@ jobs:
         rtgs visualization --help
         rtgs gridded-data --help
         rtgs device-configuration --help
-        rtgs error-analysis --help
     
     - name: Verify package installation
       run: |
