@@ -115,13 +115,18 @@ class Config:
 
     @property
     def GEE_PROJECT(self) -> Optional[str]:
-        """Copernicus CDS API key."""
+        """Google Earth Engine Project name."""
         return os.getenv("GEE_PROJECT")
 
     @property
     def BUCKET_NAME(self) -> Optional[str]:
-        """Copernicus CDS API key."""
+        """Google Cloud Bucket name."""
         return os.getenv("BUCKET_NAME")
+    
+    @property
+    def PL_API_KEY(self) -> Optional[str]:
+        """PlanetLabs API key."""
+        return os.getenv("PL_API_KEY")
 
     @property
     def logging_instance_connection_name(self) -> Optional[str]:

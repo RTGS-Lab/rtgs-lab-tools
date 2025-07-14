@@ -126,8 +126,6 @@ def search_images(name, source, roi, start_date, end_date, out_dir):
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
         out_dir: Local output directory
-    Returns:
-        Path to downloaded file
     """
 
     def clip_img(img):
