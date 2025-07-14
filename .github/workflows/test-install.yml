@@ -76,8 +76,8 @@ jobs:
         
         try:
             import rtgs_lab_tools
-            print('✓ rtgs_lab_tools package imported successfully')
+            print('rtgs_lab_tools package imported successfully')
         except ImportError as e:
-            print(f'✗ Failed to import rtgs_lab_tools: {e}')
+            print(f'Failed to import rtgs_lab_tools: {e}')
             sys.exit(1)
         "
