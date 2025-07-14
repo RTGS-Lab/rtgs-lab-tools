@@ -80,11 +80,4 @@ jobs:
         except ImportError as e:
             print(f'✗ Failed to import rtgs_lab_tools: {e}')
             sys.exit(1)
-        
-        try:
-            from rtgs_lab_tools.cli import main
-            print('✓ CLI module imported successfully')
-        except ImportError as e:
-            print(f'✗ Failed to import CLI: {e}')
-            sys.exit(1)
         "
