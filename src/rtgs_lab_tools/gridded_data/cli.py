@@ -243,6 +243,7 @@ def planet_search(
 
 ########################################################
 # SEARCH FOR GEE IMAGES
+# SEARCH FOR GEE IMAGES
 ########################################################
 @gridded_data_cli.command()
 @click.option(
@@ -276,6 +277,7 @@ def gee_search(
 ):
     """Searchg for GEE between dates."""
     cli_ctx = ctx.obj
+    cli_ctx.setup("gee-search", verbose, log_file, no_postgres_log)
     cli_ctx.setup("gee-search", verbose, log_file, no_postgres_log)
 
     try:
@@ -312,6 +314,7 @@ def gee_search(
 
 
 ########################################################
+# GET GEE POINT DATA
 # GET GEE POINT DATA
 ########################################################
 @gridded_data_cli.command()
@@ -430,6 +433,7 @@ def get_gee_point(
 
 
 ########################################################
+# GET GEE RASTER DATA
 # GET GEE RASTER DATA
 ########################################################
 @gridded_data_cli.command()
@@ -559,6 +563,7 @@ def get_gee_raster(
 
 ########################################################
 # LIST AVAILABLE GEE DATASETS
+# LIST AVAILABLE GEE DATASETS
 ########################################################
 @gridded_data_cli.command()
 @add_common_options
@@ -582,6 +587,7 @@ def list_gee_datasets(ctx, verbose, log_file, no_postgres_log, note):
 
 
 ########################################################
+# LIST AVAILABLE GEE VARIABLES
 # LIST AVAILABLE GEE VARIABLES
 ########################################################
 @gridded_data_cli.command()
