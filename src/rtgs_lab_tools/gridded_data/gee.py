@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import geopandas as gpd
 import pandas as pd
+import ee
 
 from ..core import Config
 from ..core.exceptions import APIError, ValidationError
@@ -20,18 +21,17 @@ cfg = Config()
 GEE_PROJECT = cfg.GEE_PROJECT
 BUCKET_NAME = cfg.BUCKET_NAME
 
-try:
-    import ee
+def init_ee():
+    try:
+        import ee
 
-    # ee.Authenticate()
-    # ee.Initialize(project=GEE_PROJECT)
+        ee.Authenticate()
+        ee.Initialize(project=GEE_PROJECT)
 
-    GEE_AVAILABLE = True
-except ImportError:
-    GEE_AVAILABLE = False
-    logger.warning(
-        "Gridded data functionality requires earthegine and xarray. Install with: pip install rtgs-lab-tools[climate]"
-    )
+    except ImportError:
+        logger.warning(
+            "Gridded data functionality requires earthegine and xarray. Install with: pip install rtgs-lab-tools[climate]"
+        )
 
 
 def compute_clouds(img, mask, roi):

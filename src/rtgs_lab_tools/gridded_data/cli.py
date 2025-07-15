@@ -22,10 +22,6 @@ def gridded_data_cli(ctx):
     ctx.ensure_object(CLIContext)
 
 
-# TODO: planet clipping tool
-# https://docs.planet.com/develop/apis/orders/tools/#clip
-
-
 ########################################################
 # DOWNLOAD CLIPPED PLANET IMAGES
 ########################################################
@@ -283,8 +279,10 @@ def gee_search(
     cli_ctx.setup("gee-search", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import load_roi, search_images, sources
-
+        from ..gridded_data import load_roi, search_images, sources, init_ee
+        
+        init_ee()
+        
         # Load ROI from file
         if roi:
             roi_bounds = load_roi(roi)
@@ -357,7 +355,9 @@ def get_gee_point(
     cli_ctx.setup("gee-point", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_GEE_point, load_roi, sources
+        from ..gridded_data import download_GEE_point, load_roi, sources, init_ee
+        
+        init_ee()
 
         # Load ROI from file
         if roi:
@@ -478,8 +478,10 @@ def get_gee_raster(
     cli_ctx.setup("gee-data", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_GEE_raster, load_roi, sources
-
+        from ..gridded_data import download_GEE_raster, load_roi, sources, init_ee
+        
+        init_ee()
+        
         # Load ROI from file
         if roi:
             roi_bounds = load_roi(roi)
@@ -595,7 +597,9 @@ def list_gee_variables(ctx, source, verbose, log_file, no_postgres_log, note):
     cli_ctx.setup("gee-dataset-varaibles", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import list_GEE_vars, sources
+        from ..gridded_data import list_GEE_vars, sources, init_ee
+        
+        init_ee()
 
         band_names = list_GEE_vars(sources[source])
         click.echo(f"Available GEE variables for {source}:")
@@ -606,6 +610,21 @@ def list_gee_variables(ctx, source, verbose, log_file, no_postgres_log, note):
         cli_ctx.log_error("GEE variables listing error", e, {"note": note}, __file__)
         raise
 
+
+########################################################
+# GEE AUTHENTICATE
+########################################################
+@gridded_data_cli.command()
+@add_common_options
+@click.pass_context
+@handle_common_errors("gee-authenticate")
+def gee_authenticate(ctx, verbose, log_file, no_postgres_log, note):
+    """Google Earth Engine account authentication."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("gee-authenticate", verbose, log_file, no_postgres_log)
+
+    import ee
+    ee.Authenticate()
 
 if __name__ == "__main__":
     gridded_data_cli()

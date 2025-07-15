@@ -6,6 +6,7 @@ from .gee import (
     list_GEE_vars,
     load_roi,
     search_images,
+    init_ee,
 )
 from .planet import download_clipped_scenes, download_scenes, quick_search
 from .processors import extract_time_series, process_era5_data
@@ -18,6 +19,7 @@ __all__ = [
     "load_roi",
     "list_GEE_vars",
     "extract_time_series",
+    "init_ee",
     "sources",
     "quick_search",
     "download_scenes",

@@ -226,14 +226,14 @@ run_setup_credentials() {
 }
 
 # Google Earth Engine Authentication
-auth_gee() {
-    if command -v python &> /dev/null && python -c "import rtgs_lab_tools" 2>/dev/null; then
-        python -c "import ee; ee.Authenticate()"
-        print_success "GEE Authentication is completed"
-    else
-        print_warning "Could not run setup credentials command. Package may not be properly installed."
-    fi
-}
+# auth_gee() {
+#     if command -v python &> /dev/null && python -c "import rtgs_lab_tools" 2>/dev/null; then
+#         python -c "import ee; ee.Authenticate()"
+#         print_success "GEE Authentication is completed"
+#     else
+#         print_warning "Could not run setup credentials command. Package may not be properly installed."
+#     fi
+# }
 
 # Configure Claude Desktop MCP servers
 configure_claude_desktop() {
