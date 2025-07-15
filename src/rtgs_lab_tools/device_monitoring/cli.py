@@ -16,6 +16,7 @@ import click
 
 from ..core.cli_utils import (
     CLIContext,
+    add_common_options,
     handle_common_errors,
 )
 from .core import monitor
@@ -29,22 +30,22 @@ def device_monitoring_cli(ctx):
 @device_monitoring_cli.command()
 @click.option(
     "--start-date",
-    # type=click.DateTime(formats=["%Y-%m-%d"]),
+    type=click.DateTime(formats=["%Y-%m-%d"]),
     help="Start date for data retrieval in 'YYYY-MM-DD' format.",
 )
 @click.option(
     "--end-date",
-    # type=click.DateTime(formats=["%Y-%m-%d"]),
+    type=click.DateTime(formats=["%Y-%m-%d"]),
     help="End date for data retrieval in 'YYYY-MM-DD' format.",
 )
 @click.option(
     "--node-ids",
-    # type=str,
+    type=str,
     help="Comma-separated list of node IDs to filter the data.",
 )
 @click.option(
     "--project",
-    # type=str,
+    type=str,
     help="Comma-separated list of project names to filter the data.",
 )
 @click.option(
@@ -70,7 +71,7 @@ def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
         start_date=start_date,
         end_date=end_date,
         node_ids=None,
-        project=project,
+        project=project or "ALL",
         # no_email=no_email,
     )
 
