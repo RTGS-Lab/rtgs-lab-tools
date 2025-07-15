@@ -21,8 +21,7 @@ from .notification_system import notify
 start_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
 end_date = datetime.now().strftime("%Y-%m-%d")
 node_ids = None
-# project = "ALL"
-project = "Roadside Turf"
+project = "ALL"
 
 # Step 1: Get the data
 data_frame = get_data(start_date, end_date, project, node_ids)

@@ -1,8 +1,18 @@
-# should take parsed dataframes of different packet types
-# should implement thresholds depending on the value that is being analyzed
-# should return formatted data for notification and visualization
-
-import pprint
+'''
+Overview:
+    - Analyze formatted data and return notification-ready results (python dictionary).
+    - Analysis and notification thresholds are based on Field Technician feedback.
+Input:
+    - data: Dictionary with DataFrames from data_formatter.
+Output:
+    - Dictionary with analysis results for each node, including:
+        - flagged status (True/False)
+        - battery voltage
+        - system usage
+        - errors dictionary with:
+            - error type as key
+            - count as value
+'''
 
 import pandas as pd
 
@@ -25,12 +35,6 @@ def analyze_data(data):
     error_df = data.get("error_data")
     system_df = data.get("system_current_data")
 
-    # DELETE
-    # print("\nerror_df: ")
-    # pprint.pprint(error_df)
-    # print("\nBattery Data:")
-    # pprint.pprint(battery_df)
-
     # Get all unique node_ids from all DataFrames
     all_node_ids = set()
     if battery_df is not None and hasattr(battery_df, "index"):
@@ -40,7 +44,7 @@ def analyze_data(data):
     if system_df is not None and hasattr(system_df, "index"):
         all_node_ids.update(system_df.index)
 
-    # Critical errors to flag
+    # Critical errors to flag (hardcoded for now, CHANGE LATER)
     critical_errors = ["SD_ACCESS_FAIL", "FRAM_ACCESS_FAIL"]
 
     for node_id in all_node_ids:
@@ -52,14 +56,12 @@ def analyze_data(data):
         # Get battery voltage
         if battery_df is not None and node_id in battery_df.index:
             battery_val = float(battery_df.loc[node_id, "port_v_0"])
-            # print(f"Battery voltage for {node_id}: {battery_val}")
             if battery_val < 3.6:
                 flagged = True
 
         # Get system usage
         if system_df is not None and node_id in system_df.index:
             system_val = float(system_df.loc[node_id, "port_i_1"])
-            # print(f"System current for {node_id}: {system_val}")
             if system_val > 200:  # 200mA threshold
                 flagged = True
 
@@ -72,8 +74,6 @@ def analyze_data(data):
                 for col, val in error_row.items()
                 if not pd.isna(val) and val > 0
             }
-            # print("\nErrors dict:")
-            # pprint.pprint(errors_dict)
 
             # Check for critical errors
             for critical_error in critical_errors:

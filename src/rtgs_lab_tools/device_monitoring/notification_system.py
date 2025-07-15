@@ -1,11 +1,13 @@
-# should send email to email address with results of the operation
-
-
-# send notification via email with the analysis result
-# input: analysis_result dictionary
-# output: None, but prints the notification to the console / sends email
-
-# should send email to email address with results of the operation
+'''
+Overview:
+    - Sends notifications showing analyzed metrics for nodes specified in core.py.
+    - Builds notification messages based on analysis results.
+Inputs:
+    - analysis_results: Dictionary with analysis results for each node.
+Outputs:
+    - Prints notification results to the console.
+    - Sends an email with the notification results.
+'''
 
 import os
 
@@ -18,9 +20,6 @@ GMAIL_USER = os.getenv("GMAIL_USER")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 GMAIL_RECIPIENT = os.getenv("GMAIL_RECIPIENT")
 
-# Register with clean email address
-# yagmail.register(GMAIL_USER, GMAIL_APP_PASSWORD)
-
 
 def notify(analysis_results):
     """Send notifications showing all metrics for all nodes."""
@@ -31,6 +30,7 @@ def notify(analysis_results):
     email_lines = []
 
     for node_id, result in analysis_results.items():
+        
         # Determine status
         flagged = result.get("flagged", False)
         status_icon = "⚠️ ALERT" if flagged else "✅ Normal"
@@ -68,6 +68,8 @@ def notify(analysis_results):
             # Check for critical errors
             critical_errors = []
             for error_name, count in errors.items():
+
+                # Critical errors hardcoded for now (CHANGE LATER)
                 if error_name in ["SD_ACCESS_FAIL", "FRAM_ACCESS_FAIL"] and count > 0:
                     critical_errors.append(f"{error_name} ({count})")
 
