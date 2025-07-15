@@ -8,7 +8,7 @@ arguments:
     project: str
 '''
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import click
@@ -68,8 +68,8 @@ def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
     # cli_ctx = ctx.obj
 
     monitor(
-        start_date=start_date,
-        end_date=end_date,
+        start_date=start_date or (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
+        end_date=end_date or datetime.now().strftime("%Y-%m-%d"),
         node_ids=None,
         project=project or "ALL",
         # no_email=no_email,
