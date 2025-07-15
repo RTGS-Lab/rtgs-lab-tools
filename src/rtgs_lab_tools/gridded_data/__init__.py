@@ -10,6 +10,7 @@ from .gee import (
 from .planet import (
     quick_search,
     download_scenes,
+    download_clipped_scenes
 )
 from .processors import extract_time_series, process_era5_data
 from .utils import sources
@@ -22,7 +23,8 @@ __all__ = [
     "list_GEE_vars",
     "extract_time_series",
     "sources",
-    "planet_search",
+    "quick_search",
     "download_scenes",
+    "download_clipped_scenes",
    
 ]

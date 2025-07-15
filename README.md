@@ -193,6 +193,17 @@ rtgs gridded-data list-gee-datasets
 rtgs gridded-data list-gee-variables -s MOD
 ```
 
+### PlanetLabs Imgery
+```bash
+# Saves a csv file with all avaliable images between two dates for given sensors and roi
+rtgs gridded-data quick-search --source PSScene,SkySatScene --start-date 2020-06-01 --end-date 2022-06-01 --roi ./data/test_bbox_roi.json --clouds 50 --out-dir ./data
+
+# Download raw scenes from file or between dates for a given roi
+rtgs gridded-data download-scenes --source PSScene,SkySatScene --meta-file ./data/search_results_PlanetLabs_2015-06-01_2022-06-01 --out-dir ./data
+
+# Download clipped imagery for the selected sensor and region interest for selected dates. Saves image raster file, xml and json with meta information
+rtgs gridded-data download-clipped-scenes --source PSScene --meta-file ./data/search_results_PlanetLabs_2015-06-01_2022-06-01 --out-dir ./data --roi ./data/test_bbox_roi.json
+
 ### Error Analysis
 ```bash
 # Basic error analysis (shows all nodes by default)
