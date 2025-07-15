@@ -23,8 +23,8 @@ BUCKET_NAME = cfg.BUCKET_NAME
 try:
     import ee
 
-    ee.Authenticate()
-    ee.Initialize(project=GEE_PROJECT)
+    # ee.Authenticate()
+    # ee.Initialize(project=GEE_PROJECT)
 
     GEE_AVAILABLE = True
 except ImportError:

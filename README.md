@@ -1,6 +1,6 @@
 # RTGS Lab Tools
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A comprehensive Python package for environmental sensing data tools, gridded climate data access, IoT device management, and data visualization. Developed by the RTGS Lab at the University of Minnesota.
@@ -56,7 +56,7 @@ RTGS Lab Tools consolidates multiple environmental data analysis workflows into 
 ## Installation
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.10+
 - PostgreSQL client libraries (for GEMS database access)
 - UMN VPN connection (for database access)
 
@@ -70,9 +70,22 @@ cd rtgs-lab-tools
 bash install.sh
 ```
 
+#### MSI (Minnesota Supercomputing Institute) Users
+
+Before running the installation script on MSI infrastructure, load the required modules:
+
+```bash
+module load python
+module load git
+# Then proceed with installation
+git clone https://github.com/RTGS-Lab/rtgs-lab-tools.git
+cd rtgs-lab-tools
+bash install.sh
+```
+
 The install script will:
 - Detect your operating system (Windows/macOS/Linux)
-- Verify Python 3.8+ installation
+- Verify Python 3.10+ installation
 - Install `uv` package manager if needed
 - Initialize git submodules
 - Create and activate a virtual environment
@@ -87,6 +100,9 @@ git clone https://github.com/RTGS-Lab/rtgs-lab-tools.git
 cd rtgs-lab-tools
 python -m venv venv
 source venv/bin/activate
+# On macOS with zsh, use quotes:
+pip install -e ".[all]"
+# On other systems:
 pip install -e .[all]
 ```
 
@@ -109,18 +125,18 @@ pip install rtgs-lab-tools[all]
 
 ### 1. Setup Credentials
 ```bash
-rtgs data --setup-credentials
+rtgs sensing-data extract --setup-credentials
 ```
 Edit the created `.env` file with your database credentials.
 
 ### 2. List Available Projects
 ```bash
-rtgs data --list-projects
+rtgs sensing-data list-projects
 ```
 
 ### 3. Extract Sensor Data
 ```bash
-rtgs data --project "Winter Turf - v3" --start-date 2023-01-01 --end-date 2023-01-31
+rtgs sensing-data extract --project "Winter Turf - v3" --start-date 2023-01-01 --end-date 2023-01-31
 ```
 
 ### 4. Create Visualizations
@@ -138,16 +154,16 @@ rtgs era5 --variables 2m_temperature --start-date 2023-01-01 --end-date 2023-01-
 ### Data Extraction
 ```bash
 # Basic extraction
-rtgs data --project "My Project" --start-date 2023-01-01
+rtgs sensing-data extract --project "My Project" --start-date 2023-01-01
 
 # Filter by specific nodes
-rtgs data --project "My Project" --node-id "node001,node002"
+rtgs sensing-data extract --project "My Project" --node-ids "node001,node002"
 
 # Create compressed archive
-rtgs data --project "My Project" --create-zip
+rtgs sensing-data extract --project "My Project" --create-zip
 
 # Export as Parquet
-rtgs data --project "My Project" --output parquet
+rtgs sensing-data extract --project "My Project" --output-format parquet
 ```
 
 ### Visualization
@@ -212,10 +228,22 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 ```
 
 ### Use with Claude Code
-1. Clone and install as normal
-2. Navigate to repository and start Claude Code with 'claude'
-3. .mcp.json includes all configuration and Claude Code should recognize
-4. verify the mcps are running with /mcp once in Claude Code
+1. Clone and install as normal with `bash install.sh`
+2. Activate the virtual environment: `source venv/bin/activate`
+3. Install Claude Code CLI:
+   ```bash
+   # Install nodeenv if not already installed
+   pip install nodeenv
+   # Set up Node.js in the virtual environment
+   nodeenv -p
+   # Update npm
+   npm install -g npm
+   # Install Claude Code CLI
+   npm install -g @anthropic-ai/claude-code
+   ```
+4. Navigate to repository and start Claude Code with `claude`
+5. .mcp.json includes all configuration and Claude Code should recognize
+6. Verify the mcps are running with `/mcp` once in Claude Code
 
 ### Setup with Claude Desktop
 1. Install the package with MCP support:

@@ -58,7 +58,7 @@ check_python() {
         PYTHON_CMD="python"
     else
         print_error "Python is not installed or not in PATH"
-        print_error "Please install Python 3.8+ before running this script"
+        print_error "Please install Python 3.10+ before running this script"
         exit 1
     fi
     
@@ -66,12 +66,12 @@ check_python() {
     PYTHON_VERSION=$($PYTHON_CMD --version 2>&1 | awk '{print $2}')
     print_success "Found Python $PYTHON_VERSION at $(which $PYTHON_CMD)"
     
-    # Verify minimum version (3.8+)
+    # Verify minimum version (3.10+)
     PYTHON_MAJOR=$($PYTHON_CMD -c "import sys; print(sys.version_info.major)")
     PYTHON_MINOR=$($PYTHON_CMD -c "import sys; print(sys.version_info.minor)")
     
-    if [[ $PYTHON_MAJOR -lt 3 ]] || [[ $PYTHON_MAJOR -eq 3 && $PYTHON_MINOR -lt 8 ]]; then
-        print_error "Python 3.8 or higher is required. Found Python $PYTHON_VERSION"
+    if [[ $PYTHON_MAJOR -lt 3 ]] || [[ $PYTHON_MAJOR -eq 3 && $PYTHON_MINOR -lt 10 ]]; then
+        print_error "Python 3.10 or higher is required. Found Python $PYTHON_VERSION"
         exit 1
     fi
 }
@@ -165,25 +165,29 @@ init_submodules() {
 create_venv() {
     print_status "Creating virtual environment..."
     
-    VENV_NAME="venv"
+    # Always create venv in the project root directory
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    VENV_PATH="$SCRIPT_DIR/venv"
     
-    if [[ -d "$VENV_NAME" ]]; then
+    if [[ -d "$VENV_PATH" ]]; then
         print_warning "Virtual environment already exists. Removing old one..."
-        rm -rf "$VENV_NAME"
+        rm -rf "$VENV_PATH"
     fi
     
-    $PYTHON_CMD -m venv "$VENV_NAME"
-    print_success "Virtual environment created: $VENV_NAME"
+    $PYTHON_CMD -m venv "$VENV_PATH"
+    print_success "Virtual environment created: $VENV_PATH"
 }
 
 # Activate virtual environment
 activate_venv() {
     print_status "Activating virtual environment..."
     
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
     if [[ "$OS" == "windows" ]]; then
-        source "venv/Scripts/activate"
+        source "$SCRIPT_DIR/venv/Scripts/activate"
     else
-        source "venv/bin/activate"
+        source "$SCRIPT_DIR/venv/bin/activate"
     fi
     
     print_success "Virtual environment activated"
@@ -203,7 +207,8 @@ install_package() {
     print_status "Installing RTGS Lab Tools in development mode..."
     
     # Install in editable mode with all dependencies
-    python -m pip install -e .[all]
+    # Use quotes for zsh compatibility on macOS
+    python -m pip install -e ".[all]"
     
     print_success "Package installed successfully"
 }
@@ -227,6 +232,85 @@ auth_gee() {
         print_success "GEE Authentication is completed"
     else
         print_warning "Could not run setup credentials command. Package may not be properly installed."
+    fi
+}
+
+# Configure Claude Desktop MCP servers
+configure_claude_desktop() {
+    print_status "Configuring Claude Desktop MCP servers..."
+    
+    # Get absolute path to repository
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
+    # Determine Claude Desktop config path based on OS
+    case "$OS" in
+        "macos")
+            CLAUDE_CONFIG_DIR="$HOME/Library/Application Support/Claude"
+            CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/claude_desktop_config.json"
+            PYTHON_PATH="$SCRIPT_DIR/venv/bin/python"
+            PARTICLE_PATH="$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/"
+            ;;
+        "windows")
+            CLAUDE_CONFIG_DIR="$USERPROFILE/AppData/Roaming/Claude"
+            CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/claude_desktop_config.json"
+            # Convert Unix-style paths to Windows-style paths (e.g., /c/path -> C:/path)
+            PYTHON_PATH="$(echo "$SCRIPT_DIR/venv/Scripts/python.exe" | sed 's|^/\([a-z]\)/|\U\1:/|')"
+            PARTICLE_PATH="$(echo "$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/" | sed 's|^/\([a-z]\)/|\U\1:/|')"
+            ;;
+        "linux")
+            CLAUDE_CONFIG_DIR="$HOME/.config/Claude"
+            CLAUDE_CONFIG_FILE="$CLAUDE_CONFIG_DIR/claude_desktop_config.json"
+            PYTHON_PATH="$SCRIPT_DIR/venv/bin/python"
+            PARTICLE_PATH="$SCRIPT_DIR/src/rtgs_lab_tools/mcp_server/particle-mcp-server/"
+            ;;
+        *)
+            print_warning "Unknown OS. Skipping Claude Desktop MCP configuration."
+            return
+            ;;
+    esac
+    
+    # Check if Claude Desktop is installed by looking for the config directory
+    if [[ ! -d "$CLAUDE_CONFIG_DIR" ]]; then
+        print_warning "Claude Desktop not found (directory doesn't exist: $CLAUDE_CONFIG_DIR)"
+        print_warning "Skipping Claude Desktop MCP configuration. Install Claude Desktop first if you want MCP integration."
+        return
+    fi
+    
+    # Create or update claude_desktop_config.json
+    if [[ -f "$CLAUDE_CONFIG_FILE" ]]; then
+        print_status "Backing up existing Claude Desktop config..."
+        cp "$CLAUDE_CONFIG_FILE" "${CLAUDE_CONFIG_FILE}.backup.$(date +%Y%m%d_%H%M%S)"
+    fi
+    
+    # Generate the configuration
+    print_status "Writing Claude Desktop MCP configuration..."
+    
+    # Use forward slashes for all platforms (JSON accepts forward slashes on Windows)
+    cat > "$CLAUDE_CONFIG_FILE" << EOF
+{
+  "mcpServers": {
+    "particle": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "$PARTICLE_PATH",
+        "run",
+        "particle.py"
+      ]
+    },
+    "rtgs_lab_tools": {
+      "command": "$PYTHON_PATH",
+      "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+    }
+  }
+}
+EOF
+    
+    if [[ $? -eq 0 ]]; then
+        print_success "Claude Desktop MCP configuration created: $CLAUDE_CONFIG_FILE"
+        print_status "Restart Claude Desktop to load the new MCP servers"
+    else
+        print_error "Failed to create Claude Desktop MCP configuration"
     fi
 }
 
@@ -264,10 +348,11 @@ show_next_steps() {
     
     echo -e "${YELLOW}Next Steps:${NC}"
     echo -e "1. ${BLUE}Activate the virtual environment:${NC}"
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     if [[ "$OS" == "windows" ]]; then
-        echo -e "   ${BLUE}source venv/Scripts/activate${NC}"
+        echo -e "   ${BLUE}source $SCRIPT_DIR/venv/Scripts/activate${NC}"
     else
-        echo -e "   ${BLUE}source venv/bin/activate${NC}"
+        echo -e "   ${BLUE}source $SCRIPT_DIR/venv/bin/activate${NC}"
     fi
     
     echo -e "\n2. ${BLUE}Configure your credentials:${NC}"
@@ -294,6 +379,10 @@ show_next_steps() {
 main() {
     print_header
     
+    # Change to script directory to ensure we're in the project root
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    cd "$SCRIPT_DIR"
+    
     detect_os
     check_directories
     init_submodules
@@ -305,7 +394,8 @@ main() {
     upgrade_pip
     install_package
     run_setup_credentials
-    auth_gee
+    #auth_gee
+    configure_claude_desktop
 
     show_next_steps
 }
