@@ -120,7 +120,7 @@ class Config:
     def BUCKET_NAME(self) -> Optional[str]:
         """Google Cloud Bucket name."""
         return os.getenv("BUCKET_NAME")
-    
+
     @property
     def PL_API_KEY(self) -> Optional[str]:
         """PlanetLabs API key."""

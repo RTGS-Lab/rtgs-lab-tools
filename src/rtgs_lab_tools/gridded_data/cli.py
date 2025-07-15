@@ -21,11 +21,13 @@ def gridded_data_cli(ctx):
     """Gridded climate data tools."""
     ctx.ensure_object(CLIContext)
 
-#TODO: planet clipping tool
-#https://docs.planet.com/develop/apis/orders/tools/#clip
+
+# TODO: planet clipping tool
+# https://docs.planet.com/develop/apis/orders/tools/#clip
+
 
 ########################################################
-# DOWNLOAD CLIPPED PLANET IMAGES 
+# DOWNLOAD CLIPPED PLANET IMAGES
 ########################################################
 @gridded_data_cli.command()
 @click.option(
@@ -34,11 +36,15 @@ def gridded_data_cli(ctx):
     required=True,
     help="One source of Planet data: PSScene (PlanetScope) or SkySatScene (SkySat)",
 )
-@click.option("--meta-file", help="Path to the CSV file containing id column with scene ids to download")
+@click.option(
+    "--meta-file",
+    help="Path to the CSV file containing id column with scene ids to download",
+)
 @click.option("--start-date", help="Start date (YYYY-MM-DD)")
 @click.option("--end-date", help="End date (YYYY-MM-DD)")
 @click.option(
-    "--roi", required=True,
+    "--roi",
+    required=True,
     help="Region of interest coordinates file path: path/to/file.json",
 )
 @click.option("--clouds", help="Cloud percentage threshold")
@@ -65,7 +71,7 @@ def download_clipped_scenes(
     cli_ctx.setup("download-scenes", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import load_roi, download_clipped_scenes
+        from ..gridded_data import download_clipped_scenes, load_roi
 
         # Load ROI from file
         if roi:
@@ -94,6 +100,7 @@ def download_clipped_scenes(
         }
         raise
 
+
 ########################################################
 # DOWNLOAD RAW PLANET IMAGES
 ########################################################
@@ -104,7 +111,10 @@ def download_clipped_scenes(
     required=True,
     help="A source of Planet data: PSScene (PlanetScope), SkySatScene (SkySat)",
 )
-@click.option("--meta-file", help="Path to the CSV file containing id column with scene ids to download")
+@click.option(
+    "--meta-file",
+    help="Path to the CSV file containing id column with scene ids to download",
+)
 @click.option("--start-date", help="Start date (YYYY-MM-DD)")
 @click.option("--end-date", help="End date (YYYY-MM-DD)")
 @click.option(
@@ -135,7 +145,7 @@ def download_scenes(
     cli_ctx.setup("download-scenes", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import load_roi, download_scenes
+        from ..gridded_data import download_scenes, load_roi
 
         # Load ROI from file
         if roi:
@@ -163,6 +173,7 @@ def download_scenes(
             "note": note,
         }
         raise
+
 
 ########################################################
 # SEARCH FOR PLANET IMAGES
@@ -209,7 +220,7 @@ def planet_search(
         # Load ROI from file
         if roi:
             roi = load_roi(roi).getInfo()
-        #print(roi_bounds)
+        # print(roi_bounds)
 
         quick_search(
             source=source,
