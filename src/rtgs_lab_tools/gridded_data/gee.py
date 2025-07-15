@@ -7,9 +7,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
+import ee
 import geopandas as gpd
 import pandas as pd
-import ee
 
 from ..core import Config
 from ..core.exceptions import APIError, ValidationError
@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 cfg = Config()
 GEE_PROJECT = cfg.GEE_PROJECT
 BUCKET_NAME = cfg.BUCKET_NAME
+
 
 def init_ee():
     try:

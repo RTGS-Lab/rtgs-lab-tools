@@ -281,10 +281,10 @@ def gee_search(
     cli_ctx.setup("gee-search", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import load_roi, search_images, sources, init_ee
-        
+        from ..gridded_data import init_ee, load_roi, search_images, sources
+
         init_ee()
-        
+
         # Load ROI from file
         if roi:
             roi_bounds = load_roi(roi)
@@ -358,8 +358,8 @@ def get_gee_point(
     cli_ctx.setup("gee-point", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_GEE_point, load_roi, sources, init_ee
-        
+        from ..gridded_data import download_GEE_point, init_ee, load_roi, sources
+
         init_ee()
 
         # Load ROI from file
@@ -482,10 +482,10 @@ def get_gee_raster(
     cli_ctx.setup("gee-data", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_GEE_raster, load_roi, sources, init_ee
-        
+        from ..gridded_data import download_GEE_raster, init_ee, load_roi, sources
+
         init_ee()
-        
+
         # Load ROI from file
         if roi:
             roi_bounds = load_roi(roi)
@@ -603,8 +603,8 @@ def list_gee_variables(ctx, source, verbose, log_file, no_postgres_log, note):
     cli_ctx.setup("gee-dataset-varaibles", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import list_GEE_vars, sources, init_ee
-        
+        from ..gridded_data import init_ee, list_GEE_vars, sources
+
         init_ee()
 
         band_names = list_GEE_vars(sources[source])
@@ -630,7 +630,9 @@ def gee_authenticate(ctx, verbose, log_file, no_postgres_log, note):
     cli_ctx.setup("gee-authenticate", verbose, log_file, no_postgres_log)
 
     import ee
+
     ee.Authenticate()
+
 
 if __name__ == "__main__":
     gridded_data_cli()
