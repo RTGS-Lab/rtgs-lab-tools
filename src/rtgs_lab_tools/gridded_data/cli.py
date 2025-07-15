@@ -25,7 +25,77 @@ def gridded_data_cli(ctx):
 #https://docs.planet.com/develop/apis/orders/tools/#clip
 
 ########################################################
-# DOWNLOAD PLANET IMAGES
+# DOWNLOAD CLIPPED PLANET IMAGES 
+########################################################
+@gridded_data_cli.command()
+@click.option(
+    "--source",
+    multiple=False,
+    required=True,
+    help="One source of Planet data: PSScene (PlanetScope) or SkySatScene (SkySat)",
+)
+@click.option("--meta-file", help="Path to the CSV file containing id column with scene ids to download")
+@click.option("--start-date", help="Start date (YYYY-MM-DD)")
+@click.option("--end-date", help="End date (YYYY-MM-DD)")
+@click.option(
+    "--roi", required=True,
+    help="Region of interest coordinates file path: path/to/file.json",
+)
+@click.option("--clouds", help="Cloud percentage threshold")
+@click.option("--out-dir", "-o", required=True, help="Local output directory")
+@add_common_options
+@click.pass_context
+@handle_common_errors("download-clipped-scenes")
+def download_clipped_scenes(
+    ctx,
+    source,
+    meta_file,
+    start_date,
+    end_date,
+    roi,
+    clouds,
+    out_dir,
+    verbose,
+    log_file,
+    no_postgres_log,
+    note,
+):
+    """Downloading clipped PlanetLabs scenes. Provide eaither a csv file with scene id's or dates and region of interest(roi)."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("download-scenes", verbose, log_file, no_postgres_log)
+
+    try:
+        from ..gridded_data import load_roi, download_clipped_scenes
+
+        # Load ROI from file
+        if roi:
+            roi = load_roi(roi).getInfo()
+
+        download_clipped_scenes(
+            source=source,
+            meta_file=meta_file,
+            roi=roi,
+            start_date=start_date,
+            end_date=end_date,
+            clouds=clouds,
+            out_dir=out_dir,
+        )
+
+        click.echo(f"Planet imagery is saved to: {out_dir}")
+
+    except Exception as e:
+        # Log error
+        parameters = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "roi": roi,
+            "out_dir": out_dir,
+            "note": note,
+        }
+        raise
+
+########################################################
+# DOWNLOAD RAW PLANET IMAGES
 ########################################################
 @gridded_data_cli.command()
 @click.option(
@@ -60,7 +130,7 @@ def download_scenes(
     no_postgres_log,
     note,
 ):
-    """Downloading PlanetLabs scenes. Provide eaither a csv file with scene id's or dates and region of interest(roi)."""
+    """Downloading PlanetLabs scenes. To use provide eaither a csv file with scene id's or dates and region of interest(roi)."""
     cli_ctx = ctx.obj
     cli_ctx.setup("download-scenes", verbose, log_file, no_postgres_log)
 
@@ -81,7 +151,7 @@ def download_scenes(
             out_dir=out_dir,
         )
 
-        click.echo(f"Planet Search results are saved to: {out_dir}")
+        click.echo(f"Planet imagery is saved to: {out_dir}")
 
     except Exception as e:
         # Log error
