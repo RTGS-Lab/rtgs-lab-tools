@@ -84,6 +84,12 @@ def notify(analysis_results):
         email_lines.append(message)
         email_lines.append("")  # Add spacing between nodes
 
+    print("\nTotal Nodes Analyzed:", len(analysis_results))
+
+    # include total number of nodes
+    total_nodes = len(analysis_results)
+    email_lines.append(f"\nTotal Nodes Analyzed: {total_nodes}")
+
     # Send email with all results
     subject = "Device Monitoring Report"
     body = "\n".join(email_lines)

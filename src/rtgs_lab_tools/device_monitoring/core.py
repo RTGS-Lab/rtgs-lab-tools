@@ -18,20 +18,20 @@ from .data_formatter import format_data_with_parser
 from .data_getter import get_data
 from .notification_system import notify
 
-start_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-end_date = datetime.now().strftime("%Y-%m-%d")
-node_ids = None
-project = "ALL"
+def monitor(start_date=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"), 
+            end_date=datetime.now().strftime("%Y-%m-%d"), 
+            node_ids=None, 
+            project="ALL"):
 
-# Step 1: Get the data
-data_frame = get_data(start_date, end_date, project, node_ids)
+    # Step 1: Get the data
+    data_frame = get_data(start_date, end_date, project, node_ids)
 
-# Step 2: Format the data
-formatted_data = format_data_with_parser(data_frame)
+    # Step 2: Format the data
+    formatted_data = format_data_with_parser(data_frame)
 
-# Step 3: Analyze the data
-analysis_dict = analyze_data(formatted_data)
+    # Step 3: Analyze the data
+    analysis_dict = analyze_data(formatted_data)
 
-# Step 4: Notify the user with the analysis result
-print("\n--Notification Results--\n")
-notify(analysis_dict)
+    # Step 4: Notify the user with the analysis result
+    print("\n--Notification Results--\n")
+    notify(analysis_dict)
