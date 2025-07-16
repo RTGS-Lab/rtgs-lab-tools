@@ -55,7 +55,11 @@ def extract_array_value(
         The value at the specified index, or None if extraction fails
     """
     # Handle None values
-    if value is None or pd.isna(value):
+    if value is None:
+        return None
+    
+    # Check for pd.NA/NaN for non-list values only
+    if not isinstance(value, list) and pd.isna(value):
         return None
 
     # If it's already a list
@@ -318,7 +322,11 @@ def _detect_array_length(value: Union[str, list, float, int]) -> int:
         Length of array, or 1 if not an array
     """
     # Handle None values
-    if value is None or pd.isna(value):
+    if value is None:
+        return 0
+    
+    # Check for pd.NA/NaN for non-list values only
+    if not isinstance(value, list) and pd.isna(value):
         return 0
 
     # If it's already a list
