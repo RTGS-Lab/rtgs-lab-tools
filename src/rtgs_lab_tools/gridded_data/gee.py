@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
+import ee
 import geopandas as gpd
 import pandas as pd
 
@@ -20,18 +21,18 @@ cfg = Config()
 GEE_PROJECT = cfg.GEE_PROJECT
 BUCKET_NAME = cfg.BUCKET_NAME
 
-try:
-    import ee
 
-    # ee.Authenticate()
-    # ee.Initialize(project=GEE_PROJECT)
+def init_ee():
+    try:
+        import ee
 
-    GEE_AVAILABLE = True
-except ImportError:
-    GEE_AVAILABLE = False
-    logger.warning(
-        "Gridded data functionality requires earthegine and xarray. Install with: pip install rtgs-lab-tools[climate]"
-    )
+        ee.Authenticate()
+        ee.Initialize(project=GEE_PROJECT)
+
+    except ImportError:
+        logger.warning(
+            "Gridded data functionality requires earthegine and xarray. Install with: pip install rtgs-lab-tools[climate]"
+        )
 
 
 def compute_clouds(img, mask, roi):
@@ -126,8 +127,6 @@ def search_images(name, source, roi, start_date, end_date, out_dir):
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
         out_dir: Local output directory
-    Returns:
-        Path to downloaded file
     """
 
     def clip_img(img):
