@@ -28,15 +28,19 @@ def monitor(
 ):
 
     # Step 1: Get the data
-    print(f"Beginning data retrieval")
+    print(f"--Beginning data retrieval--")
     data_frame = get_data(start_date, end_date, project, node_ids)
-    print(f"Data retrieval complete")
+    print(f"--Data retrieval complete--")
 
     # Step 2: Format the data
+    print(f"--Beginning data formatting--")
     formatted_data = format_data_with_parser(data_frame)
+    print(f"--Data formatting complete--")
 
     # Step 3: Analyze the data
+    print(f"--Beginning data analysis--")
     analysis_dict = analyze_data(formatted_data)
+    print(f"--Data analysis complete--")
 
     # Step 4: Notify the user with the analysis result
     print("\n--Notification Results--\n")

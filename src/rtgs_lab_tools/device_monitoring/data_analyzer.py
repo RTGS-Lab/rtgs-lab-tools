@@ -15,6 +15,7 @@ Output:
 """
 
 import pandas as pd
+from .config import BATTERY_VOLTAGE_MIN, SYSTEM_CURRENT_MAX, CRITICAL_ERRORS
 
 
 def analyze_data(data):
@@ -44,9 +45,6 @@ def analyze_data(data):
     if system_df is not None and hasattr(system_df, "index"):
         all_node_ids.update(system_df.index)
 
-    # Critical errors to flag (hardcoded for now, CHANGE LATER)
-    critical_errors = ["SD_ACCESS_FAIL", "FRAM_ACCESS_FAIL"]
-
     for node_id in all_node_ids:
         flagged = False
         battery_val = None
@@ -56,13 +54,13 @@ def analyze_data(data):
         # Get battery voltage
         if battery_df is not None and node_id in battery_df.index:
             battery_val = float(battery_df.loc[node_id, "port_v_0"])
-            if battery_val < 3.6:
+            if battery_val < BATTERY_VOLTAGE_MIN:
                 flagged = True
 
         # Get system usage
         if system_df is not None and node_id in system_df.index:
             system_val = float(system_df.loc[node_id, "port_i_1"])
-            if system_val > 200:  # 200mA threshold
+            if system_val > SYSTEM_CURRENT_MAX:
                 flagged = True
 
         # Get errors
@@ -76,7 +74,7 @@ def analyze_data(data):
             }
 
             # Check for critical errors
-            for critical_error in critical_errors:
+            for critical_error in CRITICAL_ERRORS:
                 if critical_error in errors_dict and errors_dict[critical_error] > 0:
                     flagged = True
                     break
