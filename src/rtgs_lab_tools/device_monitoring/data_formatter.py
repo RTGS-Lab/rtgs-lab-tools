@@ -26,7 +26,7 @@ def format_data_with_parser(data_frame):
 
     # get parsed dataframe from parse_gems_data
     try:
-        parsed_result = parse_gems_data(data_frame, packet_types="error/v2, data/v2, metadata/v2, diagnostic/v2")
+        parsed_result = parse_gems_data(data_frame, packet_types="error/v2, diagnostic/v2")
     except ValueError as e:
         print(f"Error parsing data: {e}")
         return None
