@@ -370,6 +370,8 @@ show_next_steps() {
     echo -e "   ${YELLOW}Google Earth Engine (optional for satellite data):${NC}"
     echo -e "     • GEE_PROJECT (Google Cloud project name)"
     echo -e "     • BUCKET_NAME (Google Cloud Storage bucket)"
+    echo -e "   ${YELLOW}PlanetLabs (optional for high-res satellite imagery):${NC}"
+    echo -e "     • PL_API_KEY (PlanetLabs API key)"
     echo -e "   ${YELLOW}Device Management (optional for IoT devices):${NC}"
     echo -e "     • PARTICLE_ACCESS_TOKEN"
     

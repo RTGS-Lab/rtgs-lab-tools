@@ -77,6 +77,34 @@ rtgs gridded-data gee-search \
   --roi ./data/search_roi.json
 ```
 
+### PlanetLabs Imagery
+
+```bash
+# Search for available images between dates for given sensors and ROI
+# Saves a CSV file with all available images
+rtgs gridded-data quick-search \
+  --source PSScene,SkySatScene \
+  --start-date 2020-06-01 \
+  --end-date 2022-06-01 \
+  --roi ./data/test_bbox_roi.json \
+  --clouds 50 \
+  --out-dir ./data
+
+# Download raw scenes from file or between dates for a given ROI
+rtgs gridded-data download-scenes \
+  --source PSScene,SkySatScene \
+  --meta-file ./data/search_results_PlanetLabs_2015-06-01_2022-06-01 \
+  --out-dir ./data
+
+# Download clipped imagery for selected sensor and region of interest
+# Saves image raster file, XML and JSON with metadata
+rtgs gridded-data download-clipped-scenes \
+  --source PSScene \
+  --meta-file ./data/search_results_PlanetLabs_2015-06-01_2022-06-01 \
+  --out-dir ./data \
+  --roi ./data/test_bbox_roi.json
+```
+
 ### Command Options
 
 **Common Options:**
@@ -93,6 +121,13 @@ rtgs gridded-data gee-search \
 **Raster Data Options:**
 - `--out-dest TEXT`: "drive" for Google Drive or "bucket" for Cloud Storage (required)
 - `--folder TEXT`: Output folder name or bucket path
+
+**PlanetLabs Options:**
+- `--source TEXT`: Sensor types (e.g., "PSScene,SkySatScene") (required)
+- `--meta-file TEXT`: Path to search results file for download operations
+- `--out-dir TEXT`: Local output directory (required)
+- `--roi TEXT`: Region of interest JSON file path (required for clipped scenes)
+- `--clouds INTEGER`: Cloud percentage threshold for filtering
 
 ## Python API Usage
 
@@ -274,6 +309,16 @@ For multiple point locations:
 - **Spatial Resolution**: 10-60m
 - **Key Variables**: Surface reflectance, vegetation indices
 
+### PlanetLabs
+- **Description**: High-resolution commercial satellite imagery
+- **Temporal Coverage**: 2009-present (varies by sensor)
+- **Spatial Resolution**: 0.8m-5m depending on sensor
+- **Key Sensors**: PSScene (PlanetScope), SkySatScene (SkySat)
+
+**Available Sensors:**
+- `PSScene`: PlanetScope constellation (3-5m resolution, daily coverage)
+- `SkySatScene`: SkySat constellation (0.8-1m resolution, targeted coverage)
+
 ## Configuration
 
 ### Google Earth Engine Setup
@@ -309,6 +354,21 @@ For raster downloads to Google Drive:
 1. Ensure your Google account has sufficient storage
 2. Authenticate with the same account used for Earth Engine
 3. Files will appear in the specified folder in your Drive
+
+### PlanetLabs Setup
+For PlanetLabs imagery access:
+1. **Create PlanetLabs Account**
+   - Sign up at [Planet.com](https://www.planet.com/)
+   - Obtain API access credentials
+
+2. **Environment Variables**
+   Add to your `.env` file:
+   ```env
+   PL_API_KEY=your_planet_labs_api_key
+   ```
+
+3. **Authentication**
+   The API key is automatically used for all PlanetLabs operations
 
 ## Output Formats
 
