@@ -21,7 +21,7 @@ GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 GMAIL_RECIPIENT = os.getenv("GMAIL_RECIPIENT")
 
 
-def notify(analysis_results):
+def notify(analysis_results, no_email=False):
     """Send notifications showing all metrics for all nodes."""
     if not analysis_results:
         print("ℹ️ No analysis results to process.")
@@ -93,7 +93,12 @@ def notify(analysis_results):
     # Send email with all results
     subject = "Device Monitoring Report"
     body = "\n".join(email_lines)
-    _send_email(subject, body)
+    if no_email:
+        print("\n📧 Email notifications are disabled. Skipping email sending.")
+    else:
+        print("\n📧 Sending notification email...")
+        _send_email(subject, body)
+
 
 
 def _send_email(subject, body):

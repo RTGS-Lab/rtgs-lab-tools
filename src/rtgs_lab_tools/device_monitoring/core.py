@@ -21,10 +21,13 @@ from .notification_system import notify
 def monitor(start_date=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"), 
             end_date=datetime.now().strftime("%Y-%m-%d"), 
             node_ids=None, 
-            project="ALL"):
+            project="ALL",
+            no_email=False):
 
     # Step 1: Get the data
+    print(f"Beginning data retrieval")
     data_frame = get_data(start_date, end_date, project, node_ids)
+    print(f"Data retrieval complete")
 
     # Step 2: Format the data
     formatted_data = format_data_with_parser(data_frame)
@@ -34,4 +37,4 @@ def monitor(start_date=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
 
     # Step 4: Notify the user with the analysis result
     print("\n--Notification Results--\n")
-    notify(analysis_dict)
+    notify(analysis_dict, no_email=no_email)
