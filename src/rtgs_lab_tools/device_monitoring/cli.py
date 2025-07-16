@@ -1,4 +1,4 @@
-'''
+"""
 Overview:
     - CLI module for device monitoring
 arguments:
@@ -6,13 +6,12 @@ arguments:
     end_date: datetime
     node_ids: list of node ids
     project: str
-'''
+"""
 
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import click
-
 
 from ..core.cli_utils import (
     CLIContext,
@@ -21,11 +20,13 @@ from ..core.cli_utils import (
 )
 from .core import monitor
 
+
 @click.group()
 @click.pass_context
 def device_monitoring_cli(ctx):
     """Device monitoring tools."""
     ctx.ensure_object(CLIContext)
+
 
 @device_monitoring_cli.command()
 @click.option(
@@ -67,9 +68,17 @@ def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
     # }
     # cli_ctx = ctx.obj
 
-     # Convert datetime objects to strings, or use defaults
-    start_date_str = start_date.strftime("%Y-%m-%d") if start_date else (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    end_date_str = end_date.strftime("%Y-%m-%d") if end_date else datetime.now().strftime("%Y-%m-%d")
+    # Convert datetime objects to strings, or use defaults
+    start_date_str = (
+        start_date.strftime("%Y-%m-%d")
+        if start_date
+        else (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    )
+    end_date_str = (
+        end_date.strftime("%Y-%m-%d")
+        if end_date
+        else datetime.now().strftime("%Y-%m-%d")
+    )
 
     monitor(
         start_date=start_date_str,
@@ -79,6 +88,7 @@ def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
         project=project or "ALL",
         no_email=no_email or False,
     )
+
 
 if __name__ == "__main__":
     device_monitoring_cli()

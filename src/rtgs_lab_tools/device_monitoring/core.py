@@ -1,14 +1,14 @@
-'''
-Overview: 
+"""
+Overview:
     - This file is an implementation of the core functionality of device monitoring
-Task Description: 
+Task Description:
     - should organize all the functions from within data_getter, date_formatter, data_analyzer, notification system
     - should create the function that the cli.py wraps
-Work Flow: 
+Work Flow:
     - data_getter->data_formatter->data_analyzer->notification_system
-To run: 
+To run:
     - python -m rtgs_lab_tools.device_monitoring.core
-'''
+"""
 
 import pprint
 from datetime import datetime, timedelta
@@ -18,11 +18,14 @@ from .data_formatter import format_data_with_parser
 from .data_getter import get_data
 from .notification_system import notify
 
-def monitor(start_date=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"), 
-            end_date=datetime.now().strftime("%Y-%m-%d"), 
-            node_ids=None, 
-            project="ALL",
-            no_email=False):
+
+def monitor(
+    start_date=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
+    end_date=datetime.now().strftime("%Y-%m-%d"),
+    node_ids=None,
+    project="ALL",
+    no_email=False,
+):
 
     # Step 1: Get the data
     print(f"Beginning data retrieval")

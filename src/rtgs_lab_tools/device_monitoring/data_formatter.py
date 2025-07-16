@@ -1,26 +1,28 @@
-'''
+"""
 Overview:
     - This file is responsible for formatting raw data into a structured format suitable for analysis.
 Input:
     - data_frame: A pandas DataFrame containing raw data retrieved from the database.
 Output:
-    - A python dictionary of Pandas DataFrames containing formatted data including: 
+    - A python dictionary of Pandas DataFrames containing formatted data including:
         - a battery voltages dataframe
         - a system usage dataframe
         - an error counts dataframe
         - and the aggregated parsed data dataframe (so that all data is still accessible in analysis)
-'''
+"""
 
 import ast
+
 import pandas as pd
+
 from ..data_parser import parse_gems_data
 
 
 def format_data_with_parser(data_frame):
-    '''
+    """
     input: data_frame (pandas DataFrame)
     output: formatted data dictionary
-    '''
+    """
 
     # get parsed dataframe from parse_gems_data
     parsed_result = parse_gems_data(data_frame, packet_types="all")

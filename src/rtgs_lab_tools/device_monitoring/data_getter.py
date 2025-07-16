@@ -1,4 +1,4 @@
-'''
+"""
 Overview:
     - This file is responsible for fetching raw data from the database.
     - It uses the `get_raw_data` function from the `sensing_data` module to retrieve data based on specified parameters.
@@ -9,7 +9,7 @@ Inputs:
     - node_ids: Optional list of node IDs to filter the data.
 Outputs:
     - pandas DataFrame containing the raw data.
-'''
+"""
 
 from ..core.config import Config
 from ..core.database import DatabaseManager

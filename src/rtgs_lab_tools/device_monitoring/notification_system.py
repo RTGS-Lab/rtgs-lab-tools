@@ -1,4 +1,4 @@
-'''
+"""
 Overview:
     - Sends notifications showing analyzed metrics for nodes specified in core.py.
     - Builds notification messages based on analysis results.
@@ -7,7 +7,7 @@ Inputs:
 Outputs:
     - Prints notification results to the console.
     - Sends an email with the notification results.
-'''
+"""
 
 import os
 
@@ -30,7 +30,7 @@ def notify(analysis_results, no_email=False):
     email_lines = []
 
     for node_id, result in analysis_results.items():
-        
+
         # Determine status
         flagged = result.get("flagged", False)
         status_icon = "⚠️ ALERT" if flagged else "✅ Normal"
@@ -98,7 +98,6 @@ def notify(analysis_results, no_email=False):
     else:
         print("\n📧 Sending notification email...")
         _send_email(subject, body)
-
 
 
 def _send_email(subject, body):

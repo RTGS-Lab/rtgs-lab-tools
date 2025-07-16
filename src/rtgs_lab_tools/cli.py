@@ -18,10 +18,10 @@ def register_commands():
     from .audit.cli import audit_cli
     from .data_parser.cli import data_parser_cli
     from .device_configuration.cli import device_configuration_cli
+    from .device_monitoring.cli import device_monitoring_cli
     from .gridded_data.cli import gridded_data_cli
     from .sensing_data.cli import sensing_data_cli
     from .visualization.cli import visualization_cli
-    from .device_monitoring.cli import device_monitoring_cli
 
     # Add them to the main CLI with their specific names
     cli.add_command(sensing_data_cli, name="sensing-data")
