@@ -193,6 +193,16 @@ rtgs gridded-data list-gee-datasets
 rtgs gridded-data list-gee-variables -s MOD
 ```
 
+### Device Monitoring
+```bash
+# Monitor all v3 devices across all projects for the last 24 hours
+# Defaults: start-date -> 24 hours ago, end-date -> now
+rtgs device-monitoring monitor
+
+# Monitor devices over a specific time frame, from a specific project, without an email notification (terminal output only)
+rtgs device-monitoring monitor --start-date YYYY-MM-DD --end-date YYYY-MM-DD --project "project name" --no-email
+```
+
 ### Error Analysis
 ```bash
 # Basic error analysis (shows all nodes by default)
