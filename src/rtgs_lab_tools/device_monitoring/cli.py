@@ -59,15 +59,6 @@ def device_monitoring_cli(ctx):
 def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
     """Monitor device data."""
 
-    # ctx.obj = {
-    #     "start_date": start_date,
-    #     "end_date": end_date,
-    #     "node_ids": node_ids,
-    #     "project": project,
-    #     "no_email": no_email,
-    # }
-    # cli_ctx = ctx.obj
-
     # Convert datetime objects to strings, or use defaults
     start_date_str = (
         start_date.strftime("%Y-%m-%d")
