@@ -18,6 +18,7 @@ def register_commands():
     from .audit.cli import audit_cli
     from .data_parser.cli import data_parser_cli
     from .device_configuration.cli import device_configuration_cli
+    from .device_monitoring.cli import device_monitoring_cli
     from .gridded_data.cli import gridded_data_cli
     from .sensing_data.cli import sensing_data_cli
     from .visualization.cli import visualization_cli
@@ -30,6 +31,7 @@ def register_commands():
     cli.add_command(device_configuration_cli, name="device-configuration")
     cli.add_command(agricultural_modeling_cli, name="agricultural-modeling")
     cli.add_command(audit_cli, name="audit")
+    cli.add_command(device_monitoring_cli, name="device-monitoring")
 
 
 # Register commands when the module is imported
