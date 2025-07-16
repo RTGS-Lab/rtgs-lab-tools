@@ -3,7 +3,7 @@
 # Battery voltage threshold (Volts)
 BATTERY_VOLTAGE_MIN = 3.6
 
-# System current threshold (mA) 
+# System current threshold (mA)
 SYSTEM_CURRENT_MAX = 200
 
 # Critical errors that trigger alerts

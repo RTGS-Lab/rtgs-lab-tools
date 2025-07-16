@@ -15,7 +15,8 @@ Output:
 """
 
 import pandas as pd
-from .config import BATTERY_VOLTAGE_MIN, SYSTEM_CURRENT_MAX, CRITICAL_ERRORS
+
+from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_CURRENT_MAX
 
 
 def analyze_data(data):
