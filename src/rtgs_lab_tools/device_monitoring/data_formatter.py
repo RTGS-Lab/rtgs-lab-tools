@@ -25,7 +25,11 @@ def format_data_with_parser(data_frame):
     """
 
     # get parsed dataframe from parse_gems_data
-    parsed_result = parse_gems_data(data_frame, packet_types="all")
+    try:
+        parsed_result = parse_gems_data(data_frame, packet_types="error/v2, data/v2, metadata/v2, diagnostic/v2")
+    except ValueError as e:
+        print(f"Error parsing data: {e}")
+        return None
 
     # Check if parse_gems_data returns a tuple or DataFrame
     if isinstance(parsed_result, tuple):
@@ -68,7 +72,12 @@ def create_battery_voltage_dataframe(df):
 
     # Used below in place of a lambda function
     def extract_first_value(x):
-        return ast.literal_eval(str(x))[0]
+        try:
+            parsed = ast.literal_eval(str(x))
+            return parsed[0] if len(parsed) > 0 else None
+        except (ValueError, IndexError, TypeError) as e:
+            print(f"Error extracting first value from {x}: {e}")
+            return None
 
     kestrel_portv["port_v_0"] = kestrel_portv["value"].apply(extract_first_value)
     return (
@@ -87,7 +96,12 @@ def create_system_usage_dataframe(df):
 
     # Used below in place of a lambda function
     def extract_second_value(x):
-        return ast.literal_eval(str(x))[1]
+        try:
+            parsed = ast.literal_eval(str(x))
+            return parsed[1] if len(parsed) > 1 else None
+        except (ValueError, IndexError, TypeError) as e:
+            print(f"Error extracting second value from {x}: {e}")
+            return None
 
     kestrel_porti["port_i_1"] = kestrel_porti["value"].apply(extract_second_value)
     return (
