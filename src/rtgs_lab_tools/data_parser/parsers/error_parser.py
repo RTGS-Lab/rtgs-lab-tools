@@ -58,21 +58,31 @@ class ErrorV2Parser(EventParser):
     Parser for error/v2 format events.
     """
 
-    def __init__(self, schema_registry=None, error_db=None):
+    # Class variable to track if error codes have been loaded
+    _error_db_loaded = False
+    _error_db_cache = None
+
+    def __init__(self, schema_registry=None, error_db=None, verbose=False):
         """
         Initialize the parser with schema registry.
 
         Args:
             schema_registry: Schema registry
             error_db: Not used, kept for compatibility
+            verbose: Whether to enable verbose logging
         """
-        super().__init__(schema_registry, error_db)
+        super().__init__(schema_registry, error_db, verbose)
         self.error_db = self._load_errorcodes_database()
 
     def _load_errorcodes_database(self) -> Dict[str, Dict[str, str]]:
         """
         Load error code database from ERRORCODES.md file or fetch from GitHub.
+        Uses class-level caching to avoid repeated loading.
         """
+        # Return cached database if already loaded
+        if ErrorV2Parser._error_db_loaded and ErrorV2Parser._error_db_cache is not None:
+            return ErrorV2Parser._error_db_cache
+
         markdown_content = ""
 
         # Try to use local ERRORCODES.md file if it exists
@@ -81,22 +91,28 @@ class ErrorV2Parser(EventParser):
                 markdown_content = f.read()
         else:
             try:
-                print("Fetching error codes from GitHub...")
+                self.logger.info("Fetching error codes from GitHub...")
                 import requests
 
                 url = "https://raw.githubusercontent.com/gemsiot/Firmware_-_FlightControl-Demo/refs/heads/master/ERRORCODES.md"
                 response = requests.get(url, allow_redirects=False, timeout=10)
                 if response.status_code == 200:
                     markdown_content = response.text
-                    print("Got ERRORCODES.md from Github.")
+                    self.logger.info("Got ERRORCODES.md from Github.")
                     # Save for future use
                     with open("ERRORCODES.md", "w", encoding="utf-8") as f:
                         f.write(markdown_content)
                 else:
-                    print(f"Failed to fetch error codes: HTTP {response.status_code}")
+                    self.logger.warning(
+                        f"Failed to fetch error codes: HTTP {response.status_code}"
+                    )
+                    ErrorV2Parser._error_db_loaded = True
+                    ErrorV2Parser._error_db_cache = {}
                     return {}
             except Exception as e:
-                print(f"Error fetching error codes: {e}")
+                self.logger.error(f"Error fetching error codes: {e}")
+                ErrorV2Parser._error_db_loaded = True
+                ErrorV2Parser._error_db_cache = {}
                 return {}
 
         # Parse the markdown table to extract error codes
@@ -110,7 +126,9 @@ class ErrorV2Parser(EventParser):
         )
 
         if not table_match:
-            print("Could not find error code table in the markdown file.")
+            self.logger.warning("Could not find error code table in the markdown file.")
+            ErrorV2Parser._error_db_loaded = True
+            ErrorV2Parser._error_db_cache = {}
             return {}
 
         table_content = table_match.group(1)
@@ -145,7 +163,12 @@ class ErrorV2Parser(EventParser):
             # Use the hex code as the key
             error_db[error_info["base_error_code_hex"]] = error_info
 
-        print(f"Loaded {len(error_db)} error codes from database")
+        self.logger.info(f"Loaded {len(error_db)} error codes from database")
+
+        # Cache the results
+        ErrorV2Parser._error_db_loaded = True
+        ErrorV2Parser._error_db_cache = error_db
+
         return error_db
 
     def _find_error_in_db(self, hex_code: str) -> Optional[Dict[str, str]]:
@@ -306,7 +329,7 @@ class ErrorV2Parser(EventParser):
         # Get the JSON message
         message = raw_data.get("message", "")
         if not message:
-            print(f"Empty message for record {raw_data.get('id')}")
+            self._log_parsing_issue(f"Empty message for record {raw_data.get('id')}")
             return []
 
         # Parse the JSON message
@@ -315,7 +338,9 @@ class ErrorV2Parser(EventParser):
             # Parse JSON
             data = self._safely_parse_json(message)
             if not data or "Error" not in data:
-                print(f"Invalid error/v2 format for record {raw_data.get('id')}")
+                self._log_parsing_issue(
+                    f"Invalid error/v2 format for record {raw_data.get('id')}"
+                )
                 return []
 
             # Get the Error section
@@ -398,6 +423,8 @@ class ErrorV2Parser(EventParser):
                                 result.append(record)
 
         except Exception as e:
-            print(f"Error parsing error/v2 data in record {raw_data.get('id')}: {e}")
+            self._log_parsing_issue(
+                f"Error parsing error/v2 data in record {raw_data.get('id')}: {e}"
+            )
 
         return result

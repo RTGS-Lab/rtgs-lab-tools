@@ -97,6 +97,7 @@ def parse(
                 save_to_parsed_dir=True,
                 original_file_path=input_file,
                 logger_func=cli_ctx.logger.info,
+                verbose=verbose,
             )
             output_path = Path(results["output_file"])
         else:
@@ -117,6 +118,7 @@ def parse(
                 output_file=str(output_path),
                 output_format=output_format,
                 logger_func=cli_ctx.logger.info,
+                verbose=verbose,
             )
 
         click.echo(
@@ -188,7 +190,7 @@ def list_parsers(ctx):
         ("data/v2", "DataV2Parser", "GEMS sensor data packets"),
         ("diagnostic/v2", "DiagnosticV2Parser", "System diagnostic information"),
         ("metadata/v2", "MetadataV2Parser", "System configuration metadata"),
-        ("error", "ErrorParser", "Error code events"),
+        ("error/v2", "ErrorV2Parser", "Error code events"),
         ("csv", "CSVParser", "CSV format data packets"),
     ]
 

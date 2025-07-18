@@ -62,3 +62,6 @@ htmlcov/
 
 # ERRORCODES.md
 ERRORCODES.md
+
+# scritps directory for one off analysis python scripts
+/scripts/
