@@ -34,7 +34,7 @@ rtgs sensing-data extract --project "My Project" --output-dir ./my-data/
 ### Command Options
 
 - `--project TEXT`: Project name to extract data from (required)
-- `--start-date TEXT`: Start date in YYYY-MM-DD format (default: 30 days ago)
+- `--start-date TEXT`: Start date in YYYY-MM-DD format
 - `--end-date TEXT`: End date in YYYY-MM-DD format (default: today)
 - `--node-ids TEXT`: Comma-separated list of node IDs to filter
 - `--output-dir PATH`: Output directory (default: ./data)
@@ -145,7 +145,7 @@ All extractions include:
 - SHA-256 hash verification
 - Detailed metadata files
 - Query parameters and statistics
-- Automatic git logging for audit trails
+- Automatic postgres logging for audit trails if enabled
 
 ## Error Handling
 

@@ -12,34 +12,36 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def parse_measurement_spec(measurement_spec: str) -> Tuple[str, Optional[int]]:
-    """Parse measurement specification to extract measurement name and array index.
+def parse_measurement_spec(measurement_spec: str) -> Tuple[str, Optional[int], Optional[str]]:
+    """Parse measurement specification to extract device type, measurement name and array index.
 
     Args:
-        measurement_spec: Measurement specification (e.g., "Temperature", "PORT_V[0]")
+        measurement_spec: Measurement specification (e.g., "Temperature", "PORT_V[0]", "Kestrel.PORT_V[0]")
 
     Returns:
-        Tuple of (measurement_name, array_index) where array_index is None if not specified
+        Tuple of (measurement_name, array_index, device_type) where array_index and device_type are None if not specified
 
     Examples:
-        "Temperature" -> ("Temperature", None)
-        "PORT_V[0]" -> ("PORT_V", 0)
-        "PORT_I[3]" -> ("PORT_I", 3)
+        "Temperature" -> ("Temperature", None, None)
+        "PORT_V[0]" -> ("PORT_V", 0, None)
+        "Kestrel.PORT_V[0]" -> ("PORT_V", 0, "Kestrel")
+        "Talon-SDI12.Temperature" -> ("Temperature", None, "Talon-SDI12")
     """
-    # Pattern to match measurement name with optional array index
-    pattern = r"^([^[\]]+)(?:\[(\d+)\])?$"
+    # Pattern to match optional device type, measurement name, and optional array index
+    pattern = r"^(?:([^.]+)\.)?([^[\]]+)(?:\[(\d+)\])?$"
     match = re.match(pattern, measurement_spec.strip())
 
     if not match:
         raise ValueError(
             f"Invalid measurement specification: '{measurement_spec}'. "
-            f"Expected format: 'measurement_name' or 'measurement_name[index]'"
+            f"Expected format: 'measurement_name', 'measurement_name[index]', 'device_type.measurement_name', or 'device_type.measurement_name[index]'"
         )
 
-    measurement_name = match.group(1).strip()
-    array_index = int(match.group(2)) if match.group(2) is not None else None
+    device_type = match.group(1).strip() if match.group(1) else None
+    measurement_name = match.group(2).strip()
+    array_index = int(match.group(3)) if match.group(3) is not None else None
 
-    return measurement_name, array_index
+    return measurement_name, array_index, device_type
 
 
 def extract_array_value(
@@ -312,6 +314,48 @@ def get_available_measurements(df: pd.DataFrame) -> Dict[str, set]:
     return measurements_by_node
 
 
+def get_all_available_measurements(df: pd.DataFrame) -> set:
+    """Get all available measurements from parsed data organized by device type.
+
+    Args:
+        df: Parsed DataFrame
+
+    Returns:
+        Set of all available measurements including array indices, prefixed with device type
+    """
+    if "node_id" not in df.columns or "measurement_name" not in df.columns:
+        raise ValueError("DataFrame must have 'node_id' and 'measurement_name' columns")
+
+    all_measurements = set()
+
+    # Group by device_type and measurement_name to get unique combinations
+    for device_type in df["device_type"].dropna().unique():
+        device_data = df[df["device_type"] == device_type]
+        
+        for measurement_name in device_data["measurement_name"].dropna().unique():
+            # Add the base measurement name with device type prefix
+            prefixed_measurement = f"{device_type}.{measurement_name}"
+            all_measurements.add(prefixed_measurement)
+
+            # Check if this measurement has array values and add indexed versions
+            measurement_rows = device_data[
+                device_data["measurement_name"] == measurement_name
+            ]
+
+            # Sample a few values to detect arrays
+            sample_values = measurement_rows["value"].dropna().head(5)
+
+            for value in sample_values:
+                array_length = _detect_array_length(value)
+                if array_length > 1:
+                    # Add indexed versions for this array measurement
+                    for i in range(array_length):
+                        all_measurements.add(f"{device_type}.{measurement_name}[{i}]")
+                    break  # Only need to detect once per measurement
+
+    return all_measurements
+
+
 def _detect_array_length(value: Union[str, list, float, int]) -> int:
     """Detect if a value is an array and return its length.
 
@@ -358,17 +402,21 @@ def filter_parsed_data(
 
     Args:
         df: Parsed DataFrame
-        measurement_spec: Measurement specification (e.g., "Temperature", "PORT_V[0]")
+        measurement_spec: Measurement specification (e.g., "Temperature", "PORT_V[0]", "Kestrel.PORT_V[0]")
         node_ids: Optional list of node IDs to include
 
     Returns:
         Filtered DataFrame with array values extracted if index specified
     """
-    # Parse measurement specification to get measurement name and array index
-    measurement_name, array_index = parse_measurement_spec(measurement_spec)
+    # Parse measurement specification to get measurement name, array index, and device type
+    measurement_name, array_index, device_type = parse_measurement_spec(measurement_spec)
 
     # Filter by measurement name
     filtered_df = df[df["measurement_name"] == measurement_name].copy()
+
+    # Filter by device type if specified
+    if device_type:
+        filtered_df = filtered_df[filtered_df["device_type"] == device_type]
 
     # Filter by node IDs if specified
     if node_ids:

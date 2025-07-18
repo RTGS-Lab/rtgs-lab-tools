@@ -69,46 +69,55 @@ def create(
 
         if list_params:
             # List available measurements from parsed data
-            measurements_by_node = get_available_measurements(df)
+            from .data_utils import get_all_available_measurements
+            
+            all_measurements = get_all_available_measurements(df)
 
-            click.echo("Available measurements by node:")
+            click.echo("Available measurements:")
             click.echo(
                 "(Array measurements show individual indices that can be plotted)"
             )
 
-            for node, measurements in measurements_by_node.items():
-                click.echo(f"\nNode: {node}")
-
-                # Separate scalar and array measurements for better organization
-                scalar_measurements = set()
-                array_measurements = {}
-
-                for measurement in measurements:
-                    if "[" in measurement and "]" in measurement:
+            # Organize measurements by device type
+            device_measurements = {}
+            
+            for measurement in all_measurements:
+                # Extract device type from measurement
+                if "." in measurement:
+                    device_type, measurement_part = measurement.split(".", 1)
+                    if device_type not in device_measurements:
+                        device_measurements[device_type] = {"scalar": set(), "array": {}}
+                    
+                    if "[" in measurement_part and "]" in measurement_part:
                         # This is an indexed measurement
-                        base_name = measurement.split("[")[0]
-                        if base_name not in array_measurements:
-                            array_measurements[base_name] = []
-                        array_measurements[base_name].append(measurement)
+                        base_name = measurement_part.split("[")[0]
+                        full_base_name = f"{device_type}.{base_name}"
+                        if full_base_name not in device_measurements[device_type]["array"]:
+                            device_measurements[device_type]["array"][full_base_name] = []
+                        device_measurements[device_type]["array"][full_base_name].append(measurement)
                     else:
                         # Check if this measurement has array indices
                         has_array_version = any(
-                            m.startswith(f"{measurement}[") for m in measurements
+                            m.startswith(f"{measurement}[") for m in all_measurements
                         )
                         if not has_array_version:
-                            scalar_measurements.add(measurement)
+                            device_measurements[device_type]["scalar"].add(measurement)
 
+            # Display measurements organized by device type
+            for device_type in sorted(device_measurements.keys()):
+                click.echo(f"\n{device_type} measurements:")
+                
                 # Display scalar measurements
-                if scalar_measurements:
+                if device_measurements[device_type]["scalar"]:
                     click.echo("  Scalar measurements:")
-                    for measurement in sorted(scalar_measurements):
+                    for measurement in sorted(device_measurements[device_type]["scalar"]):
                         click.echo(f"    {measurement}")
 
                 # Display array measurements with their indices
-                if array_measurements:
+                if device_measurements[device_type]["array"]:
                     click.echo("  Array measurements (with available indices):")
-                    for base_name in sorted(array_measurements.keys()):
-                        indices = sorted(array_measurements[base_name])
+                    for base_name in sorted(device_measurements[device_type]["array"].keys()):
+                        indices = sorted(device_measurements[device_type]["array"][base_name])
                         click.echo(f"    {base_name}")
                         for idx_measurement in indices:
                             click.echo(f"      {idx_measurement}")
@@ -118,8 +127,8 @@ def create(
                             click.echo(f'      Example: --parameter "{indices[0]}"')
 
             click.echo(f"\nUsage examples:")
-            click.echo(f'  Scalar: --parameter "Temperature" --node-id "<node_id>"')
-            click.echo(f'  Array:  --parameter "PORT_V[0]" --node-id "<node_id>"')
+            click.echo(f'  Device-specific: --parameter "Kestrel.Temperature" --node-id "<node_id>"')
+            click.echo(f'  Device-specific array: --parameter "Kestrel.PORT_V[0]" --node-id "<node_id>"')
             return
 
         output_path = None
@@ -253,13 +262,55 @@ def list_parameters(ctx, file, verbose, log_file, no_postgres_log, note):
         )
 
         # List available measurements from parsed data
-        measurements_by_node = get_available_measurements(df)
+        from .data_utils import get_all_available_measurements
+        
+        all_measurements = get_all_available_measurements(df)
 
-        click.echo("Available measurements by node:")
-        for node, measurements in measurements_by_node.items():
-            click.echo(f"\n{node}:")
-            for measurement in sorted(measurements):
-                click.echo(f"  {measurement}")
+        click.echo("Available measurements:")
+        
+        # Organize measurements by device type
+        device_measurements = {}
+        
+        for measurement in all_measurements:
+            # Extract device type from measurement
+            if "." in measurement:
+                device_type, measurement_part = measurement.split(".", 1)
+                if device_type not in device_measurements:
+                    device_measurements[device_type] = {"scalar": set(), "array": {}}
+                
+                if "[" in measurement_part and "]" in measurement_part:
+                    # This is an indexed measurement
+                    base_name = measurement_part.split("[")[0]
+                    full_base_name = f"{device_type}.{base_name}"
+                    if full_base_name not in device_measurements[device_type]["array"]:
+                        device_measurements[device_type]["array"][full_base_name] = []
+                    device_measurements[device_type]["array"][full_base_name].append(measurement)
+                else:
+                    # Check if this measurement has array indices
+                    has_array_version = any(
+                        m.startswith(f"{measurement}[") for m in all_measurements
+                    )
+                    if not has_array_version:
+                        device_measurements[device_type]["scalar"].add(measurement)
+
+        # Display measurements organized by device type
+        for device_type in sorted(device_measurements.keys()):
+            click.echo(f"\n{device_type} measurements:")
+            
+            # Display scalar measurements
+            if device_measurements[device_type]["scalar"]:
+                click.echo("  Scalar measurements:")
+                for measurement in sorted(device_measurements[device_type]["scalar"]):
+                    click.echo(f"    {measurement}")
+
+            # Display array measurements with their indices
+            if device_measurements[device_type]["array"]:
+                click.echo("  Array measurements (with available indices):")
+                for base_name in sorted(device_measurements[device_type]["array"].keys()):
+                    indices = sorted(device_measurements[device_type]["array"][base_name])
+                    click.echo(f"    {base_name}")
+                    for idx_measurement in indices:
+                        click.echo(f"      {idx_measurement}")
 
     except Exception as e:
         cli_ctx.log_error(
