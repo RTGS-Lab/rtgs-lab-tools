@@ -218,6 +218,7 @@ POSTGRES_LOGGING_STATUS=False
 
 GEE_PROJECT = your_gee_project
 BUCKET_NAME = google_bucket_name
+PL_API_KEY = your_planet_labs_key
 
 # Optional API Keys
 PARTICLE_ACCESS_TOKEN=your_particle_token

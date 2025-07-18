@@ -3,10 +3,12 @@
 from .gee import (
     download_GEE_point,
     download_GEE_raster,
+    init_ee,
     list_GEE_vars,
     load_roi,
     search_images,
 )
+from .planet import download_clipped_scenes, download_scenes, quick_search
 from .processors import extract_time_series, process_era5_data
 from .utils import sources
 
@@ -17,5 +19,9 @@ __all__ = [
     "load_roi",
     "list_GEE_vars",
     "extract_time_series",
+    "init_ee",
     "sources",
+    "quick_search",
+    "download_scenes",
+    "download_clipped_scenes",
 ]
