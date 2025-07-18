@@ -1,6 +1,6 @@
 # Visualization Module
 
-Create time-series plots and multi-parameter visualizations from sensor data.
+Create time-series plots and multi-parameter visualizations from sensor data. Visualization tool can take raw data files or pre-parsed CSV files, and automatically handles parsing if needed. Raw data files come from the sensing data module, and can be downloaded from the GEMS database. Parsed CSV files can be created using the data parser module.
 
 ## CLI Usage
 
@@ -18,14 +18,14 @@ rtgs visualization create --file data.csv --list-params
 
 ```bash
 # Basic time series plot
-rtgs visualization create --file data.csv --parameter "Temperature" --node-id "node001"
+rtgs visualization create --file data.csv --parameter "Kestrel.PORT_V[0]" --node-id "e00fce68c148e3450a925509"
 
 # Array parameter with index
-rtgs visualization create --file data.csv --parameter "PORT_V[0]" --node-id "node001"
+rtgs visualization create --file data.csv --parameter "Kestrel.PORT_V[0]" --node-id "e00fce68c148e3450a925509"
 
 # Custom output settings
-rtgs visualization create --file data.csv --parameter "Temperature" --node-id "node001" \
-  --output-dir ./plots --output-file temp_analysis --format pdf --title "Temperature Analysis"
+rtgs visualization create --file data.csv --parameter "Kestrel.PORT_V[0]" --node-id "e00fce68c148e3450a925509" \
+  --output-dir ./plots --output-file temp_analysis --format png --title "Battery Analysis"
 ```
 
 ### Multi-Parameter Plots
@@ -33,18 +33,18 @@ rtgs visualization create --file data.csv --parameter "Temperature" --node-id "n
 ```bash
 # Compare same parameter across nodes
 rtgs visualization create --file data.csv \
-  --multi-param "node001,Temperature" \
-  --multi-param "node002,Temperature"
+  --multi-param "e00fce68c148e3450a925509,Kestrel.PORT_V[0]" \
+  --multi-param "e00fce685bf38074f81ea5f1,Kestrel.PORT_V[0]"
 
 # Compare different parameters from same node
 rtgs visualization create --file data.csv \
-  --multi-param "node001,Temperature" \
-  --multi-param "node001,Humidity"
+  --multi-param "e00fce68c148e3450a925509,PORT_V[0]" \
+  --multi-param "e00fce68c148e3450a925509,PORT_I[1]"
 
 # Mixed comparison
 rtgs visualization create --file data.csv \
-  --multi-param "node001,Temperature" \
-  --multi-param "node002,PORT_V[0]"
+  --multi-param "e00fce68c148e3450a925509,PORT_V[0]" \
+  --multi-param "e00fce685bf38074f81ea5f1,PORT_I[1]" \
 ```
 
 ### Command Options
