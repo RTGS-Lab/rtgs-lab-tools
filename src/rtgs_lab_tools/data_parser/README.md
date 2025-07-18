@@ -37,6 +37,7 @@ rtgs data-parser parse --input-file raw_data.csv --output-dir ./processed_data/
 - `--output-dir TEXT`: Output directory (default: ./data/parsed)
 - `--output-format [csv|parquet]`: Output format (default: csv)
 - `--packet-types TEXT`: Comma-separated packet types to parse (default: "all")
+- `--verbose`: Enable verbose output for debugging
 - `--skip-confirmation`: Skip interactive confirmation prompts
 
 ## Python API Usage
