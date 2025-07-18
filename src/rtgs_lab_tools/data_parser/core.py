@@ -1,6 +1,7 @@
 """Core data parsing functions for GEMS sensing data."""
 
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
@@ -22,6 +23,7 @@ def parse_gems_data(
     logger_func: Optional[callable] = None,
     note: Optional[str] = None,
     auto_commit_postgres_log: bool = True,
+    verbose: bool = False,
 ) -> Tuple[pd.DataFrame, Dict]:
     """Parse GEMS sensing data using the appropriate parsers.
 
@@ -35,6 +37,7 @@ def parse_gems_data(
         logger_func: Optional logging function to call with messages
         note: Optional note for git logging
         auto_commit_postgres_log: Whether to automatically create and commit postgres log
+        verbose: Whether to show detailed parsing errors and warnings
 
     Returns:
         Tuple of (parsed_dataframe, results_dict)
@@ -50,9 +53,10 @@ def parse_gems_data(
     from .parsers.factory import ParserFactory
     from .parsers.metadata_parser import MetadataV2Parser
 
-    # Initialize postgres logger
+    # Initialize postgres logger - check environment variable first
+    postgres_logging_enabled = os.getenv("POSTGRES_LOGGING_STATUS", "true").lower() == "true"
     postgres_logger = (
-        PostgresLogger("data-parser") if auto_commit_postgres_log else None
+        PostgresLogger("data-parser") if auto_commit_postgres_log and postgres_logging_enabled else None
     )
     start_time = datetime.now()
 
@@ -67,7 +71,7 @@ def parse_gems_data(
 
     try:
         # Set up parser factory
-        factory = ParserFactory()
+        factory = ParserFactory(verbose=verbose)
         factory.register_parser("data/v2", DataV2Parser)
         factory.register_parser("diagnostic/v2", DiagnosticV2Parser)
         factory.register_parser("metadata/v2", MetadataV2Parser)
@@ -86,6 +90,7 @@ def parse_gems_data(
         parsed_records = []
         parsed_count = 0
         skipped_count = 0
+        error_count = 0
 
         for idx, row in raw_df.iterrows():
             event_type = row.get("event", "").lower()
@@ -102,10 +107,12 @@ def parse_gems_data(
                     parsed_records.extend(parsed_data)
                     parsed_count += 1
                 except Exception as e:
-                    log(f"Failed to parse record {idx} (event: {event_type}): {e}")
+                    # Only log the first few errors of each type to avoid spam
+                    if error_count < 5:
+                        log(f"Failed to parse record {idx} (event: {event_type}): {e}")
+                    error_count += 1
                     continue
             else:
-                logger.debug(f"No parser available for event type: {event_type}")
                 skipped_count += 1
 
         if not parsed_records:
@@ -119,6 +126,15 @@ def parse_gems_data(
         )
         if skipped_count > 0:
             log(f"Skipped {skipped_count} records (no parser or filtered out)")
+        if error_count > 0:
+            log(f"Encountered {error_count} parsing errors" + (" (showing first 5)" if error_count > 5 else ""))
+            
+        # Show parsing summary
+        summary = factory.get_parsing_summary()
+        if summary["unknown_event_types"]:
+            log(f"Event types without parsers: {', '.join(summary['unknown_event_types'])}")
+        if summary["supported_event_types"]:
+            log(f"Supported event types: {', '.join(summary['supported_event_types'])}")
 
         # Save data if requested
         saved_file_path = None
@@ -178,7 +194,6 @@ def parse_gems_data(
                     parameters=parameters,
                     results=results,
                     script_path=__file__,
-                    auto_save=True,
                 )
             except Exception as e:
                 logger.warning(f"Failed to create postgres log: {e}")
@@ -218,7 +233,6 @@ def parse_gems_data(
                     parameters=parameters,
                     results=error_results,
                     script_path=__file__,
-                    auto_save=True,
                 )
             except Exception as log_e:
                 logger.warning(f"Failed to create postgres log for error: {log_e}")

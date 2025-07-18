@@ -47,7 +47,7 @@ class DiagnosticV2Parser(DataV2Parser):
         # Get the JSON message
         message = raw_data.get("message", "")
         if not message:
-            print(f"Empty message for record {raw_data.get('id')}")
+            self._log_parsing_issue(f"Empty message for record {raw_data.get('id')}")
             return []
 
         # Parse the JSON message
@@ -56,7 +56,7 @@ class DiagnosticV2Parser(DataV2Parser):
             # Parse JSON
             data = self._safely_parse_json(message)
             if not data or "Diagnostic" not in data:
-                print(f"Invalid diagnostic/v2 format for record {raw_data.get('id')}")
+                self._log_parsing_issue(f"Invalid diagnostic/v2 format for record {raw_data.get('id')}")
                 return []
 
             # Get the Diagnostic section

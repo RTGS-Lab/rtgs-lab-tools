@@ -17,8 +17,11 @@ rtgs data-parser list-parsers
 # Basic parsing - parse all packet types
 rtgs data-parser parse --input-file raw_data.csv --output-file parsed_data.csv
 
+# Basic parsing - parse all packet types with verbose output
+rtgs data-parser parse --input-file raw_data.csv --output-file parsed_data.csv --verbose
+
 # Parse specific packet types
-rtgs data-parser parse --input-file raw_data.csv --output-file parsed_data.csv --packet-types "data,diagnostic"
+rtgs data-parser parse --input-file raw_data.csv --output-file parsed_data.csv --packet-types "data/v2,diagnostic/v2"
 
 # Parse with output format selection
 rtgs data-parser parse --input-file raw_data.csv --output-file parsed_data --output-format parquet

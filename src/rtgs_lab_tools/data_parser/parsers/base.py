@@ -6,6 +6,7 @@ This module contains the abstract base class for all event type parsers.
 
 import abc
 import json
+import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -17,16 +18,26 @@ class EventParser(abc.ABC):
     Defines the interface that all concrete parser implementations must follow.
     """
 
-    def __init__(self, schema_registry=None, error_db=None):
+    def __init__(self, schema_registry=None, error_db=None, verbose=False):
         """
         Initialize the parser with optional schema registry and error database.
 
         Args:
             schema_registry: Registry of schemas for validation
             error_db: Error code database for error event parsing
+            verbose: Whether to enable verbose logging
         """
         self.schema_registry = schema_registry
         self.error_db = error_db
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.verbose = verbose
+
+    def _log_parsing_issue(self, message: str, record_id: str = None):
+        """Log parsing issues with appropriate level based on verbose flag."""
+        if self.verbose:
+            self.logger.warning(message)
+        else:
+            self.logger.debug(message)
 
     @abc.abstractmethod
     def can_parse(self, event_type: str) -> bool:
@@ -100,5 +111,8 @@ class EventParser(abc.ABC):
             return json.loads(json_str)
         except (json.JSONDecodeError, TypeError) as e:
             # Log error but don't fail parsing
-            print(f"Error parsing JSON: {e}")
+            if self.verbose:
+                self.logger.warning(f"Error parsing JSON: {e}")
+            else:
+                self.logger.debug(f"Error parsing JSON: {e}")
             return {}
