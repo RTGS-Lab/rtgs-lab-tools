@@ -56,7 +56,9 @@ class DiagnosticV2Parser(DataV2Parser):
             # Parse JSON
             data = self._safely_parse_json(message)
             if not data or "Diagnostic" not in data:
-                self._log_parsing_issue(f"Invalid diagnostic/v2 format for record {raw_data.get('id')}")
+                self._log_parsing_issue(
+                    f"Invalid diagnostic/v2 format for record {raw_data.get('id')}"
+                )
                 return []
 
             # Get the Diagnostic section

@@ -1,10 +1,11 @@
 """Tests for growing degree days calculations."""
 
 import pytest
+
 from rtgs_lab_tools.agricultural_modeling.growing_degree_days import (
-    calculate_gdd_original,
-    calculate_gdd_modified,
     calculate_corn_heat_units,
+    calculate_gdd_modified,
+    calculate_gdd_original,
 )
 
 
@@ -81,30 +82,40 @@ class TestCalculateCornHeatUnits:
     def test_normal_temperatures(self):
         """Test CHU calculation with normal temperatures."""
         result = calculate_corn_heat_units(15.0, 25.0, 10.0)
-        expected = (1.8 * (15.0 - 4.4) + 3.33 * (25.0 - 10.0) - 0.084 * (25.0 - 10.0) ** 2.0) / 2.0
+        expected = (
+            1.8 * (15.0 - 4.4) + 3.33 * (25.0 - 10.0) - 0.084 * (25.0 - 10.0) ** 2.0
+        ) / 2.0
         assert abs(result - expected) < 0.001
 
     def test_default_base_temp(self):
         """Test CHU calculation with default base temperature."""
         result = calculate_corn_heat_units(15.0, 25.0)
-        expected = (1.8 * (15.0 - 4.4) + 3.33 * (25.0 - 10.0) - 0.084 * (25.0 - 10.0) ** 2.0) / 2.0
+        expected = (
+            1.8 * (15.0 - 4.4) + 3.33 * (25.0 - 10.0) - 0.084 * (25.0 - 10.0) ** 2.0
+        ) / 2.0
         assert abs(result - expected) < 0.001
 
     def test_cold_temperatures(self):
         """Test CHU calculation with cold temperatures."""
         result = calculate_corn_heat_units(5.0, 12.0, 10.0)
-        expected = (1.8 * (5.0 - 4.4) + 3.33 * (12.0 - 10.0) - 0.084 * (12.0 - 10.0) ** 2.0) / 2.0
+        expected = (
+            1.8 * (5.0 - 4.4) + 3.33 * (12.0 - 10.0) - 0.084 * (12.0 - 10.0) ** 2.0
+        ) / 2.0
         assert abs(result - expected) < 0.001
 
     def test_high_temperatures(self):
         """Test CHU calculation with high temperatures."""
         result = calculate_corn_heat_units(20.0, 35.0, 10.0)
-        expected = (1.8 * (20.0 - 4.4) + 3.33 * (35.0 - 10.0) - 0.084 * (35.0 - 10.0) ** 2.0) / 2.0
+        expected = (
+            1.8 * (20.0 - 4.4) + 3.33 * (35.0 - 10.0) - 0.084 * (35.0 - 10.0) ** 2.0
+        ) / 2.0
         assert abs(result - expected) < 0.001
 
     def test_negative_result(self):
         """Test CHU calculation that might result in negative values."""
         result = calculate_corn_heat_units(2.0, 8.0, 10.0)
         # Should handle negative results as per the formula
-        expected = (1.8 * (2.0 - 4.4) + 3.33 * (8.0 - 10.0) - 0.084 * (8.0 - 10.0) ** 2.0) / 2.0
+        expected = (
+            1.8 * (2.0 - 4.4) + 3.33 * (8.0 - 10.0) - 0.084 * (8.0 - 10.0) ** 2.0
+        ) / 2.0
         assert abs(result - expected) < 0.001

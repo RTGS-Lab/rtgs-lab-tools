@@ -1,13 +1,14 @@
 """Tests for UID decoding utilities."""
 
 import pytest
+
 from rtgs_lab_tools.device_configuration.uid_decoding import (
-    decode_system_configuration_uid,
-    decode_sensor_configuration_uid,
-    format_system_config,
-    format_sensor_config,
-    parse_uid,
     decode_both_configs,
+    decode_sensor_configuration_uid,
+    decode_system_configuration_uid,
+    format_sensor_config,
+    format_system_config,
+    parse_uid,
 )
 
 
@@ -17,13 +18,13 @@ class TestDecodeSystemConfigurationUid:
     def test_decode_basic_system_config(self):
         """Test decoding a basic system configuration UID."""
         # Create a test UID with known values
-        # log_period=300 (0x012C), backhaul_count=1, power_save_mode=2, 
+        # log_period=300 (0x012C), backhaul_count=1, power_save_mode=2,
         # logging_mode=2, num_aux_talons=1, num_i2c_talons=1, num_sdi12_talons=1
         # 0x012C1A55 = 19439189
         uid = 0x012C1A55
-        
+
         config = decode_system_configuration_uid(uid)
-        
+
         assert config["log_period"] == 300
         assert config["backhaul_count"] == 1
         assert config["power_save_mode"] == 2
@@ -36,7 +37,7 @@ class TestDecodeSystemConfigurationUid:
         """Test decoding a zero UID."""
         uid = 0
         config = decode_system_configuration_uid(uid)
-        
+
         for key in config:
             assert config[key] == 0
 
@@ -45,7 +46,7 @@ class TestDecodeSystemConfigurationUid:
         # Set all bits to maximum for their respective fields
         uid = 0xFFFFFFFF
         config = decode_system_configuration_uid(uid)
-        
+
         assert config["log_period"] == 0xFFFF  # 16 bits
         assert config["backhaul_count"] == 0xF  # 4 bits
         assert config["power_save_mode"] == 0x3  # 2 bits
@@ -59,7 +60,7 @@ class TestDecodeSystemConfigurationUid:
         # Test with specific bit patterns
         uid = 0x12345678
         config = decode_system_configuration_uid(uid)
-        
+
         # Verify bit extraction
         assert config["log_period"] == (0x12345678 >> 16) & 0xFFFF
         assert config["backhaul_count"] == (0x12345678 >> 12) & 0xF
@@ -76,13 +77,13 @@ class TestDecodeSensorConfigurationUid:
     def test_decode_basic_sensor_config(self):
         """Test decoding a basic sensor configuration UID."""
         # Create a test UID with known values
-        # num_et=0, num_haar=0, num_soil=1, num_apogee_solar=0, 
+        # num_et=0, num_haar=0, num_soil=1, num_apogee_solar=0,
         # num_co2=0, num_o2=0, num_pressure=0
         # 0x00100000 = 1048576
         uid = 0x00100000
-        
+
         config = decode_sensor_configuration_uid(uid)
-        
+
         assert config["num_et"] == 0
         assert config["num_haar"] == 0
         assert config["num_soil"] == 1
@@ -95,7 +96,7 @@ class TestDecodeSensorConfigurationUid:
         """Test decoding a zero sensor UID."""
         uid = 0
         config = decode_sensor_configuration_uid(uid)
-        
+
         for key in config:
             assert config[key] == 0
 
@@ -104,7 +105,7 @@ class TestDecodeSensorConfigurationUid:
         # Set all bits to maximum for their respective fields
         uid = 0xFFFFFFFF
         config = decode_sensor_configuration_uid(uid)
-        
+
         assert config["num_et"] == 0xF  # 4 bits
         assert config["num_haar"] == 0xF  # 4 bits
         assert config["num_soil"] == 0xF  # 4 bits
@@ -118,7 +119,7 @@ class TestDecodeSensorConfigurationUid:
         # Test with specific bit patterns
         uid = 0x12345678
         config = decode_sensor_configuration_uid(uid)
-        
+
         # Verify bit extraction
         assert config["num_et"] == (0x12345678 >> 28) & 0xF
         assert config["num_haar"] == (0x12345678 >> 24) & 0xF
@@ -135,9 +136,9 @@ class TestFormatSystemConfig:
     def test_format_system_config_basic(self):
         """Test formatting a basic system configuration."""
         uid = 0x012C1A55  # Known values from earlier test
-        
+
         formatted = format_system_config(uid)
-        
+
         assert "System Configuration UID:" in formatted
         assert "0x012C1A55" in formatted
         assert "19667541" in formatted
@@ -152,9 +153,9 @@ class TestFormatSystemConfig:
     def test_format_system_config_zero(self):
         """Test formatting a zero system configuration."""
         uid = 0
-        
+
         formatted = format_system_config(uid)
-        
+
         assert "System Configuration UID:" in formatted
         assert "0x00000000" in formatted
         assert "(0)" in formatted
@@ -168,9 +169,9 @@ class TestFormatSensorConfig:
     def test_format_sensor_config_basic(self):
         """Test formatting a basic sensor configuration."""
         uid = 0x00100000  # Known values from earlier test
-        
+
         formatted = format_sensor_config(uid)
-        
+
         assert "Sensor Configuration UID:" in formatted
         assert "0x00100000" in formatted
         assert "1048576" in formatted
@@ -185,9 +186,9 @@ class TestFormatSensorConfig:
     def test_format_sensor_config_zero(self):
         """Test formatting a zero sensor configuration."""
         uid = 0
-        
+
         formatted = format_sensor_config(uid)
-        
+
         assert "Sensor Configuration UID:" in formatted
         assert "0x00000000" in formatted
         assert "(0)" in formatted
@@ -254,9 +255,9 @@ class TestDecodeBothConfigs:
         """Test decoding both system and sensor configurations."""
         system_uid = 0x012C1A55
         sensor_uid = 0x00100000
-        
+
         result = decode_both_configs(system_uid, sensor_uid)
-        
+
         assert "System Configuration UID:" in result
         assert "Sensor Configuration UID:" in result
         assert "0x012C1A55" in result
@@ -268,9 +269,9 @@ class TestDecodeBothConfigs:
         """Test decoding both configurations with zero values."""
         system_uid = 0
         sensor_uid = 0
-        
+
         result = decode_both_configs(system_uid, sensor_uid)
-        
+
         assert "System Configuration UID:" in result
         assert "Sensor Configuration UID:" in result
         assert "0x00000000" in result
@@ -280,9 +281,9 @@ class TestDecodeBothConfigs:
         """Test that both configurations are properly separated."""
         system_uid = 0x012C1A55
         sensor_uid = 0x00100000
-        
+
         result = decode_both_configs(system_uid, sensor_uid)
-        
+
         # Should have two sections separated by double newline
         sections = result.split("\n\n")
         assert len(sections) == 2

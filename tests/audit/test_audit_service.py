@@ -27,7 +27,7 @@ class TestAuditService:
     @pytest.fixture
     def mock_postgres_logger(self):
         """Mock PostgresLogger for testing."""
-        with patch('rtgs_lab_tools.audit.audit_service.PostgresLogger') as mock_logger:
+        with patch("rtgs_lab_tools.audit.audit_service.PostgresLogger") as mock_logger:
             yield mock_logger
 
     @pytest.fixture
@@ -43,10 +43,10 @@ class TestAuditService:
 
     def test_init_without_config(self, mock_postgres_logger):
         """Test audit service initialization without config."""
-        with patch('rtgs_lab_tools.audit.audit_service.Config') as mock_config_class:
+        with patch("rtgs_lab_tools.audit.audit_service.Config") as mock_config_class:
             mock_config_instance = Mock()
             mock_config_class.return_value = mock_config_instance
-            
+
             service = AuditService()
             assert service.config == mock_config_instance
             mock_postgres_logger.assert_called_once_with("audit", mock_config_instance)
@@ -55,7 +55,7 @@ class TestAuditService:
         """Test getting logs by date range."""
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
-        
+
         # Mock database session and query
         mock_session = Mock()
         mock_query = Mock()
@@ -83,16 +83,16 @@ class TestAuditService:
         mock_log.git_dirty = False
         mock_log.command = "test command"
         mock_log.created_at = datetime(2023, 1, 15, 10, 0, 0)
-        
+
         mock_query.filter.return_value = mock_query
         mock_query.order_by.return_value = mock_query
         mock_query.all.return_value = [mock_log]
         mock_session.query.return_value = mock_query
-        
+
         audit_service.logger.Session.return_value = mock_session
-        
+
         logs = audit_service.get_logs_by_date_range(start_date, end_date)
-        
+
         assert len(logs) == 1
         assert logs[0]["id"] == 1
         assert logs[0]["tool_name"] == "test_tool"
@@ -106,18 +106,18 @@ class TestAuditService:
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
         tool_name = "specific_tool"
-        
+
         mock_session = Mock()
         mock_query = Mock()
         mock_query.filter.return_value = mock_query
         mock_query.order_by.return_value = mock_query
         mock_query.all.return_value = []
         mock_session.query.return_value = mock_query
-        
+
         audit_service.logger.Session.return_value = mock_session
-        
+
         logs = audit_service.get_logs_by_date_range(start_date, end_date, tool_name)
-        
+
         # Verify the filter was called twice (date range + tool name)
         assert mock_query.filter.call_count == 2
         assert logs == []
@@ -126,41 +126,43 @@ class TestAuditService:
         """Test database error handling in get_logs_by_date_range."""
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
-        
-        audit_service.logger.Session.side_effect = Exception("Database connection failed")
-        
+
+        audit_service.logger.Session.side_effect = Exception(
+            "Database connection failed"
+        )
+
         with pytest.raises(DatabaseError) as excinfo:
             audit_service.get_logs_by_date_range(start_date, end_date)
-        
+
         assert "Failed to get logs" in str(excinfo.value)
 
     def test_get_recent_logs_with_limit(self, audit_service):
         """Test getting recent logs with limit."""
-        with patch.object(audit_service, 'get_logs_by_date_range') as mock_get_logs:
+        with patch.object(audit_service, "get_logs_by_date_range") as mock_get_logs:
             mock_get_logs.return_value = [{"id": 1}, {"id": 2}, {"id": 3}]
-            
+
             logs = audit_service.get_recent_logs(limit=2)
-            
+
             assert len(logs) == 2
             assert logs == [{"id": 1}, {"id": 2}]
 
     def test_get_recent_logs_with_minutes_filter(self, audit_service):
         """Test getting recent logs with minutes filter."""
-        with patch.object(audit_service, 'get_logs_by_date_range') as mock_get_logs:
+        with patch.object(audit_service, "get_logs_by_date_range") as mock_get_logs:
             mock_get_logs.return_value = [{"id": 1}, {"id": 2}]
-            
+
             logs = audit_service.get_recent_logs(limit=10, minutes=30)
-            
+
             assert len(logs) == 2
             mock_get_logs.assert_called_once()
 
     def test_get_recent_logs_with_tool_filter(self, audit_service):
         """Test getting recent logs with tool name filter."""
-        with patch.object(audit_service, 'get_logs_by_date_range') as mock_get_logs:
+        with patch.object(audit_service, "get_logs_by_date_range") as mock_get_logs:
             mock_get_logs.return_value = [{"id": 1}]
-            
+
             logs = audit_service.get_recent_logs(limit=10, tool_name="specific_tool")
-            
+
             assert len(logs) == 1
             mock_get_logs.assert_called_once()
 
@@ -169,11 +171,11 @@ class TestAuditService:
         operation = "test_operation"
         parameters = {"param1": "value1"}
         results = {"result": "success"}
-        
+
         audit_service.logger.log_execution.return_value = True
-        
+
         success = audit_service.log_audit_operation(operation, parameters, results)
-        
+
         assert success is True
         audit_service.logger.log_execution.assert_called_once_with(
             operation=operation,
@@ -187,33 +189,33 @@ class TestAuditService:
         operation = "test_operation"
         parameters = {"param1": "value1"}
         results = {"result": "failure"}
-        
+
         audit_service.logger.log_execution.return_value = False
-        
+
         success = audit_service.log_audit_operation(operation, parameters, results)
-        
+
         assert success is False
 
     def test_close(self, audit_service):
         """Test closing the audit service."""
         mock_db_manager = Mock()
         audit_service.logger.db_manager = mock_db_manager
-        
+
         audit_service.close()
-        
+
         mock_db_manager.close.assert_called_once()
 
     def test_close_no_db_manager(self, audit_service):
         """Test closing the audit service when no db_manager exists."""
         audit_service.logger.db_manager = None
-        
+
         # Should not raise an exception
         audit_service.close()
 
     def test_close_no_db_manager_attribute(self, audit_service):
         """Test closing the audit service when db_manager attribute doesn't exist."""
-        delattr(audit_service.logger, 'db_manager')
-        
+        delattr(audit_service.logger, "db_manager")
+
         # Should not raise an exception
         audit_service.close()
 
@@ -221,7 +223,7 @@ class TestAuditService:
         """Test handling logs with null JSON fields."""
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
-        
+
         mock_session = Mock()
         mock_query = Mock()
         mock_log = Mock()
@@ -248,16 +250,16 @@ class TestAuditService:
         mock_log.git_dirty = False
         mock_log.command = "test command"
         mock_log.created_at = datetime(2023, 1, 15, 10, 0, 0)
-        
+
         mock_query.filter.return_value = mock_query
         mock_query.order_by.return_value = mock_query
         mock_query.all.return_value = [mock_log]
         mock_session.query.return_value = mock_query
-        
+
         audit_service.logger.Session.return_value = mock_session
-        
+
         logs = audit_service.get_logs_by_date_range(start_date, end_date)
-        
+
         assert len(logs) == 1
         assert logs[0]["parameters"] == {}
         assert logs[0]["results"] == {}

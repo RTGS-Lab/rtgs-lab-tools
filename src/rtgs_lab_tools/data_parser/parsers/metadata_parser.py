@@ -54,7 +54,9 @@ class MetadataV2Parser(EventParser):
             # Try to parse as JSON
             data = self._safely_parse_json(message)
             if not data:
-                self._log_parsing_issue(f"Invalid metadata format for record {raw_data.get('id')}")
+                self._log_parsing_issue(
+                    f"Invalid metadata format for record {raw_data.get('id')}"
+                )
                 return []
 
             # Process the metadata fields
@@ -63,7 +65,9 @@ class MetadataV2Parser(EventParser):
             )
 
         except Exception as e:
-            self._log_parsing_issue(f"Error parsing metadata in record {raw_data.get('id')}: {e}")
+            self._log_parsing_issue(
+                f"Error parsing metadata in record {raw_data.get('id')}: {e}"
+            )
 
         return result
 

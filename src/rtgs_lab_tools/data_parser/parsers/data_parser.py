@@ -54,7 +54,9 @@ class DataV2Parser(EventParser):
             # Parse JSON
             data = self._safely_parse_json(message)
             if not data or "Data" not in data:
-                self._log_parsing_issue(f"Invalid data/v2 format for record {raw_data.get('id')}")
+                self._log_parsing_issue(
+                    f"Invalid data/v2 format for record {raw_data.get('id')}"
+                )
                 return []
 
             # Get the Data section
@@ -106,7 +108,9 @@ class DataV2Parser(EventParser):
                         )
 
         except Exception as e:
-            self._log_parsing_issue(f"Error parsing data/v2 data in record {raw_data.get('id')}: {e}")
+            self._log_parsing_issue(
+                f"Error parsing data/v2 data in record {raw_data.get('id')}: {e}"
+            )
 
         return result
 

@@ -54,9 +54,13 @@ def parse_gems_data(
     from .parsers.metadata_parser import MetadataV2Parser
 
     # Initialize postgres logger - check environment variable first
-    postgres_logging_enabled = os.getenv("POSTGRES_LOGGING_STATUS", "true").lower() == "true"
+    postgres_logging_enabled = (
+        os.getenv("POSTGRES_LOGGING_STATUS", "true").lower() == "true"
+    )
     postgres_logger = (
-        PostgresLogger("data-parser") if auto_commit_postgres_log and postgres_logging_enabled else None
+        PostgresLogger("data-parser")
+        if auto_commit_postgres_log and postgres_logging_enabled
+        else None
     )
     start_time = datetime.now()
 
@@ -127,12 +131,17 @@ def parse_gems_data(
         if skipped_count > 0:
             log(f"Skipped {skipped_count} records (no parser or filtered out)")
         if error_count > 0:
-            log(f"Encountered {error_count} parsing errors" + (" (showing first 5)" if error_count > 5 else ""))
-            
+            log(
+                f"Encountered {error_count} parsing errors"
+                + (" (showing first 5)" if error_count > 5 else "")
+            )
+
         # Show parsing summary
         summary = factory.get_parsing_summary()
         if summary["unknown_event_types"]:
-            log(f"Event types without parsers: {', '.join(summary['unknown_event_types'])}")
+            log(
+                f"Event types without parsers: {', '.join(summary['unknown_event_types'])}"
+            )
         if summary["supported_event_types"]:
             log(f"Supported event types: {', '.join(summary['supported_event_types'])}")
 

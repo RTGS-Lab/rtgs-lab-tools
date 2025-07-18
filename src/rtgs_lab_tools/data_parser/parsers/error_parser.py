@@ -103,7 +103,9 @@ class ErrorV2Parser(EventParser):
                     with open("ERRORCODES.md", "w", encoding="utf-8") as f:
                         f.write(markdown_content)
                 else:
-                    self.logger.warning(f"Failed to fetch error codes: HTTP {response.status_code}")
+                    self.logger.warning(
+                        f"Failed to fetch error codes: HTTP {response.status_code}"
+                    )
                     ErrorV2Parser._error_db_loaded = True
                     ErrorV2Parser._error_db_cache = {}
                     return {}
@@ -162,11 +164,11 @@ class ErrorV2Parser(EventParser):
             error_db[error_info["base_error_code_hex"]] = error_info
 
         self.logger.info(f"Loaded {len(error_db)} error codes from database")
-        
+
         # Cache the results
         ErrorV2Parser._error_db_loaded = True
         ErrorV2Parser._error_db_cache = error_db
-        
+
         return error_db
 
     def _find_error_in_db(self, hex_code: str) -> Optional[Dict[str, str]]:
@@ -336,7 +338,9 @@ class ErrorV2Parser(EventParser):
             # Parse JSON
             data = self._safely_parse_json(message)
             if not data or "Error" not in data:
-                self._log_parsing_issue(f"Invalid error/v2 format for record {raw_data.get('id')}")
+                self._log_parsing_issue(
+                    f"Invalid error/v2 format for record {raw_data.get('id')}"
+                )
                 return []
 
             # Get the Error section
@@ -419,6 +423,8 @@ class ErrorV2Parser(EventParser):
                                 result.append(record)
 
         except Exception as e:
-            self._log_parsing_issue(f"Error parsing error/v2 data in record {raw_data.get('id')}: {e}")
+            self._log_parsing_issue(
+                f"Error parsing error/v2 data in record {raw_data.get('id')}: {e}"
+            )
 
         return result

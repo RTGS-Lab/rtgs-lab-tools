@@ -1,9 +1,10 @@
 """Tests for crop parameters database."""
 
 import pytest
+
 from rtgs_lab_tools.agricultural_modeling.crop_parameters import (
-    get_crop_parameters,
     get_crop_names,
+    get_crop_parameters,
     get_crop_status,
 )
 
@@ -69,19 +70,27 @@ class TestGetCropParameters:
         """Test that all crops have required parameter fields."""
         required_fields = ["tBase", "tUpper", "status", "verifiedBy", "reference"]
         crops = get_crop_parameters()
-        
+
         for crop_name, crop_params in crops.items():
             for field in required_fields:
-                assert field in crop_params, f"Crop '{crop_name}' missing field '{field}'"
-                
+                assert (
+                    field in crop_params
+                ), f"Crop '{crop_name}' missing field '{field}'"
+
     def test_temperature_values_are_numeric(self):
         """Test that temperature values are numeric."""
         crops = get_crop_parameters()
-        
+
         for crop_name, crop_params in crops.items():
-            assert isinstance(crop_params["tBase"], (int, float)), f"tBase for {crop_name} is not numeric"
-            assert isinstance(crop_params["tUpper"], (int, float)), f"tUpper for {crop_name} is not numeric"
-            assert crop_params["tBase"] < crop_params["tUpper"], f"tBase >= tUpper for {crop_name}"
+            assert isinstance(
+                crop_params["tBase"], (int, float)
+            ), f"tBase for {crop_name} is not numeric"
+            assert isinstance(
+                crop_params["tUpper"], (int, float)
+            ), f"tUpper for {crop_name} is not numeric"
+            assert (
+                crop_params["tBase"] < crop_params["tUpper"]
+            ), f"tBase >= tUpper for {crop_name}"
 
 
 class TestGetCropNames:
@@ -121,15 +130,17 @@ class TestGetCropStatus:
         """Test that status values are valid."""
         status = get_crop_status()
         valid_statuses = ["verified", "pending"]
-        
+
         for crop_name, crop_status in status.items():
-            assert crop_status in valid_statuses, f"Invalid status '{crop_status}' for {crop_name}"
+            assert (
+                crop_status in valid_statuses
+            ), f"Invalid status '{crop_status}' for {crop_name}"
 
     def test_status_matches_parameters(self):
         """Test that status matches the full parameters."""
         status = get_crop_status()
         crops = get_crop_parameters()
-        
+
         for crop_name in crops.keys():
             assert status[crop_name] == crops[crop_name]["status"]
 

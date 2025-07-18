@@ -73,8 +73,10 @@ class ParserFactory:
         for registered_type, parser_class in self.parser_classes.items():
             # Check if we already have an instance of this parser class
             if registered_type not in self.parser_instances:
-                self.parser_instances[registered_type] = parser_class(verbose=self.verbose, **kwargs)
-            
+                self.parser_instances[registered_type] = parser_class(
+                    verbose=self.verbose, **kwargs
+                )
+
             # Use the cached instance to test if it can parse this event type
             if self.parser_instances[registered_type].can_parse(event_type):
                 # Store and return the parser instance

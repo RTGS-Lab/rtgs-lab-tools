@@ -12,7 +12,9 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def parse_measurement_spec(measurement_spec: str) -> Tuple[str, Optional[int], Optional[str]]:
+def parse_measurement_spec(
+    measurement_spec: str,
+) -> Tuple[str, Optional[int], Optional[str]]:
     """Parse measurement specification to extract device type, measurement name and array index.
 
     Args:
@@ -59,7 +61,7 @@ def extract_array_value(
     # Handle None values
     if value is None:
         return None
-    
+
     # Check for pd.NA/NaN for non-list values only
     if not isinstance(value, list) and pd.isna(value):
         return None
@@ -331,7 +333,7 @@ def get_all_available_measurements(df: pd.DataFrame) -> set:
     # Group by device_type and measurement_name to get unique combinations
     for device_type in df["device_type"].dropna().unique():
         device_data = df[df["device_type"] == device_type]
-        
+
         for measurement_name in device_data["measurement_name"].dropna().unique():
             # Add the base measurement name with device type prefix
             prefixed_measurement = f"{device_type}.{measurement_name}"
@@ -368,7 +370,7 @@ def _detect_array_length(value: Union[str, list, float, int]) -> int:
     # Handle None values
     if value is None:
         return 0
-    
+
     # Check for pd.NA/NaN for non-list values only
     if not isinstance(value, list) and pd.isna(value):
         return 0
@@ -409,7 +411,9 @@ def filter_parsed_data(
         Filtered DataFrame with array values extracted if index specified
     """
     # Parse measurement specification to get measurement name, array index, and device type
-    measurement_name, array_index, device_type = parse_measurement_spec(measurement_spec)
+    measurement_name, array_index, device_type = parse_measurement_spec(
+        measurement_spec
+    )
 
     # Filter by measurement name
     filtered_df = df[df["measurement_name"] == measurement_name].copy()
