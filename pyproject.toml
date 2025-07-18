@@ -26,6 +26,7 @@ classifiers = [
 dependencies = [
     "pandas>=1.5.0",
     'geopandas',
+    "earthengine-api>=0.1.375,<0.2",
     "numpy>=1.21.0",
     "sqlalchemy>=1.4.0",
     "psycopg2-binary>=2.9.0",

@@ -22,11 +22,228 @@ def gridded_data_cli(ctx):
     ctx.ensure_object(CLIContext)
 
 
-# TODO: add SMAP and ESA LC 2021
+########################################################
+# DOWNLOAD CLIPPED PLANET IMAGES
+########################################################
+@gridded_data_cli.command()
+@click.option(
+    "--source",
+    multiple=False,
+    required=True,
+    help="One source of Planet data: PSScene (PlanetScope) or SkySatScene (SkySat)",
+)
+@click.option(
+    "--meta-file",
+    help="Path to the CSV file containing id column with scene ids to download",
+)
+@click.option("--start-date", help="Start date (YYYY-MM-DD)")
+@click.option("--end-date", help="End date (YYYY-MM-DD)")
+@click.option(
+    "--roi",
+    required=True,
+    help="Region of interest coordinates file path: path/to/file.json",
+)
+@click.option("--clouds", help="Cloud percentage threshold")
+@click.option("--out-dir", "-o", required=True, help="Local output directory")
+@add_common_options
+@click.pass_context
+@handle_common_errors("download-clipped-scenes")
+def download_clipped_scenes(
+    ctx,
+    source,
+    meta_file,
+    start_date,
+    end_date,
+    roi,
+    clouds,
+    out_dir,
+    verbose,
+    log_file,
+    no_postgres_log,
+    note,
+):
+    """Downloading clipped PlanetLabs scenes. Provide eaither a csv file with scene id's or dates and region of interest(roi)."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("download-scenes", verbose, log_file, no_postgres_log)
+
+    try:
+        from ..gridded_data import download_clipped_scenes, load_roi
+
+        # Load ROI from file
+        if roi:
+            roi = load_roi(roi).getInfo()
+
+        download_clipped_scenes(
+            source=source,
+            meta_file=meta_file,
+            roi=roi,
+            start_date=start_date,
+            end_date=end_date,
+            clouds=clouds,
+            out_dir=out_dir,
+        )
+
+        click.echo(f"Planet imagery is saved to: {out_dir}")
+
+    except Exception as e:
+        # Log error
+        parameters = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "roi": roi,
+            "out_dir": out_dir,
+            "note": note,
+        }
+        raise
 
 
 ########################################################
-# SEARCH FOR IMAGES
+# DOWNLOAD RAW PLANET IMAGES
+########################################################
+@gridded_data_cli.command()
+@click.option(
+    "--source",
+    multiple=False,
+    required=True,
+    help="A source of Planet data: PSScene (PlanetScope), SkySatScene (SkySat)",
+)
+@click.option(
+    "--meta-file",
+    help="Path to the CSV file containing id column with scene ids to download",
+)
+@click.option("--start-date", help="Start date (YYYY-MM-DD)")
+@click.option("--end-date", help="End date (YYYY-MM-DD)")
+@click.option(
+    "--roi",
+    help="Region of interest coordinates file path: path/to/file.json",
+)
+@click.option("--clouds", help="Cloud percentage threshold")
+@click.option("--out-dir", "-o", required=True, help="Local output directory")
+@add_common_options
+@click.pass_context
+@handle_common_errors("download-scenes")
+def download_scenes(
+    ctx,
+    source,
+    meta_file,
+    start_date,
+    end_date,
+    roi,
+    clouds,
+    out_dir,
+    verbose,
+    log_file,
+    no_postgres_log,
+    note,
+):
+    """Downloading PlanetLabs scenes. To use provide eaither a csv file with scene id's or dates and region of interest(roi)."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("download-scenes", verbose, log_file, no_postgres_log)
+
+    try:
+        from ..gridded_data import download_scenes, load_roi
+
+        # Load ROI from file
+        if roi:
+            roi = load_roi(roi).getInfo()
+
+        download_scenes(
+            source=source,
+            meta_file=meta_file,
+            roi=roi,
+            start_date=start_date,
+            end_date=end_date,
+            clouds=clouds,
+            out_dir=out_dir,
+        )
+
+        click.echo(f"Planet imagery is saved to: {out_dir}")
+
+    except Exception as e:
+        # Log error
+        parameters = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "roi": roi,
+            "out_dir": out_dir,
+            "note": note,
+        }
+        raise
+
+
+########################################################
+# SEARCH FOR PLANET IMAGES
+########################################################
+@gridded_data_cli.command()
+@click.option(
+    "--source",
+    multiple=False,
+    required=True,
+    help="A source of Planet data: PSScene (PlanetScope), SkySatScene (SkySat)",
+)
+@click.option("--start-date", required=True, help="Start date (YYYY-MM-DD)")
+@click.option("--end-date", required=True, help="End date (YYYY-MM-DD)")
+@click.option(
+    "--roi",
+    required=True,
+    help="Region of interest coordinates file path: path/to/file.json",
+)
+@click.option("--clouds", help="Cloud percentage threshold")
+@click.option("--out-dir", "-o", required=True, help="Local output directory")
+@add_common_options
+@click.pass_context
+@handle_common_errors("planet-search")
+def planet_search(
+    ctx,
+    source,
+    start_date,
+    end_date,
+    roi,
+    clouds,
+    out_dir,
+    verbose,
+    log_file,
+    no_postgres_log,
+    note,
+):
+    """Searchg for PlanetLabs imagery between dates."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("planet-search", verbose, log_file, no_postgres_log)
+
+    try:
+        from ..gridded_data import load_roi, quick_search
+
+        # Load ROI from file
+        if roi:
+            roi = load_roi(roi).getInfo()
+        # print(roi_bounds)
+
+        quick_search(
+            source=source,
+            roi=roi,
+            start_date=start_date,
+            end_date=end_date,
+            clouds=clouds,
+            out_dir=out_dir,
+        )
+
+        click.echo(f"Planet Search results are saved to: {out_dir}")
+
+    except Exception as e:
+        # Log error
+        parameters = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "roi": roi,
+            "out_dir": out_dir,
+            "note": note,
+        }
+        raise
+
+
+########################################################
+# SEARCH FOR GEE IMAGES
+# SEARCH FOR GEE IMAGES
 ########################################################
 @gridded_data_cli.command()
 @click.option(
@@ -60,10 +277,13 @@ def gee_search(
 ):
     """Searchg for GEE between dates."""
     cli_ctx = ctx.obj
-    cli_ctx.setup("gee-point", verbose, log_file, no_postgres_log)
+    cli_ctx.setup("gee-search", verbose, log_file, no_postgres_log)
+    cli_ctx.setup("gee-search", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import load_roi, search_images, sources
+        from ..gridded_data import init_ee, load_roi, search_images, sources
+
+        init_ee()
 
         # Load ROI from file
         if roi:
@@ -94,7 +314,8 @@ def gee_search(
 
 
 ########################################################
-# GET POINT DATA
+# GET GEE POINT DATA
+# GET GEE POINT DATA
 ########################################################
 @gridded_data_cli.command()
 @click.option(
@@ -137,7 +358,9 @@ def get_gee_point(
     cli_ctx.setup("gee-point", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_GEE_point, load_roi, sources
+        from ..gridded_data import download_GEE_point, init_ee, load_roi, sources
+
+        init_ee()
 
         # Load ROI from file
         if roi:
@@ -210,7 +433,8 @@ def get_gee_point(
 
 
 ########################################################
-# GET RASTER DATA
+# GET GEE RASTER DATA
+# GET GEE RASTER DATA
 ########################################################
 @gridded_data_cli.command()
 @click.option(
@@ -258,7 +482,9 @@ def get_gee_raster(
     cli_ctx.setup("gee-data", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_GEE_raster, load_roi, sources
+        from ..gridded_data import download_GEE_raster, init_ee, load_roi, sources
+
+        init_ee()
 
         # Load ROI from file
         if roi:
@@ -336,7 +562,8 @@ def get_gee_raster(
 
 
 ########################################################
-# LIST AVAILABLE DATASETS
+# LIST AVAILABLE GEE DATASETS
+# LIST AVAILABLE GEE DATASETS
 ########################################################
 @gridded_data_cli.command()
 @add_common_options
@@ -360,7 +587,8 @@ def list_gee_datasets(ctx, verbose, log_file, no_postgres_log, note):
 
 
 ########################################################
-# LIST AVAILABLE VARIABLES
+# LIST AVAILABLE GEE VARIABLES
+# LIST AVAILABLE GEE VARIABLES
 ########################################################
 @gridded_data_cli.command()
 @click.option(
@@ -375,7 +603,9 @@ def list_gee_variables(ctx, source, verbose, log_file, no_postgres_log, note):
     cli_ctx.setup("gee-dataset-varaibles", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import list_GEE_vars, sources
+        from ..gridded_data import init_ee, list_GEE_vars, sources
+
+        init_ee()
 
         band_names = list_GEE_vars(sources[source])
         click.echo(f"Available GEE variables for {source}:")
@@ -385,6 +615,23 @@ def list_gee_variables(ctx, source, verbose, log_file, no_postgres_log, note):
     except Exception as e:
         cli_ctx.log_error("GEE variables listing error", e, {"note": note}, __file__)
         raise
+
+
+########################################################
+# GEE AUTHENTICATE
+########################################################
+@gridded_data_cli.command()
+@add_common_options
+@click.pass_context
+@handle_common_errors("gee-authenticate")
+def gee_authenticate(ctx, verbose, log_file, no_postgres_log, note):
+    """Google Earth Engine account authentication."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("gee-authenticate", verbose, log_file, no_postgres_log)
+
+    import ee
+
+    ee.Authenticate()
 
 
 if __name__ == "__main__":
