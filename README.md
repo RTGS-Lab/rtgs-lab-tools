@@ -74,19 +74,19 @@ rtgs sensing-data list-projects
 rtgs sensing-data extract --project "Winter Turf - v3" --start-date 2023-01-01 --end-date 2023-01-31
 ```
 
-### 3. Create Visualizations
+### 3. Parse Sensor Data (Optional: the visualization tool will parse automatically)
 ```bash
-rtgs visualization create --file data/Winter_Turf_v3_2023-01-01_to_2023-01-31_20240407153045.csv --parameter "Temperature" --node-id "e00fce68f374e425e2d6b891"
+rtgs data-parser parse data/Winter_Turf_v3_2023-01-01_to_2023-01-31.csv
 ```
 
-### 4. Download Climate Data
+### 4. Create Visualizations
+```bash
+rtgs visualization create --file data/parsed/Winter_Turf_v3_2023-01-01_to_2023-01-31_20240407153045_parsed.csv --parameter "Kestrel.PORT_V[0]" --node-id "e00fce68c148e3450a925509"
+```
+
+### 5. Download Climate Data
 ```bash
 rtgs gridded-data get-gee-point --source MOD --variables "sur_refl_b01,sur_refl_b02" --start-date 2023-01-01 --end-date 2023-01-31
-```
-
-### 5. Parse Data Files
-```bash
-rtgs data-parser parse --input-file raw_data.csv --output-file parsed_data.csv
 ```
 
 ## Available Tools
@@ -126,6 +126,11 @@ The package includes a FastMCP server that enables natural language interaction 
 1. Install as normal with `bash install.sh`
 2. Start Claude Code with `claude` in the repository directory
 3. The included `.mcp.json` configuration will be automatically recognized
+
+### Quick Setup with Gemini CLI
+1. Install as normal with `bash install.sh`
+2. Start Gemini CLI with `gemini` in the repository directory
+3. The included `.gemini/settings.json` (same file as .mcp.json) configuration will be automatically recognized
 
 ### Use with Claude Desktop
 See the [MCP Server documentation](src/rtgs_lab_tools/mcp_server/README.md) for Claude Desktop configuration details.
