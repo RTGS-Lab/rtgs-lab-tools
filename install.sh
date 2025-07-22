@@ -34,6 +34,7 @@ print_header() {
     echo -e "${BLUE}================================${NC}\n"
 }
 
+<<<<<<< Updated upstream
 print_update_header() {
     echo -e "\n${BLUE}================================${NC}"
     echo -e "${BLUE}    RTGS Lab Tools Update${NC}"
@@ -119,6 +120,56 @@ update_from_git() {
     git log --oneline -5
 }
 
+=======
+# Get version information
+get_version_info() {
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
+    # Try to get version from pyproject.toml
+    if [[ -f "$SCRIPT_DIR/pyproject.toml" ]]; then
+        VERSION=$(grep '^version = ' "$SCRIPT_DIR/pyproject.toml" | sed 's/version = "\(.*\)"/\1/')
+    fi
+    
+    # Try to get git commit info
+    if [[ -d "$SCRIPT_DIR/.git" ]]; then
+        GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+        GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+        GIT_DATE=$(git log -1 --format=%cd --date=short 2>/dev/null || echo "unknown")
+        
+        # Try to get the latest tag/release
+        GIT_TAG=$(git describe --tags --exact-match 2>/dev/null || git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
+        # Check if current commit is tagged
+        if [[ -n "$GIT_TAG" ]]; then
+            EXACT_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "")
+            if [[ -n "$EXACT_TAG" ]]; then
+                TAG_INFO="Release: ${GIT_TAG}"
+            else
+                TAG_INFO="Latest Release: ${GIT_TAG}"
+            fi
+        fi
+    fi
+    
+    # Build version string
+    if [[ -n "$VERSION" ]]; then
+        echo "Package: v${VERSION}"
+    fi
+    
+    if [[ -n "$TAG_INFO" ]]; then
+        echo "$TAG_INFO"
+    fi
+    
+    if [[ -n "$GIT_COMMIT" && "$GIT_COMMIT" != "unknown" ]]; then
+        echo "Git: ${GIT_BRANCH}@${GIT_COMMIT} (${GIT_DATE})"
+    fi
+    
+    # If no version info found
+    if [[ -z "$VERSION" && -z "$TAG_INFO" && ("$GIT_COMMIT" == "unknown" || -z "$GIT_COMMIT") ]]; then
+        echo "Version information unavailable"
+    fi
+}
+
+>>>>>>> Stashed changes
 # Detect operating system
 detect_os() {
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -467,6 +518,13 @@ show_next_steps() {
     echo -e "\n${GREEN}================================${NC}"
     echo -e "${GREEN}  Installation Complete!${NC}"
     echo -e "${GREEN}================================${NC}\n"
+    
+    # Show version information
+    echo -e "${BLUE}Installed Version:${NC}"
+    get_version_info | while read -r line; do
+        echo -e "  ${BLUE}${line}${NC}"
+    done
+    echo ""
     
     echo -e "${YELLOW}Next Steps:${NC}"
     echo -e "1. ${BLUE}Activate the virtual environment:${NC}"
