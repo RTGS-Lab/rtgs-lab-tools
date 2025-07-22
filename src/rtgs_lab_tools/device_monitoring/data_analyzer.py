@@ -60,7 +60,7 @@ def analyze_data(data):
 
         # Get system usage
         if system_df is not None and node_id in system_df.index:
-            system_val = float(system_df.loc[node_id, "port_i_1"])
+            system_val = float(system_df.loc[node_id, "avg_p_1"])
             if system_val > SYSTEM_CURRENT_MAX:
                 flagged = True
 

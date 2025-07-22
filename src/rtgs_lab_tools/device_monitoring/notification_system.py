@@ -47,7 +47,7 @@ def notify(analysis_results, no_email=False):
 
         # Display metrics
         battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"
-        system_str = f"{system:.1f}mA" if system is not None else "Unknown"
+        system_str = f"{system:.3f}" if system is not None else "Unknown"
 
         metrics_line = f"  Battery: {battery_str} | System: {system_str} | Errors: {len(errors)} types"
         print(metrics_line)
@@ -66,7 +66,7 @@ def notify(analysis_results, no_email=False):
                 issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
             if system is not None and system > SYSTEM_CURRENT_MAX:
                 issues.append(
-                    f"System current HIGH ({system:.1f}mA > {SYSTEM_CURRENT_MAX}mA)"
+                    f"System current HIGH ({system:.3f} > {SYSTEM_CURRENT_MAX})"
                 )
 
             # Check for critical errors
