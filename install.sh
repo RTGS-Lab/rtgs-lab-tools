@@ -34,7 +34,6 @@ print_header() {
     echo -e "${BLUE}================================${NC}\n"
 }
 
-<<<<<<< Updated upstream
 print_update_header() {
     echo -e "\n${BLUE}================================${NC}"
     echo -e "${BLUE}    RTGS Lab Tools Update${NC}"
@@ -120,7 +119,6 @@ update_from_git() {
     git log --oneline -5
 }
 
-=======
 # Get version information
 get_version_info() {
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -169,7 +167,6 @@ get_version_info() {
     fi
 }
 
->>>>>>> Stashed changes
 # Detect operating system
 detect_os() {
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
