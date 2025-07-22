@@ -12,9 +12,62 @@ RTGS Lab Tools consolidates multiple environmental data analysis workflows into 
 ## Installation
 
 ### Prerequisites
-- Python 3.10+
-- PostgreSQL client libraries (for GEMS database access)
-- UMN VPN connection (for database access)
+
+Before installing RTGS Lab Tools, ensure you have the following software installed:
+
+#### 1. Python 3.10+
+**Installation:**
+- **Download:** [Python.org Downloads](https://www.python.org/downloads/) - Get the latest Python 3.10+ version
+- **Verify installation:** Open a terminal and run:
+  ```bash
+  python --version
+  # or
+  python3 --version
+  ```
+  You should see Python 3.10 or higher.
+
+#### 2. Git
+**Installation:**
+- **Windows:** Download [Git for Windows](https://git-scm.com/download/win) 
+  - ⚠️ **Important:** Use **Git Bash** (included with Git for Windows) instead of PowerShell or Command Prompt for all commands
+- **macOS:** 
+  - Install via Homebrew: `brew install git`
+  - Or download from [Git website](https://git-scm.com/download/mac)
+- **Linux:** Install via package manager:
+  ```bash
+  # Ubuntu/Debian:
+  sudo apt update && sudo apt install git
+  
+  # CentOS/RHEL/Fedora:
+  sudo yum install git
+  # or
+  sudo dnf install git
+  ```
+- **Verify installation:**
+  ```bash
+  git --version
+  ```
+
+#### 3. pip (Python Package Installer)
+**Installation:**
+- **Usually included** with Python 3.10+ installations
+- **If missing:** Download [get-pip.py](https://bootstrap.pypa.io/get-pip.py) and run:
+  ```bash
+  python get-pip.py
+  ```
+- **Verify installation:**
+  ```bash
+  pip --version
+  # or
+  pip3 --version
+  ```
+
+#### 4. Additional Requirements
+- **PostgreSQL client libraries** (for GEMS database access)
+- **UMN VPN connection** (for database access)
+
+#### Windows Users: Important Note
+🚨 **Always use Git Bash** instead of PowerShell or Command Prompt when running installation commands. Git Bash provides a Unix-like environment that ensures compatibility with the installation scripts.
 
 ### Quick Installation (Recommended)
 
@@ -36,6 +89,56 @@ The install script will:
 - Set up credential templates
 
 After installation, edit the generated `.env` file with your actual credentials.
+
+### Post-Installation Setup
+
+After running the installation script, follow these steps to complete your setup:
+
+#### 1. Activate the Virtual Environment
+```bash
+# Linux/macOS:
+source venv/bin/activate
+
+# Windows (Git Bash/WSL):
+source venv/Scripts/activate
+```
+
+#### 2. Configure Your Credentials
+Edit the `.env` file with your actual database and API credentials:
+```bash
+nano .env  # or use your preferred editor
+```
+
+**Required Environment Variables:**
+
+**GEMS Database (required for sensor data):**
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+
+**Logging Database (optional for audit features):**
+- `LOGGING_DB_HOST`, `LOGGING_DB_PORT`, `LOGGING_DB_NAME`
+- `LOGGING_DB_USER`, `LOGGING_DB_PASSWORD`
+- `LOGGING_INSTANCE_CONNECTION_NAME` (GCP Cloud SQL)
+- `POSTGRES_LOGGING_STATUS` (True/False)
+
+**Google Earth Engine (optional for satellite data):**
+- `GEE_PROJECT` (Google Cloud project name)
+- `BUCKET_NAME` (Google Cloud Storage bucket)
+
+**PlanetLabs (optional for high-res satellite imagery):**
+- `PL_API_KEY` (PlanetLabs API key)
+
+**Device Management (optional for IoT devices):**
+- `PARTICLE_ACCESS_TOKEN`
+
+#### 3. Test the Installation
+```bash
+rtgs --help
+```
+
+#### 4. List Available Projects
+```bash
+rtgs sensing-data list-projects
+```
 
 #### MSI (Minnesota Supercomputing Institute) Users
 
