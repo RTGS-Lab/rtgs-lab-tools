@@ -1,5 +1,5 @@
 # Create .env file template
-# RTGS Lab Tools Installation Script
+# RTGS Lab Tools Installation/Update Script
 # Works on Windows (Git Bash/WSL), macOS, and Linux
 
 set -e  # Exit on any error
@@ -32,6 +32,91 @@ print_header() {
     echo -e "\n${BLUE}================================${NC}"
     echo -e "${BLUE}  RTGS Lab Tools Installation${NC}"
     echo -e "${BLUE}================================${NC}\n"
+}
+
+print_update_header() {
+    echo -e "\n${BLUE}================================${NC}"
+    echo -e "${BLUE}    RTGS Lab Tools Update${NC}"
+    echo -e "${BLUE}================================${NC}\n"
+}
+
+# Check if this is an existing installation
+check_existing_installation() {
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    VENV_PATH="$SCRIPT_DIR/venv"
+    
+    if [[ -d "$VENV_PATH" && -f "$SCRIPT_DIR/pyproject.toml" ]]; then
+        print_status "Existing installation detected"
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Check for local git changes
+check_git_status() {
+    print_status "Checking for local changes..."
+    
+    if [[ ! -d ".git" ]]; then
+        print_error "Not a git repository. Cannot perform update."
+        exit 1
+    fi
+    
+    # Check if there are uncommitted changes
+    if ! git diff-index --quiet HEAD --; then
+        print_error "You have uncommitted local changes."
+        print_error "Please commit or stash your changes before updating:"
+        print_error ""
+        git status --porcelain
+        print_error ""
+        print_error "Commands to handle your changes:"
+        print_error "  To commit: git add . && git commit -m 'Your message'"
+        print_error "  To stash: git stash"
+        exit 1
+    fi
+    
+    # Check if there are untracked files that could conflict
+    UNTRACKED_FILES=$(git ls-files --others --exclude-standard)
+    if [[ -n "$UNTRACKED_FILES" ]]; then
+        print_warning "You have untracked files:"
+        echo "$UNTRACKED_FILES"
+        print_warning "These files will be preserved during update."
+    fi
+    
+    print_success "No conflicting local changes found"
+}
+
+# Update from git repository
+update_from_git() {
+    print_status "Updating from git repository..."
+    
+    # Fetch latest changes
+    print_status "Fetching latest changes..."
+    git fetch origin
+    
+    # Get current branch
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    print_status "Current branch: $CURRENT_BRANCH"
+    
+    # If not on master, switch to master
+    if [[ "$CURRENT_BRANCH" != "master" ]]; then
+        print_status "Switching to master branch..."
+        git checkout master
+    fi
+    
+    # Pull latest changes
+    print_status "Pulling latest changes from master..."
+    if git pull origin master; then
+        print_success "Successfully updated to latest version"
+    else
+        print_error "Failed to pull latest changes"
+        print_error "Please resolve any merge conflicts and try again"
+        exit 1
+    fi
+    
+    # Show what changed
+    print_status "Recent changes:"
+    git log --oneline -5
 }
 
 # Detect operating system
@@ -340,6 +425,43 @@ check_directories() {
     print_success "Project structure verified"
 }
 
+# Update process for existing installations
+update_installation() {
+    print_update_header
+    
+    # Change to script directory to ensure we're in the project root
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    cd "$SCRIPT_DIR"
+    
+    detect_os
+    check_directories
+    check_git_status
+    update_from_git
+    init_submodules
+    check_python
+    activate_venv
+    upgrade_pip
+    install_package
+    configure_claude_desktop
+    
+    show_update_complete
+}
+
+# Display update completion message
+show_update_complete() {
+    echo -e "\n${GREEN}================================${NC}"
+    echo -e "${GREEN}    Update Complete!${NC}"
+    echo -e "${GREEN}================================${NC}\n"
+    
+    echo -e "${BLUE}Your RTGS Lab Tools installation has been updated to the latest version.${NC}"
+    echo -e "${BLUE}All dependencies have been reinstalled and MCP servers reconfigured.${NC}\n"
+    
+    echo -e "${YELLOW}Next Steps:${NC}"
+    echo -e "1. ${BLUE}Restart Claude Desktop if you're using MCP integration${NC}"
+    echo -e "2. ${BLUE}Test the updated installation:${NC}"
+    echo -e "   ${BLUE}rtgs --help${NC}\n"
+}
+
 # Display next steps
 show_next_steps() {
     echo -e "\n${GREEN}================================${NC}"
@@ -388,27 +510,32 @@ show_next_steps() {
 
 # Main installation process
 main() {
-    print_header
-    
-    # Change to script directory to ensure we're in the project root
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    cd "$SCRIPT_DIR"
-    
-    detect_os
-    check_directories
-    init_submodules
-    check_python
-    check_pip
-    check_uv
-    create_venv
-    activate_venv
-    upgrade_pip
-    install_package
-    run_setup_credentials
-    #auth_gee
-    configure_claude_desktop
+    # Check if this is an existing installation
+    if check_existing_installation; then
+        update_installation
+    else
+        print_header
+        
+        # Change to script directory to ensure we're in the project root
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        cd "$SCRIPT_DIR"
+        
+        detect_os
+        check_directories
+        init_submodules
+        check_python
+        check_pip
+        check_uv
+        create_venv
+        activate_venv
+        upgrade_pip
+        install_package
+        run_setup_credentials
+        #auth_gee
+        configure_claude_desktop
 
-    show_next_steps
+        show_next_steps
+    fi
 }
 
 # Handle script interruption
