@@ -37,13 +37,24 @@ def notify(analysis_results, no_email=False):
         flagged = result.get("flagged", False)
         status_icon = "⚠️ ALERT" if flagged else "✅ Normal"
 
-        print(f"\nNode: {node_id} - {status_icon}")
-        email_lines.append(f"Node: {node_id} - {status_icon}")
-
-        # Get all metrics
+        # Get all metrics first
         battery = result.get("battery")
         system = result.get("system")
         errors = result.get("errors", {})
+        battery_timestamp = result.get("battery_timestamp")
+        system_timestamp = result.get("system_timestamp")
+
+        # Format timestamp - use the most recent one available
+        timestamp = system_timestamp or battery_timestamp
+        timestamp_str = ""
+        if timestamp is not None:
+            if hasattr(timestamp, 'strftime'):
+                timestamp_str = f" [{timestamp.strftime('%Y-%m-%d %H:%M:%S')}]"
+            else:
+                timestamp_str = f" [{timestamp}]"
+
+        print(f"\nNode: {node_id} - {status_icon}{timestamp_str}")
+        email_lines.append(f"Node: {node_id} - {status_icon}{timestamp_str}")
 
         # Display metrics
         battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"

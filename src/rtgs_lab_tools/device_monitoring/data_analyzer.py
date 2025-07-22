@@ -80,11 +80,23 @@ def analyze_data(data):
                     flagged = True
                     break
 
+        # Get timestamps
+        battery_timestamp = None
+        system_timestamp = None
+        
+        if battery_df is not None and node_id in battery_df.index:
+            battery_timestamp = battery_df.loc[node_id, "timestamp"]
+            
+        if system_df is not None and node_id in system_df.index:
+            system_timestamp = system_df.loc[node_id, "timestamp"]
+
         analyzed_data[node_id] = {
             "flagged": flagged,
             "battery": battery_val,
             "system": system_val,
             "errors": errors_dict,
+            "battery_timestamp": battery_timestamp,
+            "system_timestamp": system_timestamp,
         }
 
     return analyzed_data
