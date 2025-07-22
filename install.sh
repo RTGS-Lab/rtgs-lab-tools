@@ -504,6 +504,13 @@ show_update_complete() {
     echo -e "${BLUE}Your RTGS Lab Tools installation has been updated to the latest version.${NC}"
     echo -e "${BLUE}All dependencies have been reinstalled and MCP servers reconfigured.${NC}\n"
     
+    # Show version information
+    echo -e "${BLUE}Updated Version:${NC}"
+    get_version_info | while read -r line; do
+        echo -e "  ${BLUE}${line}${NC}"
+    done
+    echo ""
+    
     echo -e "${YELLOW}Next Steps:${NC}"
     echo -e "1. ${BLUE}Restart Claude Desktop if you're using MCP integration${NC}"
     echo -e "2. ${BLUE}Test the updated installation:${NC}"
