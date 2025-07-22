@@ -166,7 +166,7 @@ def download_clipped_scenes(
             for result in order_info["_links"]["results"]:
                 location_url = result["location"]
                 download_file(location_url, out_dir)
-                print(f"File {result["name"]} downloaded!")
+                print(f"File {result['name']} downloaded!")
 
 
 def download_scenes(source, meta_file, roi, start_date, end_date, clouds, out_dir):
