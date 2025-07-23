@@ -1,0 +1,78 @@
+name: Daily Device Monitoring
+
+on:
+  schedule:
+    # Run daily at 8:00 AM UTC (adjust timezone as needed)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    # Allow manual triggering of the workflow
+    inputs:
+      start_date:
+        description: 'Start date (YYYY-MM-DD format, optional)'
+        required: false
+        type: string
+      end_date:
+        description: 'End date (YYYY-MM-DD format, optional)'
+        required: false
+        type: string
+      node_ids:
+        description: 'Comma-separated node IDs (optional)'
+        required: false
+        type: string
+      project:
+        description: 'Project name (default: ALL)'
+        required: false
+        type: string
+        default: 'ALL'
+
+jobs:
+  device-monitoring:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    
+    - name: Install dependencies
+      run: |
+        bash install.sh
+    
+    - name: Run device monitoring
+      run: |
+        # Activate virtual environment
+        source venv/bin/activate
+        
+        # Set up environment variables for credentials if needed
+        # Note: Add your secrets in GitHub Settings > Secrets and variables > Actions
+        
+        # Run the device monitoring core functionality
+        python -m rtgs_lab_tools.device_monitoring.core
+      env:
+        # Add any required environment variables here
+        # Example: API_KEY: ${{ secrets.API_KEY }}
+        # Add your database credentials, API keys, etc. as GitHub secrets
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        GMAIL_USER: ${{ secrets.GMAIL_USER }}
+        GMAIL_RECIPIENT: ${{ secrets.GMAIL_RECIPIENT }}
+
+    - name: Upload monitoring results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: monitoring-results-${{ github.run_number }}
+        path: |
+          *.log
+          *.json
+          *.csv
+        retention-days: 30
