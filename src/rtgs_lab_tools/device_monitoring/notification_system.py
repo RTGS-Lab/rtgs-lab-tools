@@ -14,7 +14,7 @@ import os
 import yagmail
 from dotenv import load_dotenv
 
-from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_CURRENT_MAX
+from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_POWER_MAX
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -58,7 +58,7 @@ def notify(analysis_results, no_email=False):
 
         # Display metrics
         battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"
-        system_str = f"{system:.3f}" if system is not None else "Unknown"
+        system_str = f"{system:.3f}W" if system is not None else "Unknown"
 
         metrics_line = f"  Battery: {battery_str} | System: {system_str} | Errors: {len(errors)} types"
         print(metrics_line)
@@ -75,9 +75,9 @@ def notify(analysis_results, no_email=False):
             issues = []
             if battery is not None and battery < BATTERY_VOLTAGE_MIN:
                 issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
-            if system is not None and system > SYSTEM_CURRENT_MAX:
+            if system is not None and system > SYSTEM_POWER_MAX:
                 issues.append(
-                    f"System current HIGH ({system:.3f} > {SYSTEM_CURRENT_MAX})"
+                    f"System power HIGH ({system:.3f} > {SYSTEM_POWER_MAX})"
                 )
 
             # Check for critical errors

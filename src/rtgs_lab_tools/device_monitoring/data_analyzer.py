@@ -16,7 +16,7 @@ Output:
 
 import pandas as pd
 
-from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_CURRENT_MAX
+from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_POWER_MAX
 
 
 def analyze_data(data):
@@ -61,7 +61,7 @@ def analyze_data(data):
         # Get system usage
         if system_df is not None and node_id in system_df.index:
             system_val = float(system_df.loc[node_id, "avg_p_1"])
-            if system_val > SYSTEM_CURRENT_MAX:
+            if system_val > SYSTEM_POWER_MAX:
                 flagged = True
 
         # Get errors
