@@ -64,7 +64,7 @@ Before installing RTGS Lab Tools, ensure you have the following software install
 
 #### 4. Additional Requirements
 - **PostgreSQL client libraries** (for GEMS database access)
-- **UMN VPN connection** (for database access)
+- **[UMN VPN connection](https://it.umn.edu/services-technologies/virtual-private-network-vpn)** (for database access)
 
 #### Windows Users: Important Note
 🚨 **Always use Git Bash** instead of PowerShell or Command Prompt when running installation commands. Git Bash provides a Unix-like environment that ensures compatibility with the installation scripts.
