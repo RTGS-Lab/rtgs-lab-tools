@@ -49,13 +49,11 @@ jobs:
     - name: Run device monitoring
       run: |
         # Activate virtual environment
-        source venv/bin/activate
+        source venv/bin/activate & rtgs device-monitoring monitor
         
         # Set up environment variables for credentials if needed
         # Note: Add your secrets in GitHub Settings > Secrets and variables > Actions
         
-        # Run the device monitoring core functionality
-        python -m rtgs_lab_tools.device_monitoring.core
       env:
         # Add any required environment variables here
         # Example: API_KEY: ${{ secrets.API_KEY }}
