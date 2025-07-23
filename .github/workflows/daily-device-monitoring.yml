@@ -24,6 +24,9 @@ on:
         required: false
         type: string
         default: 'ALL'
+  pull_request:
+    # Allow the workflow to run on pull requests
+    types: [opened, synchronize, reopened]
 
 jobs:
   device-monitoring:
