@@ -1,41 +1,57 @@
 """Main CLI router for RTGS Lab Tools."""
 
+import importlib
 import click
 
 
-@click.group()
+class LazyGroup(click.Group):
+    """A click Group that imports commands lazily."""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Map command names to their module paths
+        self._lazy_commands = {
+            "sensing-data": ("rtgs_lab_tools.sensing_data.cli", "sensing_data_cli"),
+            "data-parser": ("rtgs_lab_tools.data_parser.cli", "data_parser_cli"),
+            "visualization": ("rtgs_lab_tools.visualization.cli", "visualization_cli"),
+            "gridded-data": ("rtgs_lab_tools.gridded_data.cli", "gridded_data_cli"),
+            "device-configuration": ("rtgs_lab_tools.device_configuration.cli", "device_configuration_cli"),
+            "agricultural-modeling": ("rtgs_lab_tools.agricultural_modeling.cli", "agricultural_modeling_cli"),
+            "audit": ("rtgs_lab_tools.audit.cli", "audit_cli"),
+            "device-monitoring": ("rtgs_lab_tools.device_monitoring.cli", "device_monitoring_cli"),
+            "auth": ("rtgs_lab_tools.auth.cli", "auth_cli"),
+        }
+    
+    def get_command(self, ctx, cmd_name):
+        # First check if command is already loaded
+        command = super().get_command(ctx, cmd_name)
+        if command is not None:
+            return command
+        
+        # Try to lazy load the command
+        if cmd_name in self._lazy_commands:
+            module_name, attr_name = self._lazy_commands[cmd_name]
+            try:
+                module = importlib.import_module(module_name)
+                command = getattr(module, attr_name)
+                self.add_command(command, name=cmd_name)
+                return command
+            except (ImportError, AttributeError):
+                pass
+        
+        return None
+    
+    def list_commands(self, ctx):
+        # Return both loaded and available lazy commands
+        loaded = super().list_commands(ctx)
+        lazy = list(self._lazy_commands.keys())
+        return sorted(set(loaded + lazy))
+
+
+@click.group(cls=LazyGroup)
 def cli():
     """RTGS Lab Tools - Environmental sensing and climate data toolkit."""
     pass
-
-
-# Import and add the grouped CLI commands
-def register_commands():
-    """Register all tool command groups with the main CLI."""
-
-    # Import the grouped CLI commands from each tool
-    from .agricultural_modeling.cli import agricultural_modeling_cli
-    from .audit.cli import audit_cli
-    from .data_parser.cli import data_parser_cli
-    from .device_configuration.cli import device_configuration_cli
-    from .device_monitoring.cli import device_monitoring_cli
-    from .gridded_data.cli import gridded_data_cli
-    from .sensing_data.cli import sensing_data_cli
-    from .visualization.cli import visualization_cli
-
-    # Add them to the main CLI with their specific names
-    cli.add_command(sensing_data_cli, name="sensing-data")
-    cli.add_command(data_parser_cli, name="data-parser")
-    cli.add_command(visualization_cli, name="visualization")
-    cli.add_command(gridded_data_cli, name="gridded-data")
-    cli.add_command(device_configuration_cli, name="device-configuration")
-    cli.add_command(agricultural_modeling_cli, name="agricultural-modeling")
-    cli.add_command(audit_cli, name="audit")
-    cli.add_command(device_monitoring_cli, name="device-monitoring")
-
-
-# Register commands when the module is imported
-register_commands()
 
 
 if __name__ == "__main__":
