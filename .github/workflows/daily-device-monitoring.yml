@@ -48,11 +48,14 @@ jobs:
     
     - name: Run device monitoring
       run: |
-        # Activate virtual environment
-        source venv/bin/activate & rtgs device-monitoring monitor
+        # Navigate to the project directory and activate virtual environment
+        pwd
+        cd $GITHUB_WORKSPACE
+        pwd
+        source venv/bin/activate
         
-        # Set up environment variables for credentials if needed
-        # Note: Add your secrets in GitHub Settings > Secrets and variables > Actions
+        # Run the device monitoring command
+        rtgs device-monitoring monitor
         
       env:
         # Add any required environment variables here
