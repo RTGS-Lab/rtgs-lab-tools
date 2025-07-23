@@ -48,7 +48,7 @@ def notify(analysis_results, no_email=False):
         timestamp = system_timestamp or battery_timestamp
         timestamp_str = ""
         if timestamp is not None:
-            if hasattr(timestamp, 'strftime'):
+            if hasattr(timestamp, "strftime"):
                 timestamp_str = f" [{timestamp.strftime('%Y-%m-%d %H:%M:%S')}]"
             else:
                 timestamp_str = f" [{timestamp}]"
