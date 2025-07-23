@@ -1459,6 +1459,110 @@ async def agricultural_et_requirements(
 
 
 # -----------------
+# DEVICE MONITORING TOOLS
+# -----------------
+
+
+@mcp.tool("device_monitoring_monitor")
+async def device_monitoring_monitor(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    node_ids: Optional[str] = None,
+    project: str = "ALL",
+    no_email: bool = True,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Monitor device data and analyze for alerts with automatic git logging.
+
+    Monitors environmental sensor devices for battery voltage, system current,
+    and error conditions. Analyzes data against thresholds and provides
+    notification-ready results. All monitoring operations are logged to git
+    for tracking and reproducibility.
+
+    Args:
+        start_date: Start date in YYYY-MM-DD format (default: yesterday)
+        end_date: End date in YYYY-MM-DD format (default: today)
+        node_ids: Comma-separated list of node IDs to filter data (optional)
+        project: Project name to filter data (default: ALL)
+        no_email: Skip sending email notifications (default: True for MCP)
+        note: Description for this monitoring operation (optional)
+
+    Returns:
+        Dict with success status, monitoring results, and analysis summary
+    """
+    try:
+        # Ensure we're in the correct directory
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            PYTHON_EXECUTABLE,
+            "-m",
+            "rtgs_lab_tools.cli",
+            "device-monitoring",
+            "monitor",
+        ]
+
+        if start_date:
+            cmd.extend(["--start-date", start_date])
+
+        if end_date:
+            cmd.extend(["--end-date", end_date])
+
+        if node_ids:
+            cmd.extend(["--node-ids", node_ids])
+
+        if project and project != "ALL":
+            cmd.extend(["--project", project])
+
+        if no_email:
+            cmd.append("--no-email")
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        # Restore original working directory
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+            "monitoring_parameters": {
+                "start_date": start_date,
+                "end_date": end_date,
+                "node_ids": node_ids,
+                "project": project,
+                "email_notifications": not no_email,
+            },
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Device monitoring failed: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+            "monitoring_parameters": {
+                "start_date": start_date,
+                "end_date": end_date,
+                "node_ids": node_ids,
+                "project": project,
+                "email_notifications": not no_email,
+            },
+        }
+
+
+# -----------------
 # AUDIT TOOLS
 # -----------------
 

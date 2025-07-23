@@ -92,7 +92,7 @@ def create_battery_voltage_dataframe(df):
 def create_system_usage_dataframe(df):
     """Extract system usage (index 1 of PORT_I array) from Kestrel devices by node_id."""
     kestrel_porti = df[
-        (df["device_type"] == "Kestrel") & (df["measurement_name"] == "PORT_I")
+        (df["device_type"] == "Kestrel") & (df["measurement_name"] == "AVG_P")
     ].copy()
     kestrel_porti["timestamp"] = pd.to_datetime(kestrel_porti["timestamp"])
 
@@ -105,11 +105,11 @@ def create_system_usage_dataframe(df):
             print(f"Error extracting second value from {x}: {e}")
             return None
 
-    kestrel_porti["port_i_1"] = kestrel_porti["value"].apply(extract_second_value)
+    kestrel_porti["avg_p_1"] = kestrel_porti["value"].apply(extract_second_value)
     return (
         kestrel_porti.sort_values("timestamp")
         .groupby("node_id")
-        .last()[["port_i_1", "timestamp"]]
+        .last()[["avg_p_1", "timestamp"]]
     )
 
 
