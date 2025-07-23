@@ -76,9 +76,7 @@ def notify(analysis_results, no_email=False):
             if battery is not None and battery < BATTERY_VOLTAGE_MIN:
                 issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
             if system is not None and system > SYSTEM_POWER_MAX:
-                issues.append(
-                    f"System power HIGH ({system:.3f} > {SYSTEM_POWER_MAX})"
-                )
+                issues.append(f"System power HIGH ({system:.3f} > {SYSTEM_POWER_MAX})")
 
             # Check for critical errors
             critical_errors = []
