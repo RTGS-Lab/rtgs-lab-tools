@@ -177,7 +177,7 @@ nano .env  # or use your preferred editor
 - `PL_API_KEY` (PlanetLabs API key)
 
 **Device Management (optional for IoT devices):**
-- `PARTICLE_ACCESS_TOKEN`
+- `PARTICLE_ACCESS_TOKEN` (use `rtgs auth particle-login` to create)
 
 #### 3. Test the Installation
 ```bash
@@ -291,6 +291,7 @@ rtgs core update           # Update to latest release
 rtgs auth login            # Authenticate with Google Cloud
 rtgs auth logout           # Logout from Google Cloud
 rtgs auth status           # Check authentication status
+rtgs auth particle-login   # Create Particle Cloud access token
 ```
 
 ## Natural Language Interface (MCP)

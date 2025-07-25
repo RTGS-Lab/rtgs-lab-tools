@@ -221,7 +221,7 @@ Ensure your `.env` file contains the necessary credentials:
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
 
 **Optional for extended features**:
-- `PARTICLE_ACCESS_TOKEN` (device management)
+- `PARTICLE_ACCESS_TOKEN` (device management - use `rtgs auth particle-login` to create)
 - `GEE_PROJECT` (satellite data)
 - `ANTHROPIC_API_KEY` (Claude Code CLI)
 
