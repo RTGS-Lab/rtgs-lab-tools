@@ -146,6 +146,94 @@ def status():
         console.print("✅ [bold green]All systems ready![/bold green] You can use RTGS Lab Tools with Secret Manager.")
 
 
+@auth_cli.command("particle-login")
+def particle_login():
+    """Authenticate with Particle Cloud and create a temporary access token."""
+    import subprocess
+    import os
+    
+    console.print("🔌 [bold blue]Particle Cloud Authentication[/bold blue]")
+    console.print()
+    console.print("This will create a temporary 7-day access token using the Particle CLI.")
+    console.print("You'll need to login with your Particle credentials when prompted.")
+    console.print()
+    
+    # Check if particle CLI is installed
+    try:
+        subprocess.run(["particle", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        console.print("❌ [bold red]Particle CLI not found[/bold red]")
+        console.print()
+        console.print("Please install the Particle CLI first:")
+        console.print("npm install -g particle-cli")
+        console.print("or visit: https://docs.particle.io/tutorials/developer-tools/cli/")
+        return
+    
+    try:
+        # Create token with 7-day expiry
+        console.print("Creating Particle access token (expires in 7 days)...")
+        console.print("You may be prompted to login to your Particle account.")
+        console.print()
+        
+        # Run interactively to allow user login
+        console.print("Running: particle token create --expires-in 604800")
+        console.print("(This may prompt for your Particle credentials)")
+        console.print()
+        
+        result = subprocess.run([
+            "particle", "token", "create", 
+            "--expires-in", "604800"
+        ])
+        
+        if result.returncode == 0:
+            console.print()
+            console.print("Token created successfully!")
+            
+            # Now get the token by asking user to paste it
+            console.print("Please copy the token from the output above and paste it here:")
+            token = click.prompt("Particle token", type=str).strip()
+            
+            if token and len(token) == 40:
+                # Write to .env file
+                env_file_path = os.path.join(os.getcwd(), ".env")
+                
+                # Read existing .env content
+                env_lines = []
+                if os.path.exists(env_file_path):
+                    with open(env_file_path, "r") as f:
+                        env_lines = f.readlines()
+                
+                # Remove any existing PARTICLE_ACCESS_TOKEN line
+                env_lines = [line for line in env_lines if not line.strip().startswith("PARTICLE_ACCESS_TOKEN=")]
+                
+                # Add new token
+                env_lines.append(f"PARTICLE_ACCESS_TOKEN={token}\n")
+                
+                # Write back to .env file
+                with open(env_file_path, "w") as f:
+                    f.writelines(env_lines)
+                
+                console.print("✅ [bold green]Particle authentication successful![/bold green]")
+                console.print()
+                console.print(f"🔑 Access token created and saved to .env file")
+                console.print(f"⏰ Token expires in 7 days")
+                console.print()
+                console.print("[bold blue]Next steps:[/bold blue]")
+                console.print("1. Your Particle MCP server should now work")
+                console.print("2. Token will automatically expire in 7 days")
+                console.print("3. Run this command again when the token expires")
+            else:
+                console.print("❌ [bold red]Invalid token format[/bold red]")
+                console.print("Particle tokens should be 40 characters long")
+        else:
+            console.print("❌ [bold red]Token creation failed[/bold red]")
+            console.print("Please check your Particle CLI installation and credentials")
+            
+    except Exception as e:
+        console.print("❌ [bold red]Error creating token[/bold red]")
+        console.print(f"Error: {str(e)}")
+
+
 @auth_cli.command("logout")
 def logout():
     """Logout from Google Cloud."""
