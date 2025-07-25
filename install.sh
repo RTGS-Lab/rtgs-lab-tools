@@ -88,13 +88,14 @@ check_git_status() {
 
 # Get latest release tag from GitHub API
 get_latest_release_tag() {
-    print_status "Fetching latest release information..."
+    # Send status messages to stderr to avoid mixing with return value
+    print_status "Fetching latest release information..." >&2
     
     # Get the repository info from git remote
     REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
     
     if [[ -z "$REMOTE_URL" ]]; then
-        print_error "Could not determine git remote URL"
+        print_error "Could not determine git remote URL" >&2
         return 1
     fi
     
@@ -107,7 +108,7 @@ get_latest_release_tag() {
             REPO_PATH="${REMOTE_URL#git@github.com:}"
             REPO_PATH="${REPO_PATH%.git}"
         else
-            print_error "Unsupported GitHub URL format: $REMOTE_URL"
+            print_error "Unsupported GitHub URL format: $REMOTE_URL" >&2
             return 1
         fi
         
@@ -119,7 +120,7 @@ get_latest_release_tag() {
         elif command -v wget &> /dev/null; then
             RELEASE_DATA=$(wget -qO- "$API_URL" 2>/dev/null)
         else
-            print_error "Neither curl nor wget found. Cannot fetch release information."
+            print_error "Neither curl nor wget found. Cannot fetch release information." >&2
             return 1
         fi
         
@@ -133,7 +134,7 @@ get_latest_release_tag() {
         fi
     fi
     
-    print_warning "Could not fetch latest release information. Falling back to master branch."
+    print_warning "Could not fetch latest release information. Falling back to master branch." >&2
     echo "master"
     return 0
 }
