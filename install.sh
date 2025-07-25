@@ -65,9 +65,17 @@ check_git_status() {
     # Check if there are uncommitted changes
     if ! git diff-index --quiet HEAD --; then
         print_error "You have uncommitted local changes."
-        print_error "Please commit or stash your changes before updating:"
+        print_error "DEBUG: Here's what git diff-index sees:"
+        git diff-index HEAD --
         print_error ""
+        print_error "DEBUG: Here's git status --porcelain:"
         git status --porcelain
+        print_error ""
+        print_error "DEBUG: Here's git status:"
+        git status
+        print_error ""
+        print_error "DEBUG: Here's git diff --name-only:"
+        git diff --name-only
         print_error ""
         print_error "Commands to handle your changes:"
         print_error "  To commit: git add . && git commit -m 'Your message'"
