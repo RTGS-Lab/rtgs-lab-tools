@@ -112,26 +112,17 @@ def run_install_script() -> bool:
         # Make sure the script is executable
         os.chmod(install_script, 0o755)
         
-        # Run the install script using bash explicitly
+        # Run the install script using bash explicitly, inheriting terminal I/O
+        # This allows the script to run exactly as if called from the command line
         result = subprocess.run(
             ["bash", str(install_script)], 
             cwd=project_root, 
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True
+            check=True
         )
         
-        # Print the output from the script
-        if result.stdout:
-            print(result.stdout)
-            
         return result.returncode == 0
     except subprocess.CalledProcessError as e:
         print(f"Update failed with exit code {e.returncode}")
-        if e.stdout:
-            print("Output:")
-            print(e.stdout)
         return False
     except Exception as e:
         print(f"Update failed: {e}")
