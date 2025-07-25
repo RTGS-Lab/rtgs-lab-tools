@@ -206,12 +206,10 @@ bash install.sh
 ```bash
 git clone https://github.com/RTGS-Lab/rtgs-lab-tools.git
 cd rtgs-lab-tools
-python -m venv venv
+uv venv venv
 source venv/bin/activate
-# On macOS with zsh, use quotes:
-pip install -e ".[all]"
-# On other systems:
-pip install -e .[all]
+# Install with uv (works on all systems):
+uv pip install -e ".[all]"
 ```
 
 ## Quick Start
@@ -350,13 +348,13 @@ For detailed configuration instructions, see individual module documentation.
 
 ### Running Tests
 ```bash
-pytest
+uv run pytest
 ```
 
 ### Code Formatting
 ```bash
-black src/ tests/
-isort src/ tests/
+uv run black src/ tests/
+uv run isort src/ tests/
 ```
 
 ## Contributing
@@ -367,7 +365,7 @@ We welcome contributions! For detailed guidelines, see [CONTRIBUTING.md](CONTRIB
 1. Fork and clone the repository
 2. Run `bash install.sh` to set up your development environment
 3. Make your changes with appropriate tests
-4. Run `pytest` and formatting checks
+4. Run `uv run pytest` and formatting checks
 5. Submit a pull request with a clear description
 
 ## Documentation

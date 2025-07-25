@@ -129,7 +129,7 @@ The installation script (`install.sh`) automatically configures Claude Desktop b
 
 The server can be used with any MCP-compatible client by running:
 ```bash
-python -m rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server
+uv run -m rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server
 ```
 
 ## Available MCP Tools
@@ -195,7 +195,7 @@ claude
 
 **MCP server not loading**:
 - Ensure virtual environment is activated
-- Check that all dependencies are installed: `pip install -e ".[all]"`
+- Check that all dependencies are installed: `uv pip install -e ".[all]"`
 - Verify Python path in configuration files
 
 **Claude Code CLI not finding configuration**:
@@ -230,7 +230,7 @@ Ensure your `.env` file contains the necessary credentials:
 Enable debug logging to troubleshoot issues:
 ```bash
 export RTGS_LOG_LEVEL=DEBUG
-python -m rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server
+uv run -m rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server
 ```
 
 ## Architecture

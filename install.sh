@@ -373,9 +373,9 @@ init_submodules() {
     fi
 }
 
-# Create virtual environment
+# Create virtual environment using uv
 create_venv() {
-    print_status "Creating virtual environment..."
+    print_status "Creating virtual environment with uv..."
     
     # Always create venv in the project root directory
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -386,8 +386,9 @@ create_venv() {
         rm -rf "$VENV_PATH"
     fi
     
-    $PYTHON_CMD -m venv "$VENV_PATH"
-    print_success "Virtual environment created: $VENV_PATH"
+    # Use uv to create virtual environment
+    uv venv "$VENV_PATH"
+    print_success "Virtual environment created with uv: $VENV_PATH"
 }
 
 # Activate virtual environment
@@ -407,22 +408,27 @@ activate_venv() {
     print_status "Pip path: $(which pip)"
 }
 
-# Upgrade pip
-upgrade_pip() {
-    print_status "Upgrading pip..."
-    python -m pip install --upgrade pip
-    print_success "Pip upgraded successfully"
+# Install uv if not already available in venv
+ensure_uv_in_venv() {
+    print_status "Ensuring uv is available in virtual environment..."
+    # uv should already be available from the system installation
+    # but we can upgrade it if needed
+    if ! uv --version &> /dev/null; then
+        print_error "uv not available in PATH"
+        exit 1
+    fi
+    print_success "uv is ready"
 }
 
 # Install package in development mode
 install_package() {
-    print_status "Installing RTGS Lab Tools in development mode..."
+    print_status "Installing RTGS Lab Tools in development mode with uv..."
     
-    # Install in editable mode with all dependencies
+    # Install in editable mode with all dependencies using uv
     # Use quotes for zsh compatibility on macOS
-    python -m pip install -e ".[all]"
+    uv pip install -e ".[all]"
     
-    print_success "Package installed successfully"
+    print_success "Package installed successfully with uv"
 }
 
 # Run setup credentials command
@@ -511,8 +517,14 @@ configure_claude_desktop() {
       ]
     },
     "rtgs_lab_tools": {
-      "command": "$PYTHON_PATH",
-      "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+      "command": "uv",
+      "args": [
+        "--directory",
+        "$SCRIPT_DIR",
+        "run",
+        "-m",
+        "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"
+      ]
     }
   }
 }
@@ -567,7 +579,7 @@ update_installation() {
     init_submodules
     check_python
     activate_venv
-    upgrade_pip
+    ensure_uv_in_venv
     install_package
     configure_claude_desktop
     
@@ -669,7 +681,7 @@ main() {
         check_uv
         create_venv
         activate_venv
-        upgrade_pip
+        ensure_uv_in_venv
         install_package
         run_setup_credentials
         #auth_gee

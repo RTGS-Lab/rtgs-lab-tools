@@ -17,7 +17,7 @@ try:
 except ImportError:
     XARRAY_AVAILABLE = False
     logger.warning(
-        "Gridded data processing requires xarray. Install with: pip install rtgs-lab-tools[climate]"
+        "Gridded data processing requires xarray. Install with: uv pip install rtgs-lab-tools[climate]"
     )
 
 

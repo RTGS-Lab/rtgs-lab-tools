@@ -136,3 +136,19 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "--cov=src/rtgs_lab_tools --cov-report=term-missing --cov-report=html"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "mypy>=0.991",
+    "pre-commit>=2.20.0",
+    "pandas-stubs>=1.5.0",
+    "types-requests>=2.25.0",
+    "types-seaborn>=0.11.0",
+]
+
+[tool.uv.workspace]
+members = ["src/rtgs_lab_tools/mcp_server/particle-mcp-server"]
