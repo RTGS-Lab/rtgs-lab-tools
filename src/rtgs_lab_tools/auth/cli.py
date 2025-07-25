@@ -25,9 +25,7 @@ def login(headless):
     """Authenticate with Google Cloud for Secret Manager access."""
     auth_service = AuthService()
 
-    console.print(
-        "[bold blue]RTGS Lab Tools - Google Cloud Authentication[/bold blue]"
-    )
+    console.print("[bold blue]RTGS Lab Tools - Google Cloud Authentication[/bold blue]")
     console.print()
 
     # Check if gcloud is installed first
@@ -82,12 +80,8 @@ def login(headless):
         if result.get("secret_manager_access"):
             console.print("Secret Manager access: [bold green]Working[/bold green]")
         else:
-            console.print(
-                "Secret Manager access: [bold yellow]Limited[/bold yellow]"
-            )
-            console.print(
-                "Contact your administrator for Secret Manager permissions"
-            )
+            console.print("Secret Manager access: [bold yellow]Limited[/bold yellow]")
+            console.print("Contact your administrator for Secret Manager permissions")
 
         console.print()
         console.print("[bold blue]Next steps:[/bold blue]")

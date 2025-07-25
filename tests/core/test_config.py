@@ -14,7 +14,9 @@ def test_config_from_env_file(temp_env_file):
     # Mock Secret Manager to return None so it falls back to env vars
     mock_client = Mock()
     mock_client.get_secret.return_value = None
-    with patch('rtgs_lab_tools.core.config.get_secret_manager_client', return_value=mock_client):
+    with patch(
+        "rtgs_lab_tools.core.config.get_secret_manager_client", return_value=mock_client
+    ):
         config = Config(temp_env_file)
 
         assert config.db_host == "test-host"
@@ -30,7 +32,10 @@ def test_config_missing_required_vars():
     with patch.dict(os.environ, {}, clear=True):
         mock_client = Mock()
         mock_client.get_secret.return_value = None
-        with patch('rtgs_lab_tools.core.config.get_secret_manager_client', return_value=mock_client):
+        with patch(
+            "rtgs_lab_tools.core.config.get_secret_manager_client",
+            return_value=mock_client,
+        ):
             # Pass a non-existent env file to prevent loading from existing .env
             config = Config(env_file="/nonexistent/.env")
 
@@ -43,7 +48,10 @@ def test_config_invalid_port():
     with patch.dict(os.environ, {"DB_PORT": "invalid_port"}):
         mock_client = Mock()
         mock_client.get_secret.return_value = None
-        with patch('rtgs_lab_tools.core.config.get_secret_manager_client', return_value=mock_client):
+        with patch(
+            "rtgs_lab_tools.core.config.get_secret_manager_client",
+            return_value=mock_client,
+        ):
             config = Config()
 
             with pytest.raises(ConfigError, match="Invalid DB_PORT value"):
@@ -54,7 +62,9 @@ def test_config_db_url(temp_env_file):
     """Test database URL generation."""
     mock_client = Mock()
     mock_client.get_secret.return_value = None
-    with patch('rtgs_lab_tools.core.config.get_secret_manager_client', return_value=mock_client):
+    with patch(
+        "rtgs_lab_tools.core.config.get_secret_manager_client", return_value=mock_client
+    ):
         config = Config(temp_env_file)
 
         expected_url = "postgresql://test_user:test_password@test-host:5432/test_db"
@@ -66,7 +76,10 @@ def test_config_optional_values():
     with patch.dict(os.environ, {}, clear=True):
         mock_client = Mock()
         mock_client.get_secret.return_value = None
-        with patch('rtgs_lab_tools.core.config.get_secret_manager_client', return_value=mock_client):
+        with patch(
+            "rtgs_lab_tools.core.config.get_secret_manager_client",
+            return_value=mock_client,
+        ):
             # Pass a non-existent env file to prevent loading from existing .env
             config = Config(env_file="/nonexistent/.env")
 
