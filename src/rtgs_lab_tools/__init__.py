@@ -16,9 +16,6 @@ from .data_parser.parsers.factory import ParserFactory
 # Device management
 from .device_configuration import ParticleClient, ParticleConfigUpdater
 
-# Climate data
-# from .gridded_data import download_GEE_raster  # Commented out to avoid slow imports
-
 # High-level data extraction functions
 from .sensing_data import extract_data, get_raw_data, list_available_projects
 
@@ -29,6 +26,11 @@ from .visualization import (
     detect_data_type,
     load_and_prepare_data,
 )
+
+# Climate data
+# from .gridded_data import download_GEE_raster  # Commented out to avoid slow imports
+
+
 
 # Error analysis
 

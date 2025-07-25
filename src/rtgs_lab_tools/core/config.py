@@ -21,7 +21,7 @@ class Config:
         """
         # Initialize Secret Manager client
         self._secret_client = get_secret_manager_client()
-        
+
         # Load .env file as fallback
         if env_file:
             env_path = Path(env_file)
@@ -32,18 +32,20 @@ class Config:
             env_path = Path.cwd() / ".env"
             if env_path.exists():
                 load_dotenv(env_path)
-    
-    def _get_secret(self, secret_name: str, env_var: str, required: bool = True) -> Optional[str]:
+
+    def _get_secret(
+        self, secret_name: str, env_var: str, required: bool = True
+    ) -> Optional[str]:
         """Get a secret value, trying Secret Manager first, then environment variables.
-        
+
         Args:
             secret_name: Name of the secret in Secret Manager
             env_var: Environment variable name as fallback
             required: Whether this secret is required
-            
+
         Returns:
             Secret value if found
-            
+
         Raises:
             ConfigError: If required secret is not found
         """
@@ -51,16 +53,18 @@ class Config:
         secret_value = self._secret_client.get_secret(secret_name)
         if secret_value:
             return secret_value
-        
+
         # Fall back to environment variable
         env_value = os.getenv(env_var)
         if env_value:
             return env_value
-        
+
         # If required and not found, raise error
         if required:
-            raise ConfigError(f"{env_var} not found in Secret Manager or environment variables")
-        
+            raise ConfigError(
+                f"{env_var} not found in Secret Manager or environment variables"
+            )
+
         return None
 
     @property
@@ -100,12 +104,17 @@ class Config:
     @property
     def logging_db_host(self) -> str:
         """Logging database host."""
-        return self._get_secret("rtgs-logging-db-host", "LOGGING_DB_HOST", required=False) or self.db_host
+        return (
+            self._get_secret("rtgs-logging-db-host", "LOGGING_DB_HOST", required=False)
+            or self.db_host
+        )
 
     @property
     def logging_db_port(self) -> int:
         """Logging database port."""
-        port_str = self._get_secret("rtgs-logging-db-port", "LOGGING_DB_PORT", required=False) or str(self.db_port)
+        port_str = self._get_secret(
+            "rtgs-logging-db-port", "LOGGING_DB_PORT", required=False
+        ) or str(self.db_port)
         try:
             return int(port_str)
         except ValueError:
@@ -114,17 +123,28 @@ class Config:
     @property
     def logging_db_name(self) -> str:
         """Logging database name."""
-        return self._get_secret("rtgs-logging-db-name", "LOGGING_DB_NAME", required=False) or self.db_name
+        return (
+            self._get_secret("rtgs-logging-db-name", "LOGGING_DB_NAME", required=False)
+            or self.db_name
+        )
 
     @property
     def logging_db_user(self) -> str:
         """Logging database user."""
-        return self._get_secret("rtgs-logging-db-user", "LOGGING_DB_USER", required=False) or self.db_user
+        return (
+            self._get_secret("rtgs-logging-db-user", "LOGGING_DB_USER", required=False)
+            or self.db_user
+        )
 
     @property
     def logging_db_password(self) -> str:
         """Logging database password."""
-        return self._get_secret("rtgs-logging-db-password", "LOGGING_DB_PASSWORD", required=False) or self.db_password
+        return (
+            self._get_secret(
+                "rtgs-logging-db-password", "LOGGING_DB_PASSWORD", required=False
+            )
+            or self.db_password
+        )
 
     @property
     def logging_db_url(self) -> str:
@@ -134,7 +154,9 @@ class Config:
     @property
     def particle_access_token(self) -> Optional[str]:
         """Particle API access token."""
-        return self._get_secret("rtgs-particle-access-token", "PARTICLE_ACCESS_TOKEN", required=False)
+        return self._get_secret(
+            "rtgs-particle-access-token", "PARTICLE_ACCESS_TOKEN", required=False
+        )
 
     @property
     def GEE_PROJECT(self) -> Optional[str]:
@@ -154,4 +176,8 @@ class Config:
     @property
     def logging_instance_connection_name(self) -> Optional[str]:
         """GCP Cloud SQL instance connection name for logging database."""
-        return self._get_secret("rtgs-logging-instance-connection-name", "LOGGING_INSTANCE_CONNECTION_NAME", required=False)
+        return self._get_secret(
+            "rtgs-logging-instance-connection-name",
+            "LOGGING_INSTANCE_CONNECTION_NAME",
+            required=False,
+        )

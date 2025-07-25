@@ -1,12 +1,13 @@
 """Main CLI router for RTGS Lab Tools."""
 
 import importlib
+
 import click
 
 
 class LazyGroup(click.Group):
     """A click Group that imports commands lazily."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Map command names to their module paths
@@ -15,20 +16,29 @@ class LazyGroup(click.Group):
             "data-parser": ("rtgs_lab_tools.data_parser.cli", "data_parser_cli"),
             "visualization": ("rtgs_lab_tools.visualization.cli", "visualization_cli"),
             "gridded-data": ("rtgs_lab_tools.gridded_data.cli", "gridded_data_cli"),
-            "device-configuration": ("rtgs_lab_tools.device_configuration.cli", "device_configuration_cli"),
-            "agricultural-modeling": ("rtgs_lab_tools.agricultural_modeling.cli", "agricultural_modeling_cli"),
+            "device-configuration": (
+                "rtgs_lab_tools.device_configuration.cli",
+                "device_configuration_cli",
+            ),
+            "agricultural-modeling": (
+                "rtgs_lab_tools.agricultural_modeling.cli",
+                "agricultural_modeling_cli",
+            ),
             "audit": ("rtgs_lab_tools.audit.cli", "audit_cli"),
-            "device-monitoring": ("rtgs_lab_tools.device_monitoring.cli", "device_monitoring_cli"),
+            "device-monitoring": (
+                "rtgs_lab_tools.device_monitoring.cli",
+                "device_monitoring_cli",
+            ),
             "auth": ("rtgs_lab_tools.auth.cli", "auth_cli"),
             "core": ("rtgs_lab_tools.core.cli", "core_cli"),
         }
-    
+
     def get_command(self, ctx, cmd_name):
         # First check if command is already loaded
         command = super().get_command(ctx, cmd_name)
         if command is not None:
             return command
-        
+
         # Try to lazy load the command
         if cmd_name in self._lazy_commands:
             module_name, attr_name = self._lazy_commands[cmd_name]
@@ -39,9 +49,9 @@ class LazyGroup(click.Group):
                 return command
             except (ImportError, AttributeError):
                 pass
-        
+
         return None
-    
+
     def list_commands(self, ctx):
         # Return both loaded and available lazy commands
         loaded = super().list_commands(ctx)
