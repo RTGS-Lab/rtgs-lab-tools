@@ -18,6 +18,13 @@ from .postgres_control import (
     is_postgres_logging_enabled,
 )
 from .postgres_logger import PostgresLogger
+from .update import (
+    check_for_updates,
+    get_current_version,
+    get_latest_release_tag,
+    get_version_info,
+    run_install_script,
+)
 
 __all__ = [
     "DatabaseManager",
@@ -36,4 +43,9 @@ __all__ = [
     "disable_postgres_logging",
     "is_postgres_logging_enabled",
     "get_postgres_logging_status",
+    "check_for_updates",
+    "get_current_version",
+    "get_latest_release_tag",
+    "get_version_info",
+    "run_install_script",
 ]

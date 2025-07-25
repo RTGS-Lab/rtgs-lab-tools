@@ -1,5 +1,5 @@
 # Create .env file template
-# RTGS Lab Tools Installation Script
+# RTGS Lab Tools Installation/Update Script
 # Works on Windows (Git Bash/WSL), macOS, and Linux
 
 set -e  # Exit on any error
@@ -32,6 +32,218 @@ print_header() {
     echo -e "\n${BLUE}================================${NC}"
     echo -e "${BLUE}  RTGS Lab Tools Installation${NC}"
     echo -e "${BLUE}================================${NC}\n"
+}
+
+print_update_header() {
+    echo -e "\n${BLUE}================================${NC}"
+    echo -e "${BLUE}    RTGS Lab Tools Update${NC}"
+    echo -e "${BLUE}================================${NC}\n"
+}
+
+# Check if this is an existing installation
+check_existing_installation() {
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    VENV_PATH="$SCRIPT_DIR/venv"
+    
+    if [[ -d "$VENV_PATH" && -f "$SCRIPT_DIR/pyproject.toml" ]]; then
+        print_status "Existing installation detected"
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Check for local git changes
+check_git_status() {
+    print_status "Checking for local changes..."
+    
+    if [[ ! -d ".git" ]]; then
+        print_error "Not a git repository. Cannot perform update."
+        exit 1
+    fi
+    
+    # Check if there are uncommitted changes (unstaged changes only)
+    # Use git status --porcelain instead of git diff-index to properly handle all cases
+    if [[ -n "$(git status --porcelain)" ]]; then
+        print_error "You have uncommitted local changes."
+        print_error "Please commit or stash your changes before updating:"
+        print_error ""
+        git status --porcelain
+        print_error ""
+        print_error "Commands to handle your changes:"
+        print_error "  To commit: git add . && git commit -m 'Your message'"
+        print_error "  To stash: git stash"
+        exit 1
+    fi
+    
+    # Check if there are untracked files that could conflict
+    UNTRACKED_FILES=$(git ls-files --others --exclude-standard)
+    if [[ -n "$UNTRACKED_FILES" ]]; then
+        print_warning "You have untracked files:"
+        echo "$UNTRACKED_FILES"
+        print_warning "These files will be preserved during update."
+    fi
+    
+    print_success "No conflicting local changes found"
+}
+
+# Get latest release tag from GitHub API
+get_latest_release_tag() {
+    # Send status messages to stderr to avoid mixing with return value
+    print_status "Fetching latest release information..." >&2
+    
+    # Get the repository info from git remote
+    REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+    
+    if [[ -z "$REMOTE_URL" ]]; then
+        print_error "Could not determine git remote URL" >&2
+        return 1
+    fi
+    
+    # Extract owner/repo from various URL formats
+    if [[ "$REMOTE_URL" == *"github.com"* ]]; then
+        if [[ "$REMOTE_URL" == https://github.com/* ]]; then
+            REPO_PATH="${REMOTE_URL#https://github.com/}"
+            REPO_PATH="${REPO_PATH%.git}"
+        elif [[ "$REMOTE_URL" == git@github.com:* ]]; then
+            REPO_PATH="${REMOTE_URL#git@github.com:}"
+            REPO_PATH="${REPO_PATH%.git}"
+        else
+            print_error "Unsupported GitHub URL format: $REMOTE_URL" >&2
+            return 1
+        fi
+        
+        # Query GitHub API for latest release
+        API_URL="https://api.github.com/repos/${REPO_PATH}/releases/latest"
+        
+        if command -v curl &> /dev/null; then
+            RELEASE_DATA=$(curl -s "$API_URL" 2>/dev/null)
+        elif command -v wget &> /dev/null; then
+            RELEASE_DATA=$(wget -qO- "$API_URL" 2>/dev/null)
+        else
+            print_error "Neither curl nor wget found. Cannot fetch release information." >&2
+            return 1
+        fi
+        
+        # Extract tag name (simple JSON parsing)
+        if [[ -n "$RELEASE_DATA" ]] && echo "$RELEASE_DATA" | grep -q '"tag_name"'; then
+            LATEST_TAG=$(echo "$RELEASE_DATA" | grep '"tag_name"' | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
+            if [[ -n "$LATEST_TAG" ]]; then
+                echo "$LATEST_TAG"
+                return 0
+            fi
+        fi
+    fi
+    
+    print_warning "Could not fetch latest release information. Falling back to master branch." >&2
+    echo "master"
+    return 0
+}
+
+# Update from git repository
+update_from_git() {
+    print_status "Updating from git repository..."
+    
+    # Fetch latest changes and tags
+    print_status "Fetching latest changes and tags..."
+    git fetch origin --tags
+    
+    # Get current branch/tag
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    print_status "Current branch: $CURRENT_BRANCH"
+    
+    # Get the latest release tag
+    LATEST_TAG=$(get_latest_release_tag)
+    
+    if [[ "$LATEST_TAG" == "master" ]]; then
+        # Fall back to master branch behavior
+        if [[ "$CURRENT_BRANCH" != "master" ]]; then
+            print_status "Switching to master branch..."
+            git checkout master
+        fi
+        
+        print_status "Pulling latest changes from master..."
+        if git pull origin master; then
+            print_success "Successfully updated to latest version (master branch)"
+        else
+            print_error "Failed to pull latest changes"
+            print_error "Please resolve any merge conflicts and try again"
+            exit 1
+        fi
+    else
+        # Update to specific release tag
+        print_status "Latest release: $LATEST_TAG"
+        
+        # Check if we're already on the latest tag
+        CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "")
+        if [[ "$CURRENT_TAG" == "$LATEST_TAG" ]]; then
+            print_success "Already on latest release: $LATEST_TAG"
+        else
+            print_status "Updating to release: $LATEST_TAG"
+            if git checkout "$LATEST_TAG"; then
+                print_success "Successfully updated to release: $LATEST_TAG"
+            else
+                print_error "Failed to checkout release tag: $LATEST_TAG"
+                print_error "Falling back to master branch..."
+                git checkout master
+                git pull origin master
+            fi
+        fi
+    fi
+    
+    # Show what version we're on
+    print_status "Current version information:"
+    get_version_info | while read -r line; do
+        echo "  $line"
+    done
+}
+
+# Get version information
+get_version_info() {
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
+    # Try to get version from pyproject.toml
+    if [[ -f "$SCRIPT_DIR/pyproject.toml" ]]; then
+        VERSION=$(grep '^version = ' "$SCRIPT_DIR/pyproject.toml" | sed 's/version = "\(.*\)"/\1/')
+    fi
+    
+    # Try to get git commit info
+    if [[ -d "$SCRIPT_DIR/.git" ]]; then
+        GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+        GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+        GIT_DATE=$(git log -1 --format=%cd --date=short 2>/dev/null || echo "unknown")
+        
+        # Try to get the latest tag/release
+        GIT_TAG=$(git describe --tags --exact-match 2>/dev/null || git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
+        # Check if current commit is tagged
+        if [[ -n "$GIT_TAG" ]]; then
+            EXACT_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "")
+            if [[ -n "$EXACT_TAG" ]]; then
+                TAG_INFO="Release: ${GIT_TAG}"
+            else
+                TAG_INFO="Latest Release: ${GIT_TAG}"
+            fi
+        fi
+    fi
+    
+    # Build version string
+    if [[ -n "$VERSION" ]]; then
+        echo "Package: v${VERSION}"
+    fi
+    
+    if [[ -n "$TAG_INFO" ]]; then
+        echo "$TAG_INFO"
+    fi
+    
+    if [[ -n "$GIT_COMMIT" && "$GIT_COMMIT" != "unknown" ]]; then
+        echo "Git: ${GIT_BRANCH}@${GIT_COMMIT} (${GIT_DATE})"
+    fi
+    
+    # If no version info found
+    if [[ -z "$VERSION" && -z "$TAG_INFO" && ("$GIT_COMMIT" == "unknown" || -z "$GIT_COMMIT") ]]; then
+        echo "Version information unavailable"
+    fi
 }
 
 # Detect operating system
@@ -161,9 +373,9 @@ init_submodules() {
     fi
 }
 
-# Create virtual environment
+# Create virtual environment using uv
 create_venv() {
-    print_status "Creating virtual environment..."
+    print_status "Creating virtual environment with uv..."
     
     # Always create venv in the project root directory
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -174,8 +386,9 @@ create_venv() {
         rm -rf "$VENV_PATH"
     fi
     
-    $PYTHON_CMD -m venv "$VENV_PATH"
-    print_success "Virtual environment created: $VENV_PATH"
+    # Use uv to create virtual environment
+    uv venv "$VENV_PATH"
+    print_success "Virtual environment created with uv: $VENV_PATH"
 }
 
 # Activate virtual environment
@@ -195,22 +408,27 @@ activate_venv() {
     print_status "Pip path: $(which pip)"
 }
 
-# Upgrade pip
-upgrade_pip() {
-    print_status "Upgrading pip..."
-    python -m pip install --upgrade pip
-    print_success "Pip upgraded successfully"
+# Install uv if not already available in venv
+ensure_uv_in_venv() {
+    print_status "Ensuring uv is available in virtual environment..."
+    # uv should already be available from the system installation
+    # but we can upgrade it if needed
+    if ! uv --version &> /dev/null; then
+        print_error "uv not available in PATH"
+        exit 1
+    fi
+    print_success "uv is ready"
 }
 
 # Install package in development mode
 install_package() {
-    print_status "Installing RTGS Lab Tools in development mode..."
+    print_status "Installing RTGS Lab Tools in development mode with uv..."
     
-    # Install in editable mode with all dependencies
+    # Install in editable mode with all dependencies using uv
     # Use quotes for zsh compatibility on macOS
-    python -m pip install -e ".[all]"
+    uv pip install -e ".[all]"
     
-    print_success "Package installed successfully"
+    print_success "Package installed successfully with uv"
 }
 
 # Run setup credentials command
@@ -299,8 +517,14 @@ configure_claude_desktop() {
       ]
     },
     "rtgs_lab_tools": {
-      "command": "$PYTHON_PATH",
-      "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+      "command": "uv",
+      "args": [
+        "--directory",
+        "$SCRIPT_DIR",
+        "run",
+        "-m",
+        "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"
+      ]
     }
   }
 }
@@ -340,11 +564,62 @@ check_directories() {
     print_success "Project structure verified"
 }
 
+# Update process for existing installations
+update_installation() {
+    print_update_header
+    
+    # Change to script directory to ensure we're in the project root
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    cd "$SCRIPT_DIR"
+    
+    detect_os
+    check_directories
+    check_git_status
+    update_from_git
+    init_submodules
+    check_python
+    activate_venv
+    ensure_uv_in_venv
+    install_package
+    configure_claude_desktop
+    
+    show_update_complete
+}
+
+# Display update completion message
+show_update_complete() {
+    echo -e "\n${GREEN}================================${NC}"
+    echo -e "${GREEN}    Update Complete!${NC}"
+    echo -e "${GREEN}================================${NC}\n"
+    
+    echo -e "${BLUE}Your RTGS Lab Tools installation has been updated to the latest version.${NC}"
+    echo -e "${BLUE}All dependencies have been reinstalled and MCP servers reconfigured.${NC}\n"
+    
+    # Show version information
+    echo -e "${BLUE}Updated Version:${NC}"
+    get_version_info | while read -r line; do
+        echo -e "  ${BLUE}${line}${NC}"
+    done
+    echo ""
+    
+    echo -e "${YELLOW}Next Steps:${NC}"
+    echo -e "1. ${BLUE}Restart Claude Desktop if you're using MCP integration${NC}"
+    echo -e "2. ${BLUE}Test the updated installation:${NC}"
+    echo -e "   ${BLUE}rtgs --help${NC}\n"
+}
+
 # Display next steps
 show_next_steps() {
     echo -e "\n${GREEN}================================${NC}"
     echo -e "${GREEN}  Installation Complete!${NC}"
     echo -e "${GREEN}================================${NC}\n"
+    
+    # Show version information
+    echo -e "${BLUE}Installed Version:${NC}"
+    get_version_info | while read -r line; do
+        echo -e "  ${BLUE}${line}${NC}"
+    done
+    echo ""
     
     echo -e "${YELLOW}Next Steps:${NC}"
     echo -e "1. ${BLUE}Activate the virtual environment:${NC}"
@@ -388,27 +663,32 @@ show_next_steps() {
 
 # Main installation process
 main() {
-    print_header
-    
-    # Change to script directory to ensure we're in the project root
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    cd "$SCRIPT_DIR"
-    
-    detect_os
-    check_directories
-    init_submodules
-    check_python
-    check_pip
-    check_uv
-    create_venv
-    activate_venv
-    upgrade_pip
-    install_package
-    run_setup_credentials
-    #auth_gee
-    configure_claude_desktop
+    # Check if this is an existing installation
+    if check_existing_installation; then
+        update_installation
+    else
+        print_header
+        
+        # Change to script directory to ensure we're in the project root
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        cd "$SCRIPT_DIR"
+        
+        detect_os
+        check_directories
+        init_submodules
+        check_python
+        check_pip
+        check_uv
+        create_venv
+        activate_venv
+        ensure_uv_in_venv
+        install_package
+        run_setup_credentials
+        #auth_gee
+        configure_claude_desktop
 
-    show_next_steps
+        show_next_steps
+    fi
 }
 
 # Handle script interruption

@@ -67,7 +67,7 @@ jobs:
         fi
         
         # Check package installation details
-        pip show rtgs-lab-tools
+        uv pip show rtgs-lab-tools
         
         # Verify key dependencies are available
         python -c "

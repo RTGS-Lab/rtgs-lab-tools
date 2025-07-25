@@ -1,16 +1,7 @@
 """Gridded climate data access tools for RTGS Lab Tools."""
 
-from .gee import (
-    download_GEE_point,
-    download_GEE_raster,
-    init_ee,
-    list_GEE_vars,
-    load_roi,
-    search_images,
-)
-from .planet import download_clipped_scenes, download_scenes, quick_search
-from .processors import extract_time_series, process_era5_data
-from .utils import sources
+# Empty __init__.py to avoid loading heavy dependencies at import time
+# Functions are imported directly from submodules when needed
 
 __all__ = [
     "download_GEE_raster",

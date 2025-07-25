@@ -12,8 +12,8 @@
       },
       "rtgs_lab_tools": {
         "type": "stdio",
-        "command": "./venv/bin/python",
-        "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+        "command": "uv",
+        "args": ["run", "-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
       }
     }
 } 

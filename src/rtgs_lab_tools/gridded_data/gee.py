@@ -31,7 +31,7 @@ def init_ee():
 
     except ImportError:
         logger.warning(
-            "Gridded data functionality requires earthegine and xarray. Install with: pip install rtgs-lab-tools[climate]"
+            "Gridded data functionality requires earthegine and xarray. Install with: uv pip install rtgs-lab-tools[climate]"
         )
 
 
