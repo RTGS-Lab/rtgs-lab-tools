@@ -31,7 +31,7 @@ Before installing RTGS Lab Tools, ensure you have the following software install
 #### 2. Git
 **Installation:**
 - **Windows:** Download [Git for Windows](https://git-scm.com/download/win) 
-  - ⚠️ **Important:** Use **Git Bash** (included with Git for Windows) instead of PowerShell or Command Prompt for all commands
+  -**Important:** Use **Git Bash** (included with Git for Windows) instead of PowerShell or Command Prompt for all commands
 - **macOS:** 
   - Install via Homebrew: `brew install git`
   - Or download from [Git website](https://git-scm.com/download/mac)
@@ -69,7 +69,7 @@ Before installing RTGS Lab Tools, ensure you have the following software install
 - **[UMN VPN connection](https://it.umn.edu/services-technologies/virtual-private-network-vpn)** (for database access)
 
 #### Windows Users: Important Note
-🚨 **Always use Git Bash** instead of PowerShell or Command Prompt when running installation commands. Git Bash provides a Unix-like environment that ensures compatibility with the installation scripts.
+**Always use Git Bash** instead of PowerShell or Command Prompt when running installation commands. Git Bash provides a Unix-like environment that ensures compatibility with the installation scripts.
 
 ### Quick Installation (Recommended)
 

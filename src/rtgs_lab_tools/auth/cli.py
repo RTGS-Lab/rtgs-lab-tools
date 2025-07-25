@@ -26,7 +26,7 @@ def login(headless):
     auth_service = AuthService()
 
     console.print(
-        "🔐 [bold blue]RTGS Lab Tools - Google Cloud Authentication[/bold blue]"
+        "[bold blue]RTGS Lab Tools - Google Cloud Authentication[/bold blue]"
     )
     console.print()
 
@@ -57,7 +57,7 @@ def login(headless):
         console.print(
             "🖥️  [bold yellow]Headless Mode:[/bold yellow] Authentication will not open a browser"
         )
-        console.print("📋 You'll need to copy a URL and verification code manually")
+        console.print("You'll need to copy a URL and verification code manually")
         console.print()
 
     # Perform login
@@ -75,18 +75,18 @@ def login(headless):
     if result["success"]:
         console.print("✅ [bold green]Authentication successful![/bold green]")
         console.print()
-        console.print(f"👤 User: [bold]{result.get('user', 'Unknown')}[/bold]")
+        console.print(f"User: [bold]{result.get('user', 'Unknown')}[/bold]")
         if result.get("project"):
             console.print(f"📋 Project: [bold]{result['project']}[/bold]")
 
         if result.get("secret_manager_access"):
-            console.print("🔐 Secret Manager access: [bold green]Working[/bold green]")
+            console.print("Secret Manager access: [bold green]Working[/bold green]")
         else:
             console.print(
-                "⚠️  Secret Manager access: [bold yellow]Limited[/bold yellow]"
+                "Secret Manager access: [bold yellow]Limited[/bold yellow]"
             )
             console.print(
-                "   Contact your administrator for Secret Manager permissions"
+                "Contact your administrator for Secret Manager permissions"
             )
 
         console.print()
@@ -109,7 +109,7 @@ def status():
     """Check Google Cloud authentication status."""
     auth_service = AuthService()
 
-    console.print("🔐 [bold blue]Google Cloud Authentication Status[/bold blue]")
+    console.print("[bold blue]Google Cloud Authentication Status[/bold blue]")
     console.print()
 
     auth_status = auth_service.get_auth_status()
@@ -141,7 +141,7 @@ def status():
         table.add_row("Project", "✅ Set", auth_status["project"])
     else:
         table.add_row(
-            "Project", "⚠️  Not set", "Run 'gcloud config set project PROJECT_ID'"
+            "Project", "Not set", "Run 'gcloud config set project PROJECT_ID'"
         )
 
     # Secret Manager
@@ -256,8 +256,8 @@ def particle_login():
                     "✅ [bold green]Particle authentication successful![/bold green]"
                 )
                 console.print()
-                console.print(f"🔑 Access token created and saved to .env file")
-                console.print(f"⏰ Token expires in 7 days")
+                console.print(f"Access token created and saved to .env file")
+                console.print(f"Token expires in 7 days")
                 console.print()
                 console.print("[bold blue]Next steps:[/bold blue]")
                 console.print("1. Your Particle MCP server should now work")
@@ -280,13 +280,13 @@ def logout():
     """Logout from Google Cloud."""
     auth_service = AuthService()
 
-    console.print("🔐 [bold blue]Google Cloud Logout[/bold blue]")
+    console.print("[bold blue]Google Cloud Logout[/bold blue]")
     console.print()
 
     # Check current status
     status = auth_service.get_auth_status()
     if not status["authenticated"]:
-        console.print("ℹ️  [bold yellow]Not currently authenticated[/bold yellow]")
+        console.print("ℹ[bold yellow]Not currently authenticated[/bold yellow]")
         return
 
     console.print(f"Currently authenticated as: [bold]{status['user']}[/bold]")

@@ -77,10 +77,10 @@ To install Google Cloud CLI on Linux:
             cmd = ["gcloud", "auth", "application-default", "login"]
             if headless:
                 cmd.append("--no-browser")
-                print("🔐 Starting headless Google Cloud authentication...")
-                print("📋 Follow the instructions below to complete authentication.")
+                print("Starting headless Google Cloud authentication...")
+                print("Follow the instructions below to complete authentication.")
             else:
-                print("🔐 Opening browser for Google Cloud authentication...")
+                print("Opening browser for Google Cloud authentication...")
 
             result = subprocess.run(cmd, timeout=300)  # 5 minute timeout
 
