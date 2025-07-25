@@ -20,6 +20,7 @@ class LazyGroup(click.Group):
             "audit": ("rtgs_lab_tools.audit.cli", "audit_cli"),
             "device-monitoring": ("rtgs_lab_tools.device_monitoring.cli", "device_monitoring_cli"),
             "auth": ("rtgs_lab_tools.auth.cli", "auth_cli"),
+            "core": ("rtgs_lab_tools.core.cli", "core_cli"),
         }
     
     def get_command(self, ctx, cmd_name):

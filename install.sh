@@ -86,37 +86,114 @@ check_git_status() {
     print_success "No conflicting local changes found"
 }
 
+# Get latest release tag from GitHub API
+get_latest_release_tag() {
+    print_status "Fetching latest release information..."
+    
+    # Get the repository info from git remote
+    REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+    
+    if [[ -z "$REMOTE_URL" ]]; then
+        print_error "Could not determine git remote URL"
+        return 1
+    fi
+    
+    # Extract owner/repo from various URL formats
+    if [[ "$REMOTE_URL" == *"github.com"* ]]; then
+        if [[ "$REMOTE_URL" == https://github.com/* ]]; then
+            REPO_PATH="${REMOTE_URL#https://github.com/}"
+            REPO_PATH="${REPO_PATH%.git}"
+        elif [[ "$REMOTE_URL" == git@github.com:* ]]; then
+            REPO_PATH="${REMOTE_URL#git@github.com:}"
+            REPO_PATH="${REPO_PATH%.git}"
+        else
+            print_error "Unsupported GitHub URL format: $REMOTE_URL"
+            return 1
+        fi
+        
+        # Query GitHub API for latest release
+        API_URL="https://api.github.com/repos/${REPO_PATH}/releases/latest"
+        
+        if command -v curl &> /dev/null; then
+            RELEASE_DATA=$(curl -s "$API_URL" 2>/dev/null)
+        elif command -v wget &> /dev/null; then
+            RELEASE_DATA=$(wget -qO- "$API_URL" 2>/dev/null)
+        else
+            print_error "Neither curl nor wget found. Cannot fetch release information."
+            return 1
+        fi
+        
+        # Extract tag name (simple JSON parsing)
+        if [[ -n "$RELEASE_DATA" ]] && echo "$RELEASE_DATA" | grep -q '"tag_name"'; then
+            LATEST_TAG=$(echo "$RELEASE_DATA" | grep '"tag_name"' | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
+            if [[ -n "$LATEST_TAG" ]]; then
+                echo "$LATEST_TAG"
+                return 0
+            fi
+        fi
+    fi
+    
+    print_warning "Could not fetch latest release information. Falling back to master branch."
+    echo "master"
+    return 0
+}
+
 # Update from git repository
 update_from_git() {
     print_status "Updating from git repository..."
     
-    # Fetch latest changes
-    print_status "Fetching latest changes..."
-    git fetch origin
+    # Fetch latest changes and tags
+    print_status "Fetching latest changes and tags..."
+    git fetch origin --tags
     
-    # Get current branch
+    # Get current branch/tag
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
     print_status "Current branch: $CURRENT_BRANCH"
     
-    # If not on master, switch to master
-    if [[ "$CURRENT_BRANCH" != "master" ]]; then
-        print_status "Switching to master branch..."
-        git checkout master
-    fi
+    # Get the latest release tag
+    LATEST_TAG=$(get_latest_release_tag)
     
-    # Pull latest changes
-    print_status "Pulling latest changes from master..."
-    if git pull origin master; then
-        print_success "Successfully updated to latest version"
+    if [[ "$LATEST_TAG" == "master" ]]; then
+        # Fall back to master branch behavior
+        if [[ "$CURRENT_BRANCH" != "master" ]]; then
+            print_status "Switching to master branch..."
+            git checkout master
+        fi
+        
+        print_status "Pulling latest changes from master..."
+        if git pull origin master; then
+            print_success "Successfully updated to latest version (master branch)"
+        else
+            print_error "Failed to pull latest changes"
+            print_error "Please resolve any merge conflicts and try again"
+            exit 1
+        fi
     else
-        print_error "Failed to pull latest changes"
-        print_error "Please resolve any merge conflicts and try again"
-        exit 1
+        # Update to specific release tag
+        print_status "Latest release: $LATEST_TAG"
+        
+        # Check if we're already on the latest tag
+        CURRENT_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "")
+        if [[ "$CURRENT_TAG" == "$LATEST_TAG" ]]; then
+            print_success "Already on latest release: $LATEST_TAG"
+        else
+            print_status "Updating to release: $LATEST_TAG"
+            if git checkout "$LATEST_TAG"; then
+                print_success "Successfully updated to release: $LATEST_TAG"
+            else
+                print_error "Failed to checkout release tag: $LATEST_TAG"
+                print_error "Falling back to master branch..."
+                git checkout master
+                git pull origin master
+            fi
+        fi
     fi
     
-    # Show what changed
-    print_status "Recent changes:"
-    git log --oneline -5
+    # Show what version we're on
+    print_status "Current version information:"
+    get_version_info | while read -r line; do
+        echo "  $line"
+    done
 }
 
 # Get version information
