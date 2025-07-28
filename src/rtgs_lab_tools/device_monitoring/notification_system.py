@@ -22,6 +22,12 @@ GMAIL_USER = os.getenv("GMAIL_USER")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 GMAIL_RECIPIENT = os.getenv("GMAIL_RECIPIENT")
 
+# Parse comma-separated email addresses into a list
+if GMAIL_RECIPIENT:
+    GMAIL_RECIPIENTS = [email.strip() for email in GMAIL_RECIPIENT.split(",")]
+else:
+    GMAIL_RECIPIENTS = None
+
 
 def notify(analysis_results, no_email=False):
     """Send notifications showing all metrics for all nodes."""
@@ -117,7 +123,7 @@ def _send_email(subject, body):
         yag = yagmail.SMTP(
             user=GMAIL_USER, password=GMAIL_APP_PASSWORD, oauth2_file=None
         )
-        yag.send(to=GMAIL_RECIPIENT, subject=subject, contents=body)
+        yag.send(to=GMAIL_RECIPIENTS, subject=subject, contents=body)
         print(f"\n📧 Notification email sent: {subject}")
     except Exception as e:
         print(f"\n❌ Failed to send notification email: {e}")
