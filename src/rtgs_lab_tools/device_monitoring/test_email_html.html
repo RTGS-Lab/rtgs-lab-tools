@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Monitoring Report</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .device-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #28a745;
+        }
+        .device-card.alert {
+            border-left-color: #dc3545;
+        }
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .device-name {
+            font-weight: bold;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+        .device-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-normal {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-alert {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .metric {
+            text-align: center;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        .console-link {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .console-link:hover {
+            background-color: #0056b3;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        .issues {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .issues-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 5px;
+        }
+        .summary {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔋 Device Monitoring Report</h1>
+        <p>Environmental Sensor Network Status</p>
+    </div>
+
+    <!-- Normal Device Card -->
+    <div class="device-card">
+        <div class="device-header">
+            <div class="device-name">Weather Station Alpha (e00fce68e77372b0d3c42857)</div>
+            <div class="device-status status-normal">✅ Normal</div>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric">
+                <div class="metric-value" style="color: #28a745;">3.85V</div>
+                <div class="metric-label">Battery</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" style="color: #17a2b8;">0.245W</div>
+                <div class="metric-label">System Power</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" style="color: #6c757d;">0</div>
+                <div class="metric-label">Errors</div>
+            </div>
+        </div>
+        
+        <a href="https://console.particle.io/gems-sensing-12345/devices/e00fce68e77372b0d3c42857" class="console-link">
+            🔗 View in Particle Console
+        </a>
+        
+        <div class="timestamp">Last updated: 2025-01-28 14:30:25</div>
+    </div>
+
+    <!-- Alert Device Card -->
+    <div class="device-card alert">
+        <div class="device-header">
+            <div class="device-name">Soil Monitor Beta (e00fce68e77372b0d3c42858)</div>
+            <div class="device-status status-alert">⚠️ Alert</div>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric">
+                <div class="metric-value" style="color: #dc3545;">3.45V</div>
+                <div class="metric-label">Battery</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" style="color: #fd7e14;">0.892W</div>
+                <div class="metric-label">System Power</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" style="color: #dc3545;">3</div>
+                <div class="metric-label">Errors</div>
+            </div>
+        </div>
+        
+        <div class="issues">
+            <div class="issues-title">🚨 Issues Detected:</div>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+                <li>Battery LOW (3.45V < 3.50V)</li>
+                <li>System power HIGH (0.892W > 0.500W)</li>
+                <li>Critical errors: Sensor timeout (2), Communication failure (1)</li>
+            </ul>
+        </div>
+        
+        <a href="https://console.particle.io/gems-sensing-12345/devices/e00fce68e77372b0d3c42858" class="console-link">
+            🔗 View in Particle Console
+        </a>
+        
+        <div class="timestamp">Last updated: 2025-01-28 14:28:15</div>
+    </div>
+
+    <!-- Another Normal Device -->
+    <div class="device-card">
+        <div class="device-header">
+            <div class="device-name">Air Quality Gamma (e00fce68e77372b0d3c42859)</div>
+            <div class="device-status status-normal">✅ Normal</div>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric">
+                <div class="metric-value" style="color: #28a745;">3.92V</div>
+                <div class="metric-label">Battery</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" style="color: #17a2b8;">0.178W</div>
+                <div class="metric-label">System Power</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" style="color: #6c757d;">0</div>
+                <div class="metric-label">Errors</div>
+            </div>
+        </div>
+        
+        <a href="https://console.particle.io/gems-sensing-12345/devices/e00fce68e77372b0d3c42859" class="console-link">
+            🔗 View in Particle Console
+        </a>
+        
+        <div class="timestamp">Last updated: 2025-01-28 14:31:42</div>
+    </div>
+
+    <div class="summary">
+        <h2>📊 Summary</h2>
+        <p><strong>Total Nodes Analyzed:</strong> 3</p>
+        <p><strong>Normal:</strong> 2 devices | <strong>Alerts:</strong> 1 device</p>
+        <p style="font-size: 12px; color: #6c757d; margin-top: 15px;">
+            Generated on 2025-01-28 at 14:32:00 | GEMS Environmental Monitoring System
+        </p>
+    </div>
+</body>
+</html>
