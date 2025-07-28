@@ -81,7 +81,7 @@ def get_console_url(node_id, product_id, slug):
 
 
 def generate_device_card_html(node_id, result, device_name, console_url):
-    """Generate HTML card for a single device."""
+    """Generate HTML card for a single device with inline styles."""
     flagged = result.get("flagged", False)
     battery = result.get("battery")
     system = result.get("system")
@@ -104,9 +104,10 @@ def generate_device_card_html(node_id, result, device_name, console_url):
     else:
         device_display = node_id
     
-    # Status styling
-    card_class = "device-card alert" if flagged else "device-card"
-    status_class = "status-alert" if flagged else "status-normal"
+    # Styling based on status
+    border_color = "#dc3545" if flagged else "#28a745"
+    status_bg = "#f8d7da" if flagged else "#d4edda"
+    status_color = "#721c24" if flagged else "#155724"
     status_text = "⚠️ Alert" if flagged else "✅ Normal"
     
     # Format metrics
@@ -121,7 +122,10 @@ def generate_device_card_html(node_id, result, device_name, console_url):
     # Console link
     console_link_html = ""
     if console_url:
-        console_link_html = f'<a href="{console_url}" class="console-link">🔗 View in Particle Console</a>'
+        console_link_html = f'''
+        <a href="{console_url}" style="display: inline-block; background-color: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; margin-top: 10px;">
+            🔗 View in Particle Console
+        </a>'''
     
     # Issues section
     issues_html = ""
@@ -144,45 +148,49 @@ def generate_device_card_html(node_id, result, device_name, console_url):
         if issues:
             issues_list = "".join([f"<li>{issue}</li>" for issue in issues])
             issues_html = f'''
-            <div class="issues">
-                <div class="issues-title">🚨 Issues Detected:</div>
+            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin-top: 10px;">
+                <div style="font-weight: bold; color: #856404; margin-bottom: 5px;">🚨 Issues Detected:</div>
                 <ul style="margin: 5px 0; padding-left: 20px;">
                     {issues_list}
                 </ul>
             </div>'''
     
     return f'''
-    <div class="{card_class}">
-        <div class="device-header">
-            <div class="device-name">{device_display}</div>
-            <div class="device-status {status_class}">{status_text}</div>
+    <div style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; border-left: 4px solid {border_color}; font-family: Arial, sans-serif;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+            <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">{device_display}</div>
+            <div style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; background-color: {status_bg}; color: {status_color};">{status_text}</div>
         </div>
         
-        <div class="metrics-grid">
-            <div class="metric">
-                <div class="metric-value" style="color: {battery_color};">{battery_str}</div>
-                <div class="metric-label">Battery</div>
-            </div>
-            <div class="metric">
-                <div class="metric-value" style="color: {system_color};">{system_str}</div>
-                <div class="metric-label">System Power</div>
-            </div>
-            <div class="metric">
-                <div class="metric-value" style="color: {error_color};">{len(errors)}</div>
-                <div class="metric-label">Errors</div>
-            </div>
-        </div>
+        <table style="width: 100%; margin-bottom: 15px;">
+            <tr>
+                <td style="text-align: center; padding: 10px; background-color: #f8f9fa; border-radius: 6px; width: 33%;">
+                    <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px; color: {battery_color};">{battery_str}</div>
+                    <div style="font-size: 12px; color: #6c757d; text-transform: uppercase;">Battery</div>
+                </td>
+                <td style="width: 2%;"></td>
+                <td style="text-align: center; padding: 10px; background-color: #f8f9fa; border-radius: 6px; width: 33%;">
+                    <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px; color: {system_color};">{system_str}</div>
+                    <div style="font-size: 12px; color: #6c757d; text-transform: uppercase;">System Power</div>
+                </td>
+                <td style="width: 2%;"></td>
+                <td style="text-align: center; padding: 10px; background-color: #f8f9fa; border-radius: 6px; width: 33%;">
+                    <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px; color: {error_color};">{len(errors)}</div>
+                    <div style="font-size: 12px; color: #6c757d; text-transform: uppercase;">Errors</div>
+                </td>
+            </tr>
+        </table>
         
         {issues_html}
         
         {console_link_html}
         
-        <div class="timestamp">Last updated: {timestamp_str}</div>
+        <div style="font-size: 12px; color: #6c757d; margin-top: 10px;">Last updated: {timestamp_str}</div>
     </div>'''
 
 
 def generate_html_email(analysis_results):
-    """Generate complete HTML email from analysis results."""
+    """Generate complete HTML email from analysis results with inline styles."""
     device_cards = []
     normal_count = 0
     alert_count = 0
@@ -211,145 +219,25 @@ def generate_html_email(analysis_results):
     # Get current timestamp
     current_time = datetime.now().strftime('%Y-%m-%d at %H:%M:%S')
     
-    # CSS styles (embedded)
-    css_styles = '''
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .device-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-left: 4px solid #28a745;
-        }
-        .device-card.alert {
-            border-left-color: #dc3545;
-        }
-        .device-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        .device-name {
-            font-weight: bold;
-            font-size: 18px;
-            color: #2c3e50;
-        }
-        .device-status {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .status-normal {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .status-alert {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .metric {
-            text-align: center;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        .metric-value {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .metric-label {
-            font-size: 12px;
-            color: #6c757d;
-            text-transform: uppercase;
-        }
-        .console-link {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 8px 16px;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-        .console-link:hover {
-            background-color: #0056b3;
-        }
-        .timestamp {
-            font-size: 12px;
-            color: #6c757d;
-            margin-top: 10px;
-        }
-        .issues {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 4px;
-            padding: 10px;
-            margin-top: 10px;
-        }
-        .issues-title {
-            font-weight: bold;
-            color: #856404;
-            margin-bottom: 5px;
-        }
-        .summary {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            margin-top: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-    '''
-    
     return f'''<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Device Monitoring Report</title>
-    <style>{css_styles}</style>
 </head>
-<body>
-    <div class="header">
-        <h1>🔋 Device Monitoring Report</h1>
-        <p>Environmental Sensor Network Status</p>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+    <div style="background: #667eea; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+        <h1 style="margin: 0 0 10px 0;">🔋 Device Monitoring Report</h1>
+        <p style="margin: 0;">Environmental Sensor Network Status</p>
     </div>
 
     {"".join(device_cards)}
 
-    <div class="summary">
-        <h2>📊 Summary</h2>
-        <p><strong>Total Nodes Analyzed:</strong> {len(analysis_results)}</p>
-        <p><strong>Normal:</strong> {normal_count} devices | <strong>Alerts:</strong> {alert_count} devices</p>
+    <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; margin-top: 20px; font-family: Arial, sans-serif;">
+        <h2 style="margin: 0 0 15px 0;">📊 Summary</h2>
+        <p style="margin: 10px 0;"><strong>Total Nodes Analyzed:</strong> {len(analysis_results)}</p>
+        <p style="margin: 10px 0;"><strong>Normal:</strong> {normal_count} devices | <strong>Alerts:</strong> {alert_count} devices</p>
         <p style="font-size: 12px; color: #6c757d; margin-top: 15px;">
             Generated on {current_time} | GEMS Environmental Monitoring System
         </p>
@@ -458,8 +346,7 @@ def notify(analysis_results, no_email=False):
     # Send email with all results
     subject = "Device Monitoring Report"
     body = "\n".join(email_lines)  # Plain text fallback
-    # html_body = generate_html_email(analysis_results)  # HTML version
-    html_body = None # DELETE
+    html_body = generate_html_email(analysis_results)  # HTML version
     
     if no_email:
         print("\n📧 Email notifications are disabled. Skipping email sending.")
