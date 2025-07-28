@@ -10,6 +10,7 @@ Outputs:
 """
 
 import os
+import requests
 
 import yagmail
 from dotenv import load_dotenv
@@ -21,12 +22,32 @@ load_dotenv()  # Load environment variables from .env file
 GMAIL_USER = os.getenv("GMAIL_USER")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 GMAIL_RECIPIENT = os.getenv("GMAIL_RECIPIENT")
+PARTICLE_ACCESS_TOKEN = os.getenv("PARTICLE_ACCESS_TOKEN")
 
 # Parse comma-separated email addresses into a list
 if GMAIL_RECIPIENT:
     GMAIL_RECIPIENTS = [email.strip() for email in GMAIL_RECIPIENT.split(",")]
 else:
     GMAIL_RECIPIENTS = None
+
+
+def get_device_name(node_id):
+    """Fetch device name from Particle API using node_id."""
+    if not PARTICLE_ACCESS_TOKEN:
+        return None
+    
+    try:
+        url = f"https://api.particle.io/v1/devices/{node_id}"
+        headers = {"Authorization": f"Bearer {PARTICLE_ACCESS_TOKEN}"}
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            device_data = response.json()
+            return device_data.get("name")
+        else:
+            return None
+    except Exception:
+        return None
 
 
 def notify(analysis_results, no_email=False):
@@ -42,6 +63,13 @@ def notify(analysis_results, no_email=False):
         # Determine status
         flagged = result.get("flagged", False)
         status_icon = "⚠️ ALERT" if flagged else "✅ Normal"
+
+        # Get device name from Particle API
+        device_name = get_device_name(node_id)
+        if device_name:
+            node_display = f"{device_name} ({node_id})"
+        else:
+            node_display = node_id
 
         # Get all metrics first
         battery = result.get("battery")
@@ -59,8 +87,8 @@ def notify(analysis_results, no_email=False):
             else:
                 timestamp_str = f" [{timestamp}]"
 
-        print(f"\nNode: {node_id} - {status_icon}{timestamp_str}")
-        email_lines.append(f"Node: {node_id} - {status_icon}{timestamp_str}")
+        print(f"\nNode: {node_display} - {status_icon}{timestamp_str}")
+        email_lines.append(f"Node: {node_display} - {status_icon}{timestamp_str}")
 
         # Display metrics
         battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"
