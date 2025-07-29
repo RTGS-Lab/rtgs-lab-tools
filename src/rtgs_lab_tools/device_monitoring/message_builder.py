@@ -432,10 +432,10 @@ def build_email_message(analysis_results):
 def build_message(analysis_results):
     """
     Build notification messages from analysis results.
-    
+
     Args:
         analysis_results: Dictionary with analysis results for each node from data_analyzer
-        
+
     Returns:
         Dictionary containing formatted messages:
             - terminal_message: Text formatted for console output
@@ -448,12 +448,12 @@ def build_message(analysis_results):
             "terminal_message": "ℹ️ No analysis results to process.",
             "email_subject": "Device Monitoring Report - No Data",
             "email_body_text": "ℹ️ No analysis results to process.",
-            "email_body_html": "<p>ℹ️ No analysis results to process.</p>"
+            "email_body_html": "<p>ℹ️ No analysis results to process.</p>",
         }
 
     # Build terminal message
     terminal_message = build_terminal_message(analysis_results)
-    
+
     # Build email components
     email_subject = "Device Monitoring Report"
     email_body_text = build_email_message(analysis_results)
@@ -464,5 +464,5 @@ def build_message(analysis_results):
         "terminal_message": terminal_message,
         "email_subject": email_subject,
         "email_body_text": email_body_text,
-        "email_body_html": email_body_html
+        "email_body_html": email_body_html,
     }

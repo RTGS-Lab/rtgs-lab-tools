@@ -38,7 +38,9 @@ def notify(message_dict, no_email=False):
         return
 
     # Print terminal message
-    terminal_message = message_dict.get("terminal_message", "No terminal message available.")
+    terminal_message = message_dict.get(
+        "terminal_message", "No terminal message available."
+    )
     print(terminal_message)
 
     # Send email if requested
@@ -49,7 +51,7 @@ def notify(message_dict, no_email=False):
         subject = message_dict.get("email_subject", "Device Monitoring Report")
         body_text = message_dict.get("email_body_text", "No email body available.")
         body_html = message_dict.get("email_body_html", None)
-        
+
         # Use HTML email if available, otherwise fall back to text
         if body_html:
             _send_email_html(subject, body_text, body_html)
