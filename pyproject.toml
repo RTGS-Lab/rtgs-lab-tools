@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rtgs-lab-tools"
-version = "0.1.0"
+version = "0.2.0"
 description = "Environmental sensing data tools, gridded climate data access, and IoT device management for RTGS Lab"
 authors = [
     {name = "RTGS Lab", email = "rtgs@umn.edu"},
@@ -33,10 +33,12 @@ dependencies = [
     "python-dotenv>=0.19.0",
     "requests>=2.25.0",
     "click>=8.0.0",
+    "rich>=12.0.0",
     "pyarrow>=10.0.0",
     "matplotlib>=3.5.0",
     "cloud-sql-python-connector>=1.0.0",
     "google-auth>=2.0.0",
+    "google-cloud-secret-manager>=2.16.0",
     "pg8000>=1.29.0",
     "yagmail>=0.15.293",
     "keyring>=25.6.0",
@@ -134,3 +136,19 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "--cov=src/rtgs_lab_tools --cov-report=term-missing --cov-report=html"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "mypy>=0.991",
+    "pre-commit>=2.20.0",
+    "pandas-stubs>=1.5.0",
+    "types-requests>=2.25.0",
+    "types-seaborn>=0.11.0",
+]
+
+[tool.uv.workspace]
+members = ["src/rtgs_lab_tools/mcp_server/particle-mcp-server"]

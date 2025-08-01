@@ -12,8 +12,8 @@ from mcp.server.fastmcp import FastMCP
 # Initialize FastMCP server
 mcp = FastMCP("rtgs-lab-tools")
 
-# Get the absolute path to the Python executable
-PYTHON_EXECUTABLE = sys.executable
+# Use uv run instead of direct Python executable
+UV_COMMAND = "uv"
 
 # Get the root directory of the project - this should be where your .env file is
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
@@ -89,7 +89,8 @@ async def sensing_data_extract(
 
         # Build command to call the new grouped CLI
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "sensing-data",
@@ -176,7 +177,8 @@ async def sensing_data_list_projects() -> Dict[str, Any]:
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "sensing-data",
@@ -248,7 +250,8 @@ async def visualization_create(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "visualization",
@@ -326,7 +329,8 @@ async def visualization_list_parameters(file_path: str) -> Dict[str, Any]:
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "visualization",
@@ -438,7 +442,8 @@ async def device_configuration_update_config(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "device-configuration",
@@ -517,7 +522,8 @@ async def device_configuration_decode_system_uid(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "device-configuration",
@@ -576,7 +582,8 @@ async def device_configuration_decode_sensor_uid(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "device-configuration",
@@ -637,7 +644,8 @@ async def device_configuration_decode_both_uids(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "device-configuration",
@@ -801,7 +809,8 @@ async def device_configuration_create_config(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "device-configuration",
@@ -930,7 +939,8 @@ async def device_configuration_create_devices(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "device-configuration",
@@ -1041,7 +1051,8 @@ async def gridded_data_era5(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "gridded-data",
@@ -1106,7 +1117,8 @@ async def gridded_data_list_variables() -> Dict[str, Any]:
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "gridded-data",
@@ -1156,7 +1168,8 @@ async def agricultural_crop_parameters(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "agricultural-modeling",
@@ -1224,7 +1237,8 @@ async def agricultural_calculate_gdd(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "agricultural-modeling",
@@ -1293,7 +1307,8 @@ async def agricultural_calculate_chu(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "agricultural-modeling",
@@ -1360,7 +1375,8 @@ async def agricultural_calculate_et(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "agricultural-modeling",
@@ -1424,7 +1440,8 @@ async def agricultural_et_requirements(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "agricultural-modeling",
@@ -1502,7 +1519,8 @@ async def device_monitoring_monitor(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "device-monitoring",
@@ -1598,7 +1616,8 @@ async def audit_recent_logs(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "audit",
@@ -1722,7 +1741,8 @@ async def audit_generate_report(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "audit",
@@ -1797,7 +1817,8 @@ async def audit_create_reproduction_script(
         env["MCP_USER"] = "claude"
 
         cmd = [
-            PYTHON_EXECUTABLE,
+            UV_COMMAND,
+            "run",
             "-m",
             "rtgs_lab_tools.cli",
             "audit",
@@ -2089,7 +2110,7 @@ async def check_environment() -> Dict[str, Any]:
             "env_file_exists": env_file.exists(),
             "env_file_path": str(env_file),
             "current_working_directory": os.getcwd(),
-            "python_executable": PYTHON_EXECUTABLE,
+            "uv_command": UV_COMMAND,
             "environment_variables": {},
         }
 
@@ -2123,7 +2144,7 @@ async def check_environment() -> Dict[str, Any]:
 # Start the server when the script is run directly
 if __name__ == "__main__":
     # Print some debug info
-    print(f"Python executable: {PYTHON_EXECUTABLE}")
+    print(f"UV command: {UV_COMMAND}")
     print(f"Project root: {PROJECT_ROOT}")
     print(f"Current working directory: {os.getcwd()}")
     print(f"Environment loaded: {env_loaded}")
