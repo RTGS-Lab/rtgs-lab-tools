@@ -1016,6 +1016,7 @@ async def device_configuration_create_devices(
 # GRIDDED DATA TOOLS
 # -----------------
 
+
 @mcp.tool("gridded_data_list_variables")
 async def gridded_data_list_variables() -> Dict[str, Any]:
     """List available ERA5 variables for download."""
