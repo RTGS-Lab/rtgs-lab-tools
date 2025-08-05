@@ -1016,95 +1016,6 @@ async def device_configuration_create_devices(
 # GRIDDED DATA TOOLS
 # -----------------
 
-
-@mcp.tool("gridded_data_era5")
-async def gridded_data_era5(
-    variables: List[str],
-    start_date: str,
-    end_date: str,
-    area: Optional[str] = None,
-    output_file: Optional[str] = None,
-    pressure_levels: Optional[str] = None,
-    time_hours: Optional[str] = None,
-    note: Optional[str] = None,
-) -> Dict[str, Any]:
-    """
-    Download ERA5 climate data with automatic git logging.
-
-    Args:
-        variables: List of ERA5 variables to download (required)
-        start_date: Start date in YYYY-MM-DD format (required)
-        end_date: End date in YYYY-MM-DD format (required)
-        area: Bounding box as "north,west,south,east" (optional)
-        output_file: Output NetCDF file path (optional)
-        pressure_levels: Pressure levels (comma-separated) (optional)
-        time_hours: Specific hours (comma-separated, e.g., "00:00,12:00") (optional)
-        note: Description for this data download (optional)
-    """
-    try:
-        original_cwd = os.getcwd()
-        os.chdir(PROJECT_ROOT)
-
-        # Set MCP environment variables
-        env = os.environ.copy()
-        env["MCP_SESSION"] = "true"
-        env["MCP_USER"] = "claude"
-
-        cmd = [
-            UV_COMMAND,
-            "run",
-            "-m",
-            "rtgs_lab_tools.cli",
-            "gridded-data",
-            "era5",
-            "--start-date",
-            start_date,
-            "--end-date",
-            end_date,
-        ]
-
-        # Add variables
-        for var in variables:
-            cmd.extend(["--variables", var])
-
-        if area:
-            cmd.extend(["--area", area])
-
-        if output_file:
-            cmd.extend(["--output-file", output_file])
-
-        if pressure_levels:
-            cmd.extend(["--pressure-levels", pressure_levels])
-
-        if time_hours:
-            cmd.extend(["--time-hours", time_hours])
-
-        if note:
-            cmd.extend(["--note", note])
-
-        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
-
-        os.chdir(original_cwd)
-
-        return {
-            "success": True,
-            "output": stdout,
-            "command": " ".join(cmd),
-            "mcp_execution": True,
-            "git_logging_enabled": True,
-        }
-
-    except Exception as e:
-        if "original_cwd" in locals():
-            os.chdir(original_cwd)
-
-        return {
-            "success": False,
-            "error": f"ERA5 data download failed: {str(e)}",
-            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
-        }
-
-
 @mcp.tool("gridded_data_list_variables")
 async def gridded_data_list_variables() -> Dict[str, Any]:
     """List available ERA5 variables for download."""
@@ -1646,95 +1557,7 @@ async def gridded_data_download_clipped_scenes(
         ]
 
         if meta_file:
-            cmd.extend(["--meta-.tool("gridded_data_download_scenes")
-async def gridded_data_download_scenes(
-    source: str,
-    out_dir: str,
-    meta_file: Optional[str] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-    roi: Optional[str] = None,
-    clouds: Optional[str] = None,
-    note: Optional[str] = None,
-) -> Dict[str, Any]:
-    """
-    Downloading PlanetLabs scenes.
-
-    Args:
-        source: A source of Planet data: PSScene (PlanetScope), SkySatScene (SkySat).
-        out_dir: Local output directory.
-        meta_file: Path to the CSV file containing id column with scene ids to download (optional).
-        start_date: Start date (YYYY-MM-DD) (optional).
-        end_date: End date (YYYY-MM-DD) (optional).
-        roi: Region of interest coordinates file path (optional).
-        clouds: Cloud percentage threshold (optional).
-        note: Description for this operation (optional).
-
-    Returns:
-        Dict with success status and download details.
-    """
-    try:
-        original_cwd = os.getcwd()
-        os.chdir(PROJECT_ROOT)
-
-        # Set MCP environment variables
-        env = os.environ.copy()
-        env["MCP_SESSION"] = "true"
-        env["MCP_USER"] = "claude"
-
-        cmd = [
-            UV_COMMAND,
-            "run",
-            "-m",
-            "rtgs_lab_tools.cli",
-            "gridded-data",
-            "download-scenes",
-            "--source",
-            source,
-            "--out-dir",
-            out_dir,
-        ]
-
-        if meta_file:
             cmd.extend(["--meta-file", meta_file])
-
-        if start_date:
-            cmd.extend(["--start-date", start_date])
-
-        if end_date:
-            cmd.extend(["--end-date", end_date])
-
-        if roi:
-            cmd.extend(["--roi", roi])
-
-        if clouds:
-            cmd.extend(["--clouds", clouds])
-
-        if note:
-            cmd.extend(["--note", note])
-
-        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
-
-        os.chdir(original_cwd)
-
-        return {
-            "success": True,
-            "output": stdout,
-            "command": " ".join(cmd),
-            "mcp_execution": True,
-            "git_logging_enabled": True,
-        }
-
-    except Exception as e:
-        if "original_cwd" in locals():
-            os.chdir(original_cwd)
-
-        return {
-            "success": False,
-            "error": f"Failed to download Planet scenes: {str(e)}",
-            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
-        }
-file", meta_file])
 
         if start_date:
             cmd.extend(["--start-date", start_date])
@@ -1769,7 +1592,6 @@ file", meta_file])
             "error": f"Failed to download clipped Planet scenes: {str(e)}",
             "command": " ".join(cmd) if "cmd" in locals() else "N/A",
         }
-
 
 
 # -----------------
