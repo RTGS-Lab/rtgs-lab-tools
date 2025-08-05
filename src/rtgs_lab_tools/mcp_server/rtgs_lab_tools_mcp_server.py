@@ -1138,6 +1138,640 @@ async def gridded_data_list_variables() -> Dict[str, Any]:
         return {"success": False, "error": f"Failed to list ERA5 variables: {str(e)}"}
 
 
+@mcp.tool("gridded_data_list_gee_datasets")
+async def gridded_data_list_gee_datasets(
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    List available GEE datasets.
+
+    Args:
+        note: Description for this operation (optional)
+
+    Returns:
+        Dict with success status and list of available GEE datasets
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "list-gee-datasets",
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to list GEE datasets: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+@mcp.tool("gridded_data_list_gee_variables")
+async def gridded_data_list_gee_variables(
+    source: str,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    List available variables for a given GEE dataset.
+
+    Args:
+        source: Dataset to list variables from (required)
+        note: Description for this operation (optional)
+
+    Returns:
+        Dict with success status and list of available GEE variables
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "list-gee-variables",
+            "--source",
+            source,
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to list GEE variables: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+@mcp.tool("gridded_data_get_gee_point")
+async def gridded_data_get_gee_point(
+    source: str,
+    variables: str,
+    start_date: str,
+    end_date: str,
+    roi: str,
+    out_dir: str,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Download GEE point data to the local path.
+
+    Args:
+        source: A source of gridded data to download (short name).
+        variables: Comma-separated list of dataset variables to extract.
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        roi: Region of interest coordinates file path.
+        out_dir: Local output directory.
+        note: Description for this operation (optional).
+
+    Returns:
+        Dict with success status and download details.
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "get-gee-point",
+            "--source",
+            source,
+            "--variables",
+            variables,
+            "--start-date",
+            start_date,
+            "--end-date",
+            end_date,
+            "--roi",
+            roi,
+            "--out-dir",
+            out_dir,
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to get GEE point data: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+@mcp.tool("gridded_data_get_gee_raster")
+async def gridded_data_get_gee_raster(
+    source: str,
+    variables: str,
+    start_date: str,
+    end_date: str,
+    roi: str,
+    out_dest: str,
+    folder: str,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Download GEE raster data to gdrive or gbucket.
+
+    Args:
+        source: A source of gridded data to download (short name).
+        variables: Comma-separated list of dataset variables to extract.
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        roi: Region of interest coordinates file path.
+        out_dest: Output destination: drive (google-drive) or bucket (google-bucket).
+        folder: Output destination folder.
+        note: Description for this operation (optional).
+
+    Returns:
+        Dict with success status and download details.
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "get-gee-raster",
+            "--source",
+            source,
+            "--variables",
+            variables,
+            "--start-date",
+            start_date,
+            "--end-date",
+            end_date,
+            "--roi",
+            roi,
+            "--out-dest",
+            out_dest,
+            "--folder",
+            folder,
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to get GEE raster data: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+@mcp.tool("gridded_data_planet_search")
+async def gridded_data_planet_search(
+    source: str,
+    start_date: str,
+    end_date: str,
+    roi: str,
+    out_dir: str,
+    clouds: Optional[str] = None,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Search for PlanetLabs imagery between dates.
+
+    Args:
+        source: A source of Planet data: PSScene (PlanetScope), SkySatScene (SkySat).
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        roi: Region of interest coordinates file path.
+        out_dir: Local output directory.
+        clouds: Cloud percentage threshold (optional).
+        note: Description for this operation (optional).
+
+    Returns:
+        Dict with success status and search results.
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "planet-search",
+            "--source",
+            source,
+            "--start-date",
+            start_date,
+            "--end-date",
+            end_date,
+            "--roi",
+            roi,
+            "--out-dir",
+            out_dir,
+        ]
+
+        if clouds:
+            cmd.extend(["--clouds", clouds])
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to search Planet imagery: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+@mcp.tool("gridded_data_download_scenes")
+async def gridded_data_download_scenes(
+    source: str,
+    out_dir: str,
+    meta_file: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    roi: Optional[str] = None,
+    clouds: Optional[str] = None,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Downloading PlanetLabs scenes.
+
+    Args:
+        source: A source of Planet data: PSScene (PlanetScope), SkySatScene (SkySat).
+        out_dir: Local output directory.
+        meta_file: Path to the CSV file containing id column with scene ids to download (optional).
+        start_date: Start date (YYYY-MM-DD) (optional).
+        end_date: End date (YYYY-MM-DD) (optional).
+        roi: Region of interest coordinates file path (optional).
+        clouds: Cloud percentage threshold (optional).
+        note: Description for this operation (optional).
+
+    Returns:
+        Dict with success status and download details.
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "download-scenes",
+            "--source",
+            source,
+            "--out-dir",
+            out_dir,
+        ]
+
+        if meta_file:
+            cmd.extend(["--meta-file", meta_file])
+
+        if start_date:
+            cmd.extend(["--start-date", start_date])
+
+        if end_date:
+            cmd.extend(["--end-date", end_date])
+
+        if roi:
+            cmd.extend(["--roi", roi])
+
+        if clouds:
+            cmd.extend(["--clouds", clouds])
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to download Planet scenes: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+@mcp.tool("gridded_data_download_clipped_scenes")
+async def gridded_data_download_clipped_scenes(
+    source: str,
+    roi: str,
+    out_dir: str,
+    meta_file: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    clouds: Optional[str] = None,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Downloading clipped PlanetLabs scenes.
+
+    Args:
+        source: One source of Planet data: PSScene (PlanetScope) or SkySatScene (SkySat).
+        roi: Region of interest coordinates file path.
+        out_dir: Local output directory.
+        meta_file: Path to the CSV file containing id column with scene ids to download (optional).
+        start_date: Start date (YYYY-MM-DD) (optional).
+        end_date: End date (YYYY-MM-DD) (optional).
+        clouds: Cloud percentage threshold (optional).
+        note: Description for this operation (optional).
+
+    Returns:
+        Dict with success status and download details.
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "download-clipped-scenes",
+            "--source",
+            source,
+            "--roi",
+            roi,
+            "--out-dir",
+            out_dir,
+        ]
+
+        if meta_file:
+            cmd.extend(["--meta-.tool("gridded_data_download_scenes")
+async def gridded_data_download_scenes(
+    source: str,
+    out_dir: str,
+    meta_file: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    roi: Optional[str] = None,
+    clouds: Optional[str] = None,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Downloading PlanetLabs scenes.
+
+    Args:
+        source: A source of Planet data: PSScene (PlanetScope), SkySatScene (SkySat).
+        out_dir: Local output directory.
+        meta_file: Path to the CSV file containing id column with scene ids to download (optional).
+        start_date: Start date (YYYY-MM-DD) (optional).
+        end_date: End date (YYYY-MM-DD) (optional).
+        roi: Region of interest coordinates file path (optional).
+        clouds: Cloud percentage threshold (optional).
+        note: Description for this operation (optional).
+
+    Returns:
+        Dict with success status and download details.
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "download-scenes",
+            "--source",
+            source,
+            "--out-dir",
+            out_dir,
+        ]
+
+        if meta_file:
+            cmd.extend(["--meta-file", meta_file])
+
+        if start_date:
+            cmd.extend(["--start-date", start_date])
+
+        if end_date:
+            cmd.extend(["--end-date", end_date])
+
+        if roi:
+            cmd.extend(["--roi", roi])
+
+        if clouds:
+            cmd.extend(["--clouds", clouds])
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to download Planet scenes: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+file", meta_file])
+
+        if start_date:
+            cmd.extend(["--start-date", start_date])
+
+        if end_date:
+            cmd.extend(["--end-date", end_date])
+
+        if clouds:
+            cmd.extend(["--clouds", clouds])
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to download clipped Planet scenes: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
+
 # -----------------
 # AGRICULTURAL MODELING TOOLS
 # -----------------
