@@ -10,7 +10,7 @@
         "numSDI12Talons": 1
       },
       "sensors": {
-        "numET": 0,
+        "numET": 1,
         "numHaar": 0,
         "numSoil": 1,
         "numApogeeSolar": 0,

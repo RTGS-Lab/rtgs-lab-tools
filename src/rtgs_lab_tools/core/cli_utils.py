@@ -330,11 +330,6 @@ def device_config_parameters(func: Callable) -> Callable:
     """Add device configuration parameters to a command."""
     # Add options in reverse order due to how decorators work
     func = click.option(
-        "--no-particle-postgres-log",
-        is_flag=True,
-        help="Disable Particle-specific postgres logging (CLI logging still active)",
-    )(func)
-    func = click.option(
         "--dry-run", is_flag=True, help="Validate inputs without making changes"
     )(func)
     func = click.option(

@@ -4,6 +4,10 @@
 # Figure output directory
 /figures/
 
+# SD dump output directory
+/sd_dump_output/
+**/sd_dump_output/
+
 # Environment and credentials
 .env
 venv/
