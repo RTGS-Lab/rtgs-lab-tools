@@ -42,6 +42,7 @@ dependencies = [
     "pg8000>=1.29.0",
     "yagmail>=0.15.293",
     "keyring>=25.6.0",
+    "pyserial>=3.5",
 ]
 
 [project.optional-dependencies]
