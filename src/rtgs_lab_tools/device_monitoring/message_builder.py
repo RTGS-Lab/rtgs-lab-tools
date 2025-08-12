@@ -308,8 +308,41 @@ def build_terminal_message(analysis_results):
             errors_line = f"  Error Details: {errors}"
             terminal_lines.append(errors_line)
 
+        # Check if this is a missing node
+        is_missing = result.get("is_missing", False)
+        last_heard = result.get("last_heard")
+        
         # Generate status message
-        if flagged:
+        if is_missing:
+            # Handle missing node alert
+            if last_heard:
+                time_diff = datetime.now() - last_heard
+                if time_diff.days > 0:
+                    time_str = f"{time_diff.days} days"
+                else:
+                    hours = time_diff.seconds // 3600
+                    time_str = f"{hours} hours"
+            else:
+                time_str = "unknown time"
+            
+            message = f"  ⚠️ MISSING: Node hasn't written to database in {time_str}"
+            if last_heard:
+                last_heard_str = last_heard.strftime('%Y-%m-%d %H:%M:%S') if hasattr(last_heard, 'strftime') else str(last_heard)
+                message += f". Last heard from {last_heard_str}"
+                
+                # Include last known metrics
+                if battery is not None or system is not None:
+                    metrics_parts = []
+                    if battery is not None:
+                        metrics_parts.append(f"Battery: {battery:.2f}V")
+                    if system is not None:
+                        metrics_parts.append(f"System: {system:.3f}W")
+                    if errors:
+                        metrics_parts.append(f"Errors: {errors}")
+                    if metrics_parts:
+                        message += f" with {', '.join(metrics_parts)}"
+                        
+        elif flagged:
             issues = []
             if battery is not None and battery < BATTERY_VOLTAGE_MIN:
                 issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
@@ -398,13 +431,46 @@ def build_email_message(analysis_results):
             errors_line = f"  Error Details: {errors}"
             email_lines.append(errors_line)
 
+        # Check if this is a missing node
+        is_missing = result.get("is_missing", False)
+        last_heard = result.get("last_heard")
+        
         # Generate status message
-        if flagged:
+        if is_missing:
+            # Handle missing node alert
+            if last_heard:
+                time_diff = datetime.now() - last_heard
+                if time_diff.days > 0:
+                    time_str = f"{time_diff.days} days"
+                else:
+                    hours = time_diff.seconds // 3600
+                    time_str = f"{hours} hours"
+            else:
+                time_str = "unknown time"
+            
+            message = f"  ⚠️ MISSING: Node hasn't written to database in {time_str}"
+            if last_heard:
+                last_heard_str = last_heard.strftime('%Y-%m-%d %H:%M:%S') if hasattr(last_heard, 'strftime') else str(last_heard)
+                message += f". Last heard from {last_heard_str}"
+                
+                # Include last known metrics
+                if battery is not None or system is not None:
+                    metrics_parts = []
+                    if battery is not None:
+                        metrics_parts.append(f"Battery: {battery:.2f}V")
+                    if system is not None:
+                        metrics_parts.append(f"System: {system:.3f}W")
+                    if errors:
+                        metrics_parts.append(f"Errors: {errors}")
+                    if metrics_parts:
+                        message += f" with {', '.join(metrics_parts)}"
+                        
+        elif flagged:
             issues = []
             if battery is not None and battery < BATTERY_VOLTAGE_MIN:
                 issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
             if system is not None and system > SYSTEM_POWER_MAX:
-                issues.append(f"System power HIGH ({system:.3f} > {SYSTEM_POWER_MAX})")
+                issues.append(f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)")
 
             # Check for critical errors
             critical_errors = []
