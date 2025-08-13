@@ -252,8 +252,23 @@ def build_terminal_message(analysis_results):
         return "ℹ️ No analysis results to process."
 
     terminal_lines = []
-
+    
+    # Separate missing nodes from active nodes
+    missing_nodes = {}
+    active_nodes = {}
+    
     for node_id, result in analysis_results.items():
+        if result.get("is_missing", False):
+            missing_nodes[node_id] = result
+        else:
+            active_nodes[node_id] = result
+    
+    # Process missing nodes first
+    if missing_nodes:
+        terminal_lines.append("\n🚨 MISSING NODES (Not heard from in 24+ hours):")
+        terminal_lines.append("=" * 60)
+        
+    for node_id, result in missing_nodes.items():
 
         # Determine status
         flagged = result.get("flagged", False)
@@ -364,7 +379,83 @@ def build_terminal_message(analysis_results):
 
         terminal_lines.append(message)
 
-    terminal_lines.append(f"\nTotal Nodes Analyzed: {len(analysis_results)}")
+    # Process active nodes
+    if active_nodes:
+        terminal_lines.append("\n\n✅ ACTIVE NODES (Recent activity):")
+        terminal_lines.append("=" * 40)
+        
+    for node_id, result in active_nodes.items():
+        # Same processing logic as missing nodes but without the missing-specific handling
+        flagged = result.get("flagged", False)
+        status_icon = "⚠️ ALERT" if flagged else "✅ Normal"
+
+        device_name, product_id = get_device_info(node_id)
+        console_url = None
+        if product_id:
+            slug = get_product_slug(product_id)
+            if slug:
+                console_url = get_console_url(node_id, product_id, slug)
+
+        if device_name:
+            node_display = f"{device_name} ({node_id})"
+        else:
+            node_display = node_id
+
+        if console_url:
+            node_display += f" - Console: {console_url}"
+
+        battery = result.get("battery")
+        system = result.get("system")
+        errors = result.get("errors", {})
+        battery_timestamp = result.get("battery_timestamp")
+        system_timestamp = result.get("system_timestamp")
+
+        timestamp = system_timestamp or battery_timestamp
+        timestamp_str = ""
+        if timestamp is not None:
+            if hasattr(timestamp, "strftime"):
+                timestamp_str = f" [{timestamp.strftime('%Y-%m-%d %H:%M:%S')}]"
+            else:
+                timestamp_str = f" [{timestamp}]"
+
+        terminal_lines.append(f"\nNode: {node_display} - {status_icon}{timestamp_str}")
+
+        battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"
+        system_str = f"{system:.3f}W" if system is not None else "Unknown"
+        metrics_line = f"  Battery: {battery_str} | System: {system_str} | Errors: {len(errors)} types"
+        terminal_lines.append(metrics_line)
+
+        if errors:
+            errors_line = f"  Error Details: {errors}"
+            terminal_lines.append(errors_line)
+
+        if flagged:
+            issues = []
+            if battery is not None and battery < BATTERY_VOLTAGE_MIN:
+                issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
+            if system is not None and system > SYSTEM_POWER_MAX:
+                issues.append(f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)")
+
+            critical_errors = []
+            for error_name, count in errors.items():
+                if error_name in CRITICAL_ERRORS and count > 0:
+                    critical_errors.append(f"{error_name} ({count})")
+
+            if critical_errors:
+                issues.append(f"Critical errors: {', '.join(critical_errors)}")
+
+            message = f"  🚨 ISSUES: {' | '.join(issues)}"
+        else:
+            message = "  ✅ All systems operating normally"
+
+        terminal_lines.append(message)
+    
+    # Summary
+    missing_count = len(missing_nodes)
+    active_count = len(active_nodes)
+    terminal_lines.append(f"\n📊 SUMMARY:")
+    terminal_lines.append(f"Total Nodes Analyzed: {len(analysis_results)}")
+    terminal_lines.append(f"Missing Nodes: {missing_count} | Active Nodes: {active_count}")
 
     return "\n".join(terminal_lines)
 
@@ -375,8 +466,23 @@ def build_email_message(analysis_results):
         return "ℹ️ No analysis results to process."
 
     email_lines = []
-
+    
+    # Separate missing nodes from active nodes
+    missing_nodes = {}
+    active_nodes = {}
+    
     for node_id, result in analysis_results.items():
+        if result.get("is_missing", False):
+            missing_nodes[node_id] = result
+        else:
+            active_nodes[node_id] = result
+    
+    # Process missing nodes first
+    if missing_nodes:
+        email_lines.append("🚨 MISSING NODES (Not heard from in 24+ hours):")
+        email_lines.append("=" * 60)
+        
+    for node_id, result in missing_nodes.items():
 
         # Determine status
         flagged = result.get("flagged", False)
@@ -488,9 +594,83 @@ def build_email_message(analysis_results):
         email_lines.append(message)
         email_lines.append("")  # Add spacing between nodes
 
-    # include total number of nodes
-    total_nodes = len(analysis_results)
-    email_lines.append(f"\nTotal Nodes Analyzed: {total_nodes}")
+    # Process active nodes
+    if active_nodes:
+        email_lines.append("\n\n✅ ACTIVE NODES (Recent activity):")
+        email_lines.append("=" * 40)
+        
+    for node_id, result in active_nodes.items():
+        flagged = result.get("flagged", False)
+        status_icon = "⚠️ ALERT" if flagged else "✅ Normal"
+
+        device_name, product_id = get_device_info(node_id)
+        console_url = None
+        if product_id:
+            slug = get_product_slug(product_id)
+            if slug:
+                console_url = get_console_url(node_id, product_id, slug)
+
+        if device_name:
+            node_display = f"{device_name} ({node_id})"
+        else:
+            node_display = node_id
+
+        if console_url:
+            node_display += f" - Console: {console_url}"
+
+        battery = result.get("battery")
+        system = result.get("system")
+        errors = result.get("errors", {})
+        battery_timestamp = result.get("battery_timestamp")
+        system_timestamp = result.get("system_timestamp")
+
+        timestamp = system_timestamp or battery_timestamp
+        timestamp_str = ""
+        if timestamp is not None:
+            if hasattr(timestamp, "strftime"):
+                timestamp_str = f" [{timestamp.strftime('%Y-%m-%d %H:%M:%S')}]"
+            else:
+                timestamp_str = f" [{timestamp}]"
+
+        email_lines.append(f"Node: {node_display} - {status_icon}{timestamp_str}")
+
+        battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"
+        system_str = f"{system:.3f}W" if system is not None else "Unknown"
+        metrics_line = f"  Battery: {battery_str} | System: {system_str} | Errors: {len(errors)} types"
+        email_lines.append(metrics_line)
+
+        if errors:
+            errors_line = f"  Error Details: {errors}"
+            email_lines.append(errors_line)
+
+        if flagged:
+            issues = []
+            if battery is not None and battery < BATTERY_VOLTAGE_MIN:
+                issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
+            if system is not None and system > SYSTEM_POWER_MAX:
+                issues.append(f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)")
+
+            critical_errors = []
+            for error_name, count in errors.items():
+                if error_name in CRITICAL_ERRORS and count > 0:
+                    critical_errors.append(f"{error_name} ({count})")
+
+            if critical_errors:
+                issues.append(f"Critical errors: {', '.join(critical_errors)}")
+
+            message = f"  🚨 ISSUES: {' | '.join(issues)}"
+        else:
+            message = "  ✅ All systems operating normally"
+
+        email_lines.append(message)
+        email_lines.append("")  # Add spacing between nodes
+    
+    # Summary
+    missing_count = len(missing_nodes)
+    active_count = len(active_nodes)
+    email_lines.append("📊 SUMMARY:")
+    email_lines.append(f"Total Nodes Analyzed: {len(analysis_results)}")
+    email_lines.append(f"Missing Nodes: {missing_count} | Active Nodes: {active_count}")
 
     return "\n".join(email_lines)
 
