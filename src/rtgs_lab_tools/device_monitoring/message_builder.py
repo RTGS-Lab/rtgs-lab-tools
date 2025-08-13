@@ -246,187 +246,179 @@ def generate_html_email(analysis_results):
 </html>"""
 
 
-def build_terminal_message(analysis_results):
-    """Build terminal message from analysis results."""
+def _build_message_content(analysis_results, add_node_spacing=False):
+    """Build message content from analysis results (shared implementation)."""
     if not analysis_results:
         return "ℹ️ No analysis results to process."
 
-    terminal_lines = []
+    lines = []
+
+    # Separate missing nodes from active nodes
+    missing_nodes = {}
+    active_nodes = {}
 
     for node_id, result in analysis_results.items():
-
-        # Determine status
-        flagged = result.get("flagged", False)
-        status_icon = "⚠️ ALERT" if flagged else "✅ Normal"
-
-        # Get device info from Particle API
-        device_name, product_id = get_device_info(node_id)
-
-        # Get console URL if we have the required info
-        console_url = None
-        if product_id:
-            slug = get_product_slug(product_id)
-            if slug:
-                console_url = get_console_url(node_id, product_id, slug)
-
-        # Format node display with console link
-        if device_name:
-            node_display = f"{device_name} ({node_id})"
+        if result.get("is_missing", False):
+            missing_nodes[node_id] = result
         else:
-            node_display = node_id
+            active_nodes[node_id] = result
 
-        if console_url:
-            node_display += f" - Console: {console_url}"
+    # Process missing nodes first
+    if missing_nodes:
+        lines.append("\n🚨 MISSING NODES (Not heard from in 24+ hours):")
+        lines.append("=" * 60)
 
-        # Get all metrics first
-        battery = result.get("battery")
-        system = result.get("system")
-        errors = result.get("errors", {})
-        battery_timestamp = result.get("battery_timestamp")
-        system_timestamp = result.get("system_timestamp")
+    for node_id, result in missing_nodes.items():
+        _process_node(node_id, result, lines, add_node_spacing)
 
-        # Format timestamp - use the most recent one available
-        timestamp = system_timestamp or battery_timestamp
-        timestamp_str = ""
-        if timestamp is not None:
-            if hasattr(timestamp, "strftime"):
-                timestamp_str = f" [{timestamp.strftime('%Y-%m-%d %H:%M:%S')}]"
+    # Process active nodes
+    if active_nodes:
+        lines.append("\n\n✅ ACTIVE NODES (Recent activity):")
+        lines.append("=" * 40)
+
+    for node_id, result in active_nodes.items():
+        _process_node(node_id, result, lines, add_node_spacing)
+
+    # Summary
+    missing_count = len(missing_nodes)
+    active_count = len(active_nodes)
+    lines.append("\n📊 SUMMARY:")
+    lines.append(f"Total Nodes Analyzed: {len(analysis_results)}")
+    lines.append(f"Missing Nodes: {missing_count} | Active Nodes: {active_count}")
+
+    return "\n".join(lines)
+
+
+def _process_node(node_id, result, lines, add_spacing=False):
+    """Process a single node and add its information to the lines list."""
+    # Determine status
+    flagged = result.get("flagged", False)
+    status_icon = "⚠️ ALERT" if flagged else "✅ Normal"
+
+    # Get device info from Particle API
+    device_name, product_id = get_device_info(node_id)
+
+    # Get console URL if we have the required info
+    console_url = None
+    if product_id:
+        slug = get_product_slug(product_id)
+        if slug:
+            console_url = get_console_url(node_id, product_id, slug)
+
+    # Format node display with console link
+    if device_name:
+        node_display = f"{device_name} ({node_id})"
+    else:
+        node_display = node_id
+
+    if console_url:
+        node_display += f" - Console: {console_url}"
+
+    # Get all metrics
+    battery = result.get("battery")
+    system = result.get("system")
+    errors = result.get("errors", {})
+    battery_timestamp = result.get("battery_timestamp")
+    system_timestamp = result.get("system_timestamp")
+
+    # Format timestamp - use the most recent one available
+    timestamp = system_timestamp or battery_timestamp
+    timestamp_str = ""
+    if timestamp is not None:
+        if hasattr(timestamp, "strftime"):
+            timestamp_str = f" [{timestamp.strftime('%Y-%m-%d %H:%M:%S')}]"
+        else:
+            timestamp_str = f" [{timestamp}]"
+
+    lines.append(f"\nNode: {node_display} - {status_icon}{timestamp_str}")
+
+    # Display metrics
+    battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"
+    system_str = f"{system:.3f}W" if system is not None else "Unknown"
+
+    metrics_line = (
+        f"  Battery: {battery_str} | System: {system_str} | Errors: {len(errors)} types"
+    )
+    lines.append(metrics_line)
+
+    # Show errors if any
+    if errors:
+        errors_line = f"  Error Details: {errors}"
+        lines.append(errors_line)
+
+    # Check if this is a missing node
+    is_missing = result.get("is_missing", False)
+    last_heard = result.get("last_heard")
+
+    # Generate status message
+    if is_missing:
+        # Handle missing node alert
+        if last_heard:
+            time_diff = datetime.now() - last_heard
+            if time_diff.days > 0:
+                time_str = f"{time_diff.days} days"
             else:
-                timestamp_str = f" [{timestamp}]"
-
-        terminal_lines.append(f"\nNode: {node_display} - {status_icon}{timestamp_str}")
-
-        # Display metrics
-        battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"
-        system_str = f"{system:.3f}W" if system is not None else "Unknown"
-
-        metrics_line = f"  Battery: {battery_str} | System: {system_str} | Errors: {len(errors)} types"
-        terminal_lines.append(metrics_line)
-
-        # Show errors if any
-        if errors:
-            errors_line = f"  Error Details: {errors}"
-            terminal_lines.append(errors_line)
-
-        # Generate status message
-        if flagged:
-            issues = []
-            if battery is not None and battery < BATTERY_VOLTAGE_MIN:
-                issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
-            if system is not None and system > SYSTEM_POWER_MAX:
-                issues.append(f"System power HIGH ({system:.3f} > {SYSTEM_POWER_MAX})")
-
-            # Check for critical errors
-            critical_errors = []
-            for error_name, count in errors.items():
-                if error_name in CRITICAL_ERRORS and count > 0:
-                    critical_errors.append(f"{error_name} ({count})")
-
-            if critical_errors:
-                issues.append(f"Critical errors: {', '.join(critical_errors)}")
-
-            message = f"  🚨 ISSUES: {' | '.join(issues)}"
+                hours = time_diff.seconds // 3600
+                time_str = f"{hours} hours"
         else:
-            message = "  ✅ All systems operating normally"
+            time_str = "unknown time"
 
-        terminal_lines.append(message)
+        message = f"  ⚠️ MISSING: Node hasn't written to database in {time_str}"
+        if last_heard:
+            last_heard_str = (
+                last_heard.strftime("%Y-%m-%d %H:%M:%S")
+                if hasattr(last_heard, "strftime")
+                else str(last_heard)
+            )
+            message += f". Last heard from {last_heard_str}"
 
-    terminal_lines.append(f"\nTotal Nodes Analyzed: {len(analysis_results)}")
+            # Include last known metrics
+            if battery is not None or system is not None:
+                metrics_parts = []
+                if battery is not None:
+                    metrics_parts.append(f"Battery: {battery:.2f}V")
+                if system is not None:
+                    metrics_parts.append(f"System: {system:.3f}W")
+                if errors:
+                    metrics_parts.append(f"Errors: {errors}")
+                if metrics_parts:
+                    message += f" with {', '.join(metrics_parts)}"
 
-    return "\n".join(terminal_lines)
+    elif flagged:
+        issues = []
+        if battery is not None and battery < BATTERY_VOLTAGE_MIN:
+            issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
+        if system is not None and system > SYSTEM_POWER_MAX:
+            issues.append(f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)")
+
+        # Check for critical errors
+        critical_errors = []
+        for error_name, count in errors.items():
+            if error_name in CRITICAL_ERRORS and count > 0:
+                critical_errors.append(f"{error_name} ({count})")
+
+        if critical_errors:
+            issues.append(f"Critical errors: {', '.join(critical_errors)}")
+
+        message = f"  🚨 ISSUES: {' | '.join(issues)}"
+    else:
+        message = "  ✅ All systems operating normally"
+
+    lines.append(message)
+
+    # Add spacing for email format if needed
+    if add_spacing:
+        lines.append("")
+
+
+def build_terminal_message(analysis_results):
+    """Build terminal message from analysis results."""
+    return _build_message_content(analysis_results, add_node_spacing=False)
 
 
 def build_email_message(analysis_results):
     """Build email message from analysis results."""
-    if not analysis_results:
-        return "ℹ️ No analysis results to process."
-
-    email_lines = []
-
-    for node_id, result in analysis_results.items():
-
-        # Determine status
-        flagged = result.get("flagged", False)
-        status_icon = "⚠️ ALERT" if flagged else "✅ Normal"
-
-        # Get device info from Particle API
-        device_name, product_id = get_device_info(node_id)
-
-        # Get console URL if we have the required info
-        console_url = None
-        if product_id:
-            slug = get_product_slug(product_id)
-            if slug:
-                console_url = get_console_url(node_id, product_id, slug)
-
-        # Format node display with console link
-        if device_name:
-            node_display = f"{device_name} ({node_id})"
-        else:
-            node_display = node_id
-
-        if console_url:
-            node_display += f" - Console: {console_url}"
-
-        # Get all metrics first
-        battery = result.get("battery")
-        system = result.get("system")
-        errors = result.get("errors", {})
-        battery_timestamp = result.get("battery_timestamp")
-        system_timestamp = result.get("system_timestamp")
-
-        # Format timestamp - use the most recent one available
-        timestamp = system_timestamp or battery_timestamp
-        timestamp_str = ""
-        if timestamp is not None:
-            if hasattr(timestamp, "strftime"):
-                timestamp_str = f" [{timestamp.strftime('%Y-%m-%d %H:%M:%S')}]"
-            else:
-                timestamp_str = f" [{timestamp}]"
-
-        email_lines.append(f"Node: {node_display} - {status_icon}{timestamp_str}")
-
-        # Display metrics
-        battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"
-        system_str = f"{system:.3f}W" if system is not None else "Unknown"
-
-        metrics_line = f"  Battery: {battery_str} | System: {system_str} | Errors: {len(errors)} types"
-        email_lines.append(metrics_line)
-
-        # Show errors if any
-        if errors:
-            errors_line = f"  Error Details: {errors}"
-            email_lines.append(errors_line)
-
-        # Generate status message
-        if flagged:
-            issues = []
-            if battery is not None and battery < BATTERY_VOLTAGE_MIN:
-                issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
-            if system is not None and system > SYSTEM_POWER_MAX:
-                issues.append(f"System power HIGH ({system:.3f} > {SYSTEM_POWER_MAX})")
-
-            # Check for critical errors
-            critical_errors = []
-            for error_name, count in errors.items():
-                if error_name in CRITICAL_ERRORS and count > 0:
-                    critical_errors.append(f"{error_name} ({count})")
-
-            if critical_errors:
-                issues.append(f"Critical errors: {', '.join(critical_errors)}")
-
-            message = f"  🚨 ISSUES: {' | '.join(issues)}"
-        else:
-            message = "  ✅ All systems operating normally"
-
-        email_lines.append(message)
-        email_lines.append("")  # Add spacing between nodes
-
-    # include total number of nodes
-    total_nodes = len(analysis_results)
-    email_lines.append(f"\nTotal Nodes Analyzed: {total_nodes}")
-
-    return "\n".join(email_lines)
+    return _build_message_content(analysis_results, add_node_spacing=True)
 
 
 def build_message(analysis_results):

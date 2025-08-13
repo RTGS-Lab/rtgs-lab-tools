@@ -19,9 +19,10 @@ rtgs device-monitoring monitor --project LCCMR
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `--project` | String | Project name to monitor (or "ALL" for all projects) | ALL |
-| `--start_date` | String | Start date in YYYY-MM-DD format | 30 days ago |
+| `--start_date` | String | Start date in YYYY-MM-DD format | 10 days ago |
 | `--end_date` | String | End date in YYYY-MM-DD format | Today |
 | `--node_ids` | String | Comma-separated list of specific node IDs to monitor | All nodes |
+| `--no-email` | Flag | Skip sending email notifications | False |
 
 ## Scheduled Monitoring on MSI Infrastructure
 
@@ -35,8 +36,8 @@ The device monitoring system runs automatically on MSI (Minnesota Supercomputing
 # Edit your scrontab on MSI
 scrontab -e
 
-# Add this line to run monitoring daily at 8:00 AM
-0 8 * * * /home/$USER/code/scripts/scheduled_device_monitoring.sh
+# Add this line to run monitoring daily at 4:27 AM
+27 4 * * 1-5 /home/$USER/code/scripts/scheduled_device_monitoring.sh
 ```
 
 #### Script Location and Setup
@@ -105,7 +106,7 @@ export GMAIL_RECIPIENT=notification_recipient@umn.edu
 
 #### Daily Execution Process
 
-1. **8:00 AM daily**: SLURM crontab triggers the monitoring script
+1. **Before 5:00 AM daily**: SLURM crontab triggers the monitoring script
 2. **Environment setup**: Script loads Python and Git modules
 3. **Code update**: Repository is updated with `git pull`
 4. **Credential loading**: Secure credentials are loaded from `~/.rtgs_creds`
@@ -274,6 +275,26 @@ for project in projects:
 - **MSI Infrastructure**: Direct database access (no VPN required)
 - **External Networks**: UMN VPN connection required for database access
 - **Internet Access**: Required for Particle Cloud API communication
+
+## Known Bugs
+
+- **--node-ids flag**: Currently not working - all nodes are monitored regardless of this parameter
+
+## Planned Future Improvements
+
+### High Priority (Ann's Requests)
+- **Dynamic thresholds and error configuration**: Allow Ann to add/remove critical error codes and modify battery, system usage, and humidity thresholds
+- **Include humidity in reports**: Add humidity data to monitoring output
+- **V2 device support**: Implement logic for handling non-v3 devices, with V2 devices as priority
+
+### Medium Priority
+- **HTML email notifications**: Implement unused HTML methods to send static HTML emails with readable "node cards" for better data display
+- **Fix node-ids flag**: Resolve the issue with node ID filtering
+- **Online portal for Ann**: Create web interface for checking device status (pending approval from B, prototyping okay)
+
+### Low Priority
+- **Rename formatter to preprocessing**: More accurate naming for the data processing phase
+- **React app migration**: Migrate to React app with components library for better Claude integration
 
 For more information on other modules, see:
 - [Sensing Data Module](../sensing_data/README.md) - Data extraction and management
