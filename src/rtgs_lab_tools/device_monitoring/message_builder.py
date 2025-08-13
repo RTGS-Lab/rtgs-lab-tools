@@ -252,22 +252,22 @@ def build_terminal_message(analysis_results):
         return "ℹ️ No analysis results to process."
 
     terminal_lines = []
-    
+
     # Separate missing nodes from active nodes
     missing_nodes = {}
     active_nodes = {}
-    
+
     for node_id, result in analysis_results.items():
         if result.get("is_missing", False):
             missing_nodes[node_id] = result
         else:
             active_nodes[node_id] = result
-    
+
     # Process missing nodes first
     if missing_nodes:
         terminal_lines.append("\n🚨 MISSING NODES (Not heard from in 24+ hours):")
         terminal_lines.append("=" * 60)
-        
+
     for node_id, result in missing_nodes.items():
 
         # Determine status
@@ -326,7 +326,7 @@ def build_terminal_message(analysis_results):
         # Check if this is a missing node
         is_missing = result.get("is_missing", False)
         last_heard = result.get("last_heard")
-        
+
         # Generate status message
         if is_missing:
             # Handle missing node alert
@@ -339,12 +339,16 @@ def build_terminal_message(analysis_results):
                     time_str = f"{hours} hours"
             else:
                 time_str = "unknown time"
-            
+
             message = f"  ⚠️ MISSING: Node hasn't written to database in {time_str}"
             if last_heard:
-                last_heard_str = last_heard.strftime('%Y-%m-%d %H:%M:%S') if hasattr(last_heard, 'strftime') else str(last_heard)
+                last_heard_str = (
+                    last_heard.strftime("%Y-%m-%d %H:%M:%S")
+                    if hasattr(last_heard, "strftime")
+                    else str(last_heard)
+                )
                 message += f". Last heard from {last_heard_str}"
-                
+
                 # Include last known metrics
                 if battery is not None or system is not None:
                     metrics_parts = []
@@ -356,7 +360,7 @@ def build_terminal_message(analysis_results):
                         metrics_parts.append(f"Errors: {errors}")
                     if metrics_parts:
                         message += f" with {', '.join(metrics_parts)}"
-                        
+
         elif flagged:
             issues = []
             if battery is not None and battery < BATTERY_VOLTAGE_MIN:
@@ -383,7 +387,7 @@ def build_terminal_message(analysis_results):
     if active_nodes:
         terminal_lines.append("\n\n✅ ACTIVE NODES (Recent activity):")
         terminal_lines.append("=" * 40)
-        
+
     for node_id, result in active_nodes.items():
         # Same processing logic as missing nodes but without the missing-specific handling
         flagged = result.get("flagged", False)
@@ -434,7 +438,9 @@ def build_terminal_message(analysis_results):
             if battery is not None and battery < BATTERY_VOLTAGE_MIN:
                 issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
             if system is not None and system > SYSTEM_POWER_MAX:
-                issues.append(f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)")
+                issues.append(
+                    f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)"
+                )
 
             critical_errors = []
             for error_name, count in errors.items():
@@ -449,13 +455,15 @@ def build_terminal_message(analysis_results):
             message = "  ✅ All systems operating normally"
 
         terminal_lines.append(message)
-    
+
     # Summary
     missing_count = len(missing_nodes)
     active_count = len(active_nodes)
     terminal_lines.append(f"\n📊 SUMMARY:")
     terminal_lines.append(f"Total Nodes Analyzed: {len(analysis_results)}")
-    terminal_lines.append(f"Missing Nodes: {missing_count} | Active Nodes: {active_count}")
+    terminal_lines.append(
+        f"Missing Nodes: {missing_count} | Active Nodes: {active_count}"
+    )
 
     return "\n".join(terminal_lines)
 
@@ -466,22 +474,22 @@ def build_email_message(analysis_results):
         return "ℹ️ No analysis results to process."
 
     email_lines = []
-    
+
     # Separate missing nodes from active nodes
     missing_nodes = {}
     active_nodes = {}
-    
+
     for node_id, result in analysis_results.items():
         if result.get("is_missing", False):
             missing_nodes[node_id] = result
         else:
             active_nodes[node_id] = result
-    
+
     # Process missing nodes first
     if missing_nodes:
         email_lines.append("🚨 MISSING NODES (Not heard from in 24+ hours):")
         email_lines.append("=" * 60)
-        
+
     for node_id, result in missing_nodes.items():
 
         # Determine status
@@ -540,7 +548,7 @@ def build_email_message(analysis_results):
         # Check if this is a missing node
         is_missing = result.get("is_missing", False)
         last_heard = result.get("last_heard")
-        
+
         # Generate status message
         if is_missing:
             # Handle missing node alert
@@ -553,12 +561,16 @@ def build_email_message(analysis_results):
                     time_str = f"{hours} hours"
             else:
                 time_str = "unknown time"
-            
+
             message = f"  ⚠️ MISSING: Node hasn't written to database in {time_str}"
             if last_heard:
-                last_heard_str = last_heard.strftime('%Y-%m-%d %H:%M:%S') if hasattr(last_heard, 'strftime') else str(last_heard)
+                last_heard_str = (
+                    last_heard.strftime("%Y-%m-%d %H:%M:%S")
+                    if hasattr(last_heard, "strftime")
+                    else str(last_heard)
+                )
                 message += f". Last heard from {last_heard_str}"
-                
+
                 # Include last known metrics
                 if battery is not None or system is not None:
                     metrics_parts = []
@@ -570,13 +582,15 @@ def build_email_message(analysis_results):
                         metrics_parts.append(f"Errors: {errors}")
                     if metrics_parts:
                         message += f" with {', '.join(metrics_parts)}"
-                        
+
         elif flagged:
             issues = []
             if battery is not None and battery < BATTERY_VOLTAGE_MIN:
                 issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
             if system is not None and system > SYSTEM_POWER_MAX:
-                issues.append(f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)")
+                issues.append(
+                    f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)"
+                )
 
             # Check for critical errors
             critical_errors = []
@@ -598,7 +612,7 @@ def build_email_message(analysis_results):
     if active_nodes:
         email_lines.append("\n\n✅ ACTIVE NODES (Recent activity):")
         email_lines.append("=" * 40)
-        
+
     for node_id, result in active_nodes.items():
         flagged = result.get("flagged", False)
         status_icon = "⚠️ ALERT" if flagged else "✅ Normal"
@@ -648,7 +662,9 @@ def build_email_message(analysis_results):
             if battery is not None and battery < BATTERY_VOLTAGE_MIN:
                 issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
             if system is not None and system > SYSTEM_POWER_MAX:
-                issues.append(f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)")
+                issues.append(
+                    f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)"
+                )
 
             critical_errors = []
             for error_name, count in errors.items():
@@ -664,7 +680,7 @@ def build_email_message(analysis_results):
 
         email_lines.append(message)
         email_lines.append("")  # Add spacing between nodes
-    
+
     # Summary
     missing_count = len(missing_nodes)
     active_count = len(active_nodes)

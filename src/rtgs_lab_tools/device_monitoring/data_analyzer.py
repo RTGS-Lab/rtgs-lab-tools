@@ -14,8 +14,9 @@ Output:
             - count as value
 """
 
-import pandas as pd
 from datetime import datetime, timedelta
+
+import pandas as pd
 
 from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_POWER_MAX
 
@@ -50,30 +51,35 @@ def analyze_data(data):
     # Identify nodes that haven't been heard from in the last 24 hours
     cutoff_time = datetime.now() - timedelta(hours=24)
     recent_node_ids = set()
-    
+
     # Check which nodes have recent data (within 24 hours)
     for node_id in all_node_ids:
         most_recent_timestamp = None
-        
+
         if battery_df is not None and node_id in battery_df.index:
             battery_timestamp = battery_df.loc[node_id, "timestamp"]
             if battery_timestamp and pd.notna(battery_timestamp):
-                if hasattr(battery_timestamp, 'to_pydatetime'):
+                if hasattr(battery_timestamp, "to_pydatetime"):
                     battery_timestamp = battery_timestamp.to_pydatetime()
                 elif isinstance(battery_timestamp, str):
-                    battery_timestamp = pd.to_datetime(battery_timestamp).to_pydatetime()
+                    battery_timestamp = pd.to_datetime(
+                        battery_timestamp
+                    ).to_pydatetime()
                 most_recent_timestamp = battery_timestamp
-        
+
         if system_df is not None and node_id in system_df.index:
             system_timestamp = system_df.loc[node_id, "timestamp"]
             if system_timestamp and pd.notna(system_timestamp):
-                if hasattr(system_timestamp, 'to_pydatetime'):
+                if hasattr(system_timestamp, "to_pydatetime"):
                     system_timestamp = system_timestamp.to_pydatetime()
                 elif isinstance(system_timestamp, str):
                     system_timestamp = pd.to_datetime(system_timestamp).to_pydatetime()
-                if most_recent_timestamp is None or system_timestamp > most_recent_timestamp:
+                if (
+                    most_recent_timestamp is None
+                    or system_timestamp > most_recent_timestamp
+                ):
                     most_recent_timestamp = system_timestamp
-        
+
         # If node has data within last 24 hours, it's considered "recent"
         if most_recent_timestamp and most_recent_timestamp > cutoff_time:
             recent_node_ids.add(node_id)
@@ -124,12 +130,12 @@ def analyze_data(data):
 
         # Determine if this node is missing (not heard from in 24+ hours)
         is_missing_node = node_id not in recent_node_ids
-        
+
         # Calculate time since last heard from
         most_recent_timestamp = system_timestamp or battery_timestamp
         last_heard = None
         if most_recent_timestamp:
-            if hasattr(most_recent_timestamp, 'to_pydatetime'):
+            if hasattr(most_recent_timestamp, "to_pydatetime"):
                 last_heard = most_recent_timestamp.to_pydatetime()
             elif isinstance(most_recent_timestamp, str):
                 last_heard = pd.to_datetime(most_recent_timestamp).to_pydatetime()
