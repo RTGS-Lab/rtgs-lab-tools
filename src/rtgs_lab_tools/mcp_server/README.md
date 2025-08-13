@@ -141,6 +141,13 @@ The server provides these tool categories:
 - **sensing_data_list_projects**: List available monitoring projects
 - **gridded_data_era5**: Download ERA5 climate reanalysis data
 - **gridded_data_list_variables**: List available climate variables
+- **gridded_data_list_gee_datasets**: List available GEE datasets
+- **gridded_data_list_gee_variables**: List available variables for a given GEE dataset
+- **gridded_data_get_gee_point**: Download GEE point data to the local path
+- **gridded_data_get_gee_raster**: Download GEE raster data to gdrive or gbucket
+- **gridded_data_planet_search**: Search for PlanetLabs imagery between dates
+- **gridded_data_download_scenes**: Downloading PlanetLabs scenes
+- **gridded_data_download_clipped_scenes**: Downloading clipped PlanetLabs scenes
 
 ### Data Analysis & Visualization  
 - **visualization_create**: Generate time-series plots and visualizations
@@ -188,6 +195,16 @@ claude
 
 **Climate data analysis**:
 > "Download ERA5 temperature and precipitation data for Minnesota in 2023, then create a comparison plot"
+
+**GEE Data**:
+> "list available GEE datasets"
+> "list available variables for ESA dataset"
+> "download ESA data for 50N 60E to ./data/test"
+
+**Planet Labs Data**:
+> "search for PlanetScope imagery between 2020-06-01 and 2022-06-01 for the given roi and save it to ./data"
+> "download PlanetScope scenes from the search results file to ./data"
+> "download clipped PlanetScope imagery from the search results file to ./data for the given roi"
 
 ## Troubleshooting
 
