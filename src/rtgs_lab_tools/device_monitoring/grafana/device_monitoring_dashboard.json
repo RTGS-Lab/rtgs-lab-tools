@@ -1,0 +1,902 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Device monitoring dashboard showing flagged devices prominently and normal devices in collapsible sections",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "📊 Overview",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "displayLabels": [
+          "name",
+          "value",
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "visible",
+          "placement": "bottom",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${datasource}"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "WITH device_data AS (\n  SELECT \n    node_id,\n    (elems1->'Kestrel'->'PORT_V'->>0)::float as battery_voltage,\n    (elems1->'Kestrel'->'AVG_P'->>1)::float as system_power,\n    publish_time,\n    ROW_NUMBER() OVER (PARTITION BY node_id ORDER BY publish_time DESC) as rn\n  FROM raw r,\n  jsonb_array_elements((r.message::jsonb)->'Diagnostic'->'Devices') elems1\n  WHERE r.publish_time > NOW() - INTERVAL '1 day'\n    AND r.event = 'diagnostic/v2'\n    AND elems1 ? 'Kestrel'\n    AND is_valid_json(r.message) \n    AND is_valid_time(r.message)\n),\nlatest_per_device AS (\n  SELECT \n    node_id,\n    battery_voltage,\n    system_power,\n    publish_time\n  FROM device_data \n  WHERE rn = 1\n)\nSELECT \n  CASE \n    WHEN battery_voltage < 3.6 OR system_power > 0.364\n    THEN 'Flagged Devices'\n    ELSE 'Normal Devices'\n  END as device_status,\n  COUNT(*) as value\nFROM latest_per_device\nGROUP BY device_status;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Device Status Overview",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${datasource}"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "WITH device_data AS (\n  SELECT \n    node_id,\n    (elems1->'Kestrel'->'PORT_V'->>0)::float as battery_voltage,\n    (elems1->'Kestrel'->'AVG_P'->>1)::float as system_power,\n    publish_time,\n    ROW_NUMBER() OVER (PARTITION BY node_id ORDER BY publish_time DESC) as rn\n  FROM raw r,\n  jsonb_array_elements((r.message::jsonb)->'Diagnostic'->'Devices') elems1\n  WHERE r.publish_time > NOW() - INTERVAL '1 day'\n    AND r.event = 'diagnostic/v2'\n    AND elems1 ? 'Kestrel'\n    AND is_valid_json(r.message) \n    AND is_valid_time(r.message)\n),\nlatest_per_device AS (\n  SELECT \n    node_id,\n    battery_voltage,\n    system_power,\n    publish_time,\n    CASE WHEN battery_voltage < 3.6 THEN 1 ELSE 0 END as battery_alert,\n    CASE WHEN system_power > 0.364 THEN 1 ELSE 0 END as power_alert,\n    CASE WHEN publish_time < NOW() - INTERVAL '2 hours' THEN 1 ELSE 0 END as offline_alert,\n    CASE \n      WHEN battery_voltage < 3.6 OR system_power > 0.364 OR publish_time < NOW() - INTERVAL '2 hours'\n      THEN 1 ELSE 0\n    END as flagged\n  FROM device_data \n  WHERE rn = 1\n)\nSELECT 'Total Devices' as metric, COUNT(*) as value FROM latest_per_device\nUNION ALL\nSELECT 'Flagged' as metric, SUM(flagged) as value FROM latest_per_device\nUNION ALL\nSELECT 'Battery Alerts' as metric, SUM(battery_alert) as value FROM latest_per_device\nUNION ALL\nSELECT 'Power Alerts' as metric, SUM(power_alert) as value FROM latest_per_device\nUNION ALL\nSELECT 'Offline Devices' as metric, SUM(offline_alert) as value FROM latest_per_device;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "Alert Summary",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 4,
+      "panels": [],
+      "title": "🚨 FLAGGED DEVICES (Always Visible)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "alerting": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "🚨 ALERT"
+                },
+                "ok": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "✅ OK"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "alert_state"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "battery_voltage"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 3.6
+                    },
+                    {
+                      "color": "green",
+                      "value": 3.8
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "volt"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "system_power"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 0.3
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.364
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "watt"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "alert_priority"
+          }
+        ]
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${datasource}"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "WITH device_data AS (\n  SELECT \n    node_id,\n    (elems1->'Kestrel'->'PORT_V'->>0)::float as battery_voltage,\n    (elems1->'Kestrel'->'AVG_P'->>1)::float as system_power,\n    publish_time,\n    ROW_NUMBER() OVER (PARTITION BY node_id ORDER BY publish_time DESC) as rn\n  FROM raw r,\n  jsonb_array_elements((r.message::jsonb)->'Diagnostic'->'Devices') elems1\n  WHERE r.publish_time > NOW() - INTERVAL '1 day'\n    AND r.event = 'diagnostic/v2'\n    AND elems1 ? 'Kestrel'\n    AND is_valid_json(r.message) \n    AND is_valid_time(r.message)\n),\nlatest_per_device AS (\n  SELECT \n    node_id,\n    battery_voltage,\n    system_power,\n    publish_time\n  FROM device_data \n  WHERE rn = 1\n)\nSELECT \n  node_id as \"Device ID\",\n  node_id as \"Device Name\",\n  CASE \n    WHEN battery_voltage < 3.6 AND system_power > 0.364\n    THEN 'Low Battery + High Power'\n    WHEN battery_voltage < 3.6 \n    THEN 'Low Battery'\n    WHEN system_power > 0.364 \n    THEN 'High Power'\n    WHEN publish_time < NOW() - INTERVAL '2 hours'\n    THEN 'Offline'\n    ELSE 'Alert'\n  END as \"Status\",\n  ROUND(battery_voltage::numeric, 2) as \"Battery (V)\",\n  ROUND(system_power::numeric, 3) as \"Power (W)\",\n  ROUND(EXTRACT(EPOCH FROM (NOW() - publish_time))/60::numeric, 1) as \"Minutes Since Seen\",\n  publish_time as \"Last Seen\"\nFROM latest_per_device\nWHERE battery_voltage < 3.6 OR system_power > 0.364 OR publish_time < NOW() - INTERVAL '2 hours'\nORDER BY \n  CASE \n    WHEN battery_voltage < 3.6 THEN 1\n    WHEN system_power > 0.364 THEN 2  \n    WHEN publish_time < NOW() - INTERVAL '2 hours' THEN 3\n    ELSE 4\n  END,\n  publish_time DESC;",
+          "refId": "A",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "column"
+              }
+            ]
+          ],
+          "timeColumn": "time",
+          "where": [
+            {
+              "name": "$__timeFilter",
+              "params": [],
+              "type": "macro"
+            }
+          ]
+        }
+      ],
+      "title": "🚨 Devices Requiring Attention",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "alert_priority": true
+            },
+            "indexByName": {},
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 6,
+      "panels": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              },
+              "mappings": [
+                {
+                  "options": {
+                    "alerting": {
+                      "color": "red",
+                      "index": 0,
+                      "text": "🚨 ALERT"
+                    },
+                    "ok": {
+                      "color": "green",
+                      "index": 1,
+                      "text": "✅ OK"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "alert_state"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "battery_voltage"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "volt"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "system_power"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "watt"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 19
+          },
+          "id": 7,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "Device Name"
+              }
+            ]
+          },
+          "pluginVersion": "9.0.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "postgres",
+                "uid": "${datasource}"
+              },
+              "format": "table",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "WITH device_data AS (\n  SELECT \n    node_id,\n    (elems1->'Kestrel'->'PORT_V'->>0)::float as battery_voltage,\n    (elems1->'Kestrel'->'AVG_P'->>1)::float as system_power,\n    publish_time,\n    ROW_NUMBER() OVER (PARTITION BY node_id ORDER BY publish_time DESC) as rn\n  FROM raw r,\n  jsonb_array_elements((r.message::jsonb)->'Diagnostic'->'Devices') elems1\n  WHERE r.publish_time > NOW() - INTERVAL '1 day'\n    AND r.event = 'diagnostic/v2'\n    AND elems1 ? 'Kestrel'\n    AND is_valid_json(r.message) \n    AND is_valid_time(r.message)\n),\nlatest_per_device AS (\n  SELECT \n    node_id,\n    battery_voltage,\n    system_power,\n    publish_time\n  FROM device_data \n  WHERE rn = 1\n)\nSELECT \n  node_id as \"Device ID\",\n  node_id as \"Device Name\",\n  '✅ Normal' as \"Status\",\n  ROUND(battery_voltage::numeric, 2) as \"Battery (V)\",\n  ROUND(system_power::numeric, 3) as \"Power (W)\",\n  ROUND(EXTRACT(EPOCH FROM (NOW() - publish_time))/60::numeric, 1) as \"Minutes Since Seen\",\n  publish_time as \"Last Seen\"\nFROM latest_per_device\nWHERE NOT (battery_voltage < 3.6 OR system_power > 0.364 OR publish_time < NOW() - INTERVAL '2 hours')\nORDER BY node_id;",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "title": "✅ Normal Operating Devices",
+          "type": "table"
+        }
+      ],
+      "title": "✅ NORMAL DEVICES (Click to expand)",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 19
+      },
+      "id": 8,
+      "panels": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "vis": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "line"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 3.6
+                  }
+                ]
+              },
+              "unit": "volt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 20
+          },
+          "id": 9,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "postgres",
+                "uid": "${datasource}"
+              },
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT \n  $__timeGroup(r.publish_time,'1h') as time,\n  r.node_id as metric,\n  AVG((r.message::jsonb->'Data'->'Devices'->0->'PORT_V'->0)::text::numeric) as value\nFROM raw r\nJOIN node n ON r.node_id = n.node_id\nWHERE $__timeFilter(r.publish_time)\n  AND ($project = 'ALL' OR n.project = '$project')\n  AND r.message::jsonb ? 'Data'\n  AND r.message::jsonb->'Data' ? 'Devices'\n  AND jsonb_array_length(r.message::jsonb->'Data'->'Devices') > 0\n  AND r.message::jsonb->'Data'->'Devices'->0 ? 'PORT_V'\nGROUP BY time, r.node_id\nORDER BY time",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "title": "Battery Voltage Over Time",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "vis": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "line"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.364
+                  }
+                ]
+              },
+              "unit": "watt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 20
+          },
+          "id": 10,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "postgres",
+                "uid": "${datasource}"
+              },
+              "format": "time_series",
+              "group": [],
+              "metricColumn": "none",
+              "rawQuery": true,
+              "rawSql": "SELECT \n  $__timeGroup(r.publish_time,'1h') as time,\n  r.node_id as metric,\n  AVG((r.message::jsonb->'Data'->'Devices'->0->'AVG_P'->1)::text::numeric) as value\nFROM raw r\nJOIN node n ON r.node_id = n.node_id\nWHERE $__timeFilter(r.publish_time)\n  AND ($project = 'ALL' OR n.project = '$project')\n  AND r.message::jsonb ? 'Data'\n  AND r.message::jsonb->'Data' ? 'Devices'\n  AND jsonb_array_length(r.message::jsonb->'Data'->'Devices') > 0\n  AND r.message::jsonb->'Data'->'Devices'->0 ? 'AVG_P'\nGROUP BY time, r.node_id\nORDER BY time",
+              "refId": "A",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "column"
+                  }
+                ]
+              ],
+              "timeColumn": "time",
+              "where": [
+                {
+                  "name": "$__timeFilter",
+                  "params": [],
+                  "type": "macro"
+                }
+              ]
+            }
+          ],
+          "title": "System Power Over Time",
+          "type": "timeseries"
+        }
+      ],
+      "title": "📈 HISTORICAL TRENDS (Click to expand)",
+      "type": "row"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": [
+    "device-monitoring",
+    "iot",
+    "gems"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "PostgreSQL",
+          "value": "PostgreSQL"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Data Source",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "postgres",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "ALL",
+          "value": "ALL"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "${datasource}"
+        },
+        "definition": "SELECT project FROM device_monitoring_summary ORDER BY CASE WHEN project = 'ALL' THEN 0 ELSE 1 END, project",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Project",
+        "multi": false,
+        "name": "project",
+        "options": [],
+        "query": "SELECT project FROM device_monitoring_summary ORDER BY CASE WHEN project = 'ALL' THEN 0 ELSE 1 END, project",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Device Monitoring Dashboard",
+  "uid": "device-monitoring-main",
+  "version": 1,
+  "weekStart": ""
+}
