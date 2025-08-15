@@ -13,6 +13,7 @@ The MCP server exposes all RTGS Lab Tools functionality through a conversational
 - Parse and process sensor data files
 - Calculate agricultural metrics (GDD, CHU, ET)
 - Track tool usage and generate audit reports
+- Extract data from the GEMS Exchange APIs for weather, climate, soils, crops, and land cover
 
 ## Installation
 
@@ -79,6 +80,11 @@ The repository includes a `.mcp.json` file that Claude Code CLI will automatical
       "type": "stdio",
       "command": "./venv/bin/python",
       "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+    },
+    "gems-exchange": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "-m", "rtgs_lab_tools.mcp_server.exchange-mcp-server.server"]
     }
   }
 }
@@ -115,6 +121,16 @@ The installation script (`install.sh`) automatically configures Claude Desktop b
     "rtgs_lab_tools": {
       "command": "/path/to/rtgs-lab-tools/venv/bin/python",
       "args": ["-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+    },
+    "gems-exchange": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/path/to/rtgs-lab-tools",
+        "run",
+        "-m",
+        "rtgs_lab_tools.mcp_server.exchange-mcp-server.server"
+      ]
     }
   }
 }
@@ -161,6 +177,18 @@ The server provides these tool categories:
 - **particle_get_device_vitals**: Check device status and vitals
 - **particle_call_function**: Execute functions on devices
 
+### GEMS Exchange Data Access
+- **Weather Data**: Current conditions, forecasts, historical weather, severe weather alerts
+- **Climate Data**: Long-term climate datasets from CRU, Daymet, PRISM sources
+- **Soil Properties**: Physical and chemical soil characteristics with spatial coverage
+- **Crop Information**: Global crop calendars, planting/harvest dates
+- **Land Cover**: LCMAP, NLCD, Cropland Data Layer for land use analysis
+- **Biotic Risk**: Agricultural pest and pathogen risk geographies (24 risk types)
+- **Elevation**: Digital elevation models, terrain analysis, slope calculations
+- **Hydrology**: Water quality data, watershed boundaries, lake characteristics
+- **Market Access**: Global accessibility indicators, travel time to cities/ports
+- **Plant Varieties**: Pedigree information, coefficient of parentage calculations
+
 ### Audit & Reporting
 - **audit_recent_logs**: View recent tool usage
 - **audit_generate_report**: Create detailed audit reports
@@ -188,6 +216,15 @@ claude
 
 **Climate data analysis**:
 > "Download ERA5 temperature and precipitation data for Minnesota in 2023, then create a comparison plot"
+
+**GEMS Exchange queries**:
+> "Get current weather conditions and forecast for Minneapolis"
+
+> "Find soil properties for a location at 44.9778° N, 93.2650° W"
+
+> "What are the typical corn planting dates for Iowa?"
+
+> "Analyze land cover changes in Minnesota over the past decade"
 
 ## Troubleshooting
 
@@ -224,6 +261,7 @@ Ensure your `.env` file contains the necessary credentials:
 - `PARTICLE_ACCESS_TOKEN` (device management - use `rtgs auth particle-login` to create)
 - `GEE_PROJECT` (satellite data)
 - `ANTHROPIC_API_KEY` (Claude Code CLI)
+- `GEMS_EXCHANGE_API_KEY` (GEMS Exchange data access - obtain from https://exchange-1.gems.msi.umn.edu)
 
 ### Logging
 
@@ -235,12 +273,13 @@ uv run -m rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server
 
 ## Architecture
 
-The MCP server consists of two main components:
+The MCP server consists of three main components:
 
 1. **RTGS Lab Tools MCP Server**: Core environmental data tools
 2. **Particle MCP Server**: Particle Cloud device management
+3. **GEMS Exchange MCP Server**: Access to external agricultural and environmental APIs
 
-Both servers run independently and can be configured separately. The combined setup provides comprehensive access to environmental sensing workflows through natural language interaction.
+All servers run independently and can be configured separately. The combined setup provides comprehensive access to environmental sensing workflows through natural language interaction, from local sensor data to global climate datasets.
 
 ## Development
 

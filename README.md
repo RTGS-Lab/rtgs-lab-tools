@@ -339,8 +339,11 @@ The system automatically tries credentials in this order:
 This allows lab users to use managed secrets while external users can use local environment variables seamlessly.
 
 ### Optional API Keys
-- **Google Earth Engine**: For satellite data access
-- **Particle Cloud API**: For IoT device management
+- **Google Earth Engine**: For satellite data access (GEE_PROJECT, BUCKET_NAME)
+- **Particle Cloud API**: For IoT device management (PARTICLE_ACCESS_TOKEN)
+- **GEMS Exchange API**: For agricultural and environmental data access (GEMS_EXCHANGE_API_KEY)
+  - Obtain from: https://exchange-1.gems.msi.umn.edu
+- **PlanetLabs API**: For high-resolution satellite imagery (PL_API_KEY)
 
 For detailed configuration instructions, see individual module documentation.
 

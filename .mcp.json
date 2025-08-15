@@ -14,6 +14,11 @@
         "type": "stdio",
         "command": "uv",
         "args": ["run", "-m", "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"]
+      },
+      "gems-exchange": {
+        "type": "stdio",
+        "command": "uv",
+        "args": ["run", "-m", "rtgs_lab_tools.mcp_server.exchange-mcp-server.server"]
       }
     }
   }
