@@ -19,7 +19,28 @@ from datetime import datetime
 import requests
 from dotenv import load_dotenv
 
-from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_POWER_MAX
+from .config import (
+    ACTIVE_NODES_HEADER,
+    ACTIVE_NODES_SEPARATOR_LENGTH,
+    BATTERY_DECIMAL_PRECISION,
+    BATTERY_VOLTAGE_MIN,
+    CRITICAL_ERRORS,
+    HTTP_SUCCESS_CODE,
+    MISSING_NODE_THRESHOLD_HOURS,
+    MISSING_NODES_HEADER,
+    MISSING_NODES_SEPARATOR_LENGTH,
+    PARTICLE_API_BASE_URL,
+    PARTICLE_CONSOLE_BASE_URL,
+    PARTICLE_DEVICE_ENDPOINT,
+    PARTICLE_PRODUCT_ENDPOINT,
+    POWER_UNIT,
+    SECONDS_PER_HOUR,
+    SUMMARY_HEADER,
+    SYSTEM_POWER_DECIMAL_PRECISION,
+    SYSTEM_POWER_MAX,
+    UNKNOWN_VALUE_TEXT,
+    VOLTAGE_UNIT,
+)
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -32,11 +53,11 @@ def get_device_info(node_id):
         return None, None
 
     try:
-        url = f"https://api.particle.io/v1/devices/{node_id}"
+        url = PARTICLE_API_BASE_URL + PARTICLE_DEVICE_ENDPOINT.format(node_id=node_id)
         headers = {"Authorization": f"Bearer {PARTICLE_ACCESS_TOKEN}"}
         response = requests.get(url, headers=headers)
 
-        if response.status_code == 200:
+        if response.status_code == HTTP_SUCCESS_CODE:
             device_data = response.json()
             name = device_data.get("name")
             product_id = device_data.get("product_id")
@@ -53,11 +74,13 @@ def get_product_slug(product_id):
         return None
 
     try:
-        url = f"https://api.particle.io/v1/products/{product_id}"
+        url = PARTICLE_API_BASE_URL + PARTICLE_PRODUCT_ENDPOINT.format(
+            product_id=product_id
+        )
         headers = {"Authorization": f"Bearer {PARTICLE_ACCESS_TOKEN}"}
         response = requests.get(url, headers=headers)
 
-        if response.status_code == 200:
+        if response.status_code == HTTP_SUCCESS_CODE:
             response_data = response.json()
             product_data = response_data.get("product", {})
             return product_data.get("slug")
@@ -71,7 +94,7 @@ def get_console_url(node_id, product_id, slug):
     """Generate Particle console URL for a device."""
     if not slug or not product_id:
         return None
-    return f"https://console.particle.io/{slug}/devices/{node_id}"
+    return f"{PARTICLE_CONSOLE_BASE_URL}/{slug}/devices/{node_id}"
 
 
 def generate_device_card_html(node_id, result, device_name, console_url):
@@ -85,7 +108,7 @@ def generate_device_card_html(node_id, result, device_name, console_url):
 
     # Format timestamp
     timestamp = system_timestamp or battery_timestamp
-    timestamp_str = "Unknown"
+    timestamp_str = UNKNOWN_VALUE_TEXT
     if timestamp is not None:
         if hasattr(timestamp, "strftime"):
             timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
@@ -105,8 +128,16 @@ def generate_device_card_html(node_id, result, device_name, console_url):
     status_text = "⚠️ Alert" if flagged else "✅ Normal"
 
     # Format metrics
-    battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"
-    system_str = f"{system:.3f}W" if system is not None else "Unknown"
+    battery_str = (
+        f"{battery:.{BATTERY_DECIMAL_PRECISION}f}{VOLTAGE_UNIT}"
+        if battery is not None
+        else UNKNOWN_VALUE_TEXT
+    )
+    system_str = (
+        f"{system:.{SYSTEM_POWER_DECIMAL_PRECISION}f}{POWER_UNIT}"
+        if system is not None
+        else UNKNOWN_VALUE_TEXT
+    )
 
     # Color code metrics
     battery_color = (
@@ -132,9 +163,13 @@ def generate_device_card_html(node_id, result, device_name, console_url):
     if flagged:
         issues = []
         if battery is not None and battery < BATTERY_VOLTAGE_MIN:
-            issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
+            issues.append(
+                f"Battery LOW ({battery:.{BATTERY_DECIMAL_PRECISION}f}{VOLTAGE_UNIT} < {BATTERY_VOLTAGE_MIN}{VOLTAGE_UNIT})"
+            )
         if system is not None and system > SYSTEM_POWER_MAX:
-            issues.append(f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)")
+            issues.append(
+                f"System power HIGH ({system:.{SYSTEM_POWER_DECIMAL_PRECISION}f}{POWER_UNIT} > {SYSTEM_POWER_MAX}{POWER_UNIT})"
+            )
 
         # Check for critical errors
         critical_errors = []
@@ -265,16 +300,18 @@ def _build_message_content(analysis_results, add_node_spacing=False):
 
     # Process missing nodes first
     if missing_nodes:
-        lines.append("\n🚨 MISSING NODES (Not heard from in 24+ hours):")
-        lines.append("=" * 60)
+        lines.append(
+            f"\n{MISSING_NODES_HEADER.format(hours=MISSING_NODE_THRESHOLD_HOURS)}"
+        )
+        lines.append("=" * MISSING_NODES_SEPARATOR_LENGTH)
 
     for node_id, result in missing_nodes.items():
         _process_node(node_id, result, lines, add_node_spacing)
 
     # Process active nodes
     if active_nodes:
-        lines.append("\n\n✅ ACTIVE NODES (Recent activity):")
-        lines.append("=" * 40)
+        lines.append(f"\n\n{ACTIVE_NODES_HEADER}")
+        lines.append("=" * ACTIVE_NODES_SEPARATOR_LENGTH)
 
     for node_id, result in active_nodes.items():
         _process_node(node_id, result, lines, add_node_spacing)
@@ -282,7 +319,7 @@ def _build_message_content(analysis_results, add_node_spacing=False):
     # Summary
     missing_count = len(missing_nodes)
     active_count = len(active_nodes)
-    lines.append("\n📊 SUMMARY:")
+    lines.append(f"\n{SUMMARY_HEADER}")
     lines.append(f"Total Nodes Analyzed: {len(analysis_results)}")
     lines.append(f"Missing Nodes: {missing_count} | Active Nodes: {active_count}")
 
@@ -333,8 +370,16 @@ def _process_node(node_id, result, lines, add_spacing=False):
     lines.append(f"\nNode: {node_display} - {status_icon}{timestamp_str}")
 
     # Display metrics
-    battery_str = f"{battery:.2f}V" if battery is not None else "Unknown"
-    system_str = f"{system:.3f}W" if system is not None else "Unknown"
+    battery_str = (
+        f"{battery:.{BATTERY_DECIMAL_PRECISION}f}{VOLTAGE_UNIT}"
+        if battery is not None
+        else UNKNOWN_VALUE_TEXT
+    )
+    system_str = (
+        f"{system:.{SYSTEM_POWER_DECIMAL_PRECISION}f}{POWER_UNIT}"
+        if system is not None
+        else UNKNOWN_VALUE_TEXT
+    )
 
     metrics_line = (
         f"  Battery: {battery_str} | System: {system_str} | Errors: {len(errors)} types"
@@ -358,7 +403,7 @@ def _process_node(node_id, result, lines, add_spacing=False):
             if time_diff.days > 0:
                 time_str = f"{time_diff.days} days"
             else:
-                hours = time_diff.seconds // 3600
+                hours = time_diff.seconds // SECONDS_PER_HOUR
                 time_str = f"{hours} hours"
         else:
             time_str = "unknown time"
@@ -376,9 +421,13 @@ def _process_node(node_id, result, lines, add_spacing=False):
             if battery is not None or system is not None:
                 metrics_parts = []
                 if battery is not None:
-                    metrics_parts.append(f"Battery: {battery:.2f}V")
+                    metrics_parts.append(
+                        f"Battery: {battery:.{BATTERY_DECIMAL_PRECISION}f}{VOLTAGE_UNIT}"
+                    )
                 if system is not None:
-                    metrics_parts.append(f"System: {system:.3f}W")
+                    metrics_parts.append(
+                        f"System: {system:.{SYSTEM_POWER_DECIMAL_PRECISION}f}{POWER_UNIT}"
+                    )
                 if errors:
                     metrics_parts.append(f"Errors: {errors}")
                 if metrics_parts:
@@ -387,9 +436,13 @@ def _process_node(node_id, result, lines, add_spacing=False):
     elif flagged:
         issues = []
         if battery is not None and battery < BATTERY_VOLTAGE_MIN:
-            issues.append(f"Battery LOW ({battery:.2f}V < {BATTERY_VOLTAGE_MIN}V)")
+            issues.append(
+                f"Battery LOW ({battery:.{BATTERY_DECIMAL_PRECISION}f}{VOLTAGE_UNIT} < {BATTERY_VOLTAGE_MIN}{VOLTAGE_UNIT})"
+            )
         if system is not None and system > SYSTEM_POWER_MAX:
-            issues.append(f"System power HIGH ({system:.3f}W > {SYSTEM_POWER_MAX}W)")
+            issues.append(
+                f"System power HIGH ({system:.{SYSTEM_POWER_DECIMAL_PRECISION}f}{POWER_UNIT} > {SYSTEM_POWER_MAX}{POWER_UNIT})"
+            )
 
         # Check for critical errors
         critical_errors = []

@@ -7,9 +7,9 @@ Input:
 Output:
     - Dictionary with analysis results for each node, including:
         - flagged status (True/False)
-        - battery voltage
-        - system usage
-        - errors dictionary with:
+        - battery voltage (float)
+        - system usage (float)
+        - errors dictionary with: (dict)
             - error type as key
             - count as value
 """
@@ -18,7 +18,12 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_POWER_MAX
+from .config import (
+    BATTERY_VOLTAGE_MIN,
+    CRITICAL_ERRORS,
+    MISSING_NODE_THRESHOLD_HOURS,
+    SYSTEM_POWER_MAX,
+)
 
 
 def analyze_data(data):
@@ -48,8 +53,8 @@ def analyze_data(data):
     if system_df is not None and hasattr(system_df, "index"):
         all_node_ids.update(system_df.index)
 
-    # Identify nodes that haven't been heard from in the last 24 hours
-    cutoff_time = datetime.now() - timedelta(hours=24)
+    # Identify nodes that haven't been heard from in the last X hours
+    cutoff_time = datetime.now() - timedelta(hours=MISSING_NODE_THRESHOLD_HOURS)
     recent_node_ids = set()
 
     # Check which nodes have recent data (within 24 hours)

@@ -18,6 +18,7 @@ from ..core.cli_utils import (
     add_common_options,
     handle_common_errors,
 )
+from .config import DATA_COLLECTION_WINDOW_DAYS
 from .core import monitor
 
 
@@ -63,7 +64,9 @@ def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
     start_date_str = (
         start_date.strftime("%Y-%m-%d")
         if start_date
-        else (datetime.now() - timedelta(days=10)).strftime("%Y-%m-%d")
+        else (datetime.now() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime(
+            "%Y-%m-%d"
+        )
     )
     end_date_str = (
         end_date.strftime("%Y-%m-%d")
