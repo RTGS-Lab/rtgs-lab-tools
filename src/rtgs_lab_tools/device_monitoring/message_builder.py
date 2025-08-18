@@ -19,7 +19,7 @@ from datetime import datetime
 import requests
 from dotenv import load_dotenv
 
-from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_POWER_MAX
+from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_POWER_MAX, MISSING_NODE_THRESHOLD_HOURS
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -265,7 +265,7 @@ def _build_message_content(analysis_results, add_node_spacing=False):
 
     # Process missing nodes first
     if missing_nodes:
-        lines.append("\n🚨 MISSING NODES (Not heard from in 24+ hours):")
+        lines.append(f"\n🚨 MISSING NODES (Not heard from in {MISSING_NODE_THRESHOLD_HOURS}+ hours):")
         lines.append("=" * 60)
 
     for node_id, result in missing_nodes.items():

@@ -13,6 +13,7 @@ To run:
 import pprint
 from datetime import datetime, timedelta
 
+from .config import DATA_COLLECTION_WINDOW_DAYS
 from .data_analyzer import analyze_data
 from .data_formatter import format_data_with_parser
 from .data_getter import get_data
@@ -21,7 +22,7 @@ from .notification_system import notify
 
 
 def monitor(
-    start_date=(datetime.now() - timedelta(days=10)).strftime("%Y-%m-%d"),
+    start_date=(datetime.now() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime("%Y-%m-%d"),
     end_date=datetime.now().strftime("%Y-%m-%d"),
     node_ids=None,
     project="ALL",
