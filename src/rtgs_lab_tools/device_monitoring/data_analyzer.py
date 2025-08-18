@@ -18,7 +18,12 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-from .config import BATTERY_VOLTAGE_MIN, CRITICAL_ERRORS, SYSTEM_POWER_MAX, MISSING_NODE_THRESHOLD_HOURS
+from .config import (
+    BATTERY_VOLTAGE_MIN,
+    CRITICAL_ERRORS,
+    MISSING_NODE_THRESHOLD_HOURS,
+    SYSTEM_POWER_MAX,
+)
 
 
 def analyze_data(data):

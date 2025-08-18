@@ -64,7 +64,9 @@ def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
     start_date_str = (
         start_date.strftime("%Y-%m-%d")
         if start_date
-        else (datetime.now() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime("%Y-%m-%d")
+        else (datetime.now() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime(
+            "%Y-%m-%d"
+        )
     )
     end_date_str = (
         end_date.strftime("%Y-%m-%d")

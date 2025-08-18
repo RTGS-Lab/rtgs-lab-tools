@@ -22,7 +22,9 @@ from .notification_system import notify
 
 
 def monitor(
-    start_date=(datetime.now() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime("%Y-%m-%d"),
+    start_date=(datetime.now() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime(
+        "%Y-%m-%d"
+    ),
     end_date=datetime.now().strftime("%Y-%m-%d"),
     node_ids=None,
     project="ALL",
