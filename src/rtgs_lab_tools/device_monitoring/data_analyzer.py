@@ -7,9 +7,9 @@ Input:
 Output:
     - Dictionary with analysis results for each node, including:
         - flagged status (True/False)
-        - battery voltage
-        - system usage
-        - errors dictionary with:
+        - battery voltage (float)
+        - system usage (float)
+        - errors dictionary with: (dict)
             - error type as key
             - count as value
 """

@@ -279,6 +279,7 @@ for project in projects:
 ## Known Bugs
 
 - **--node-ids flag**: Currently not working - all nodes are monitored regardless of this parameter
+- **Missing node error**: Node is marked as missing in report but it is sending data to grafana. Maybe if it sends data packets but no diagnostic packets it gets marked as missing? (reference report on 08/18/2025 node: PepsiCo_001)
 
 ## Planned Future Improvements
 
