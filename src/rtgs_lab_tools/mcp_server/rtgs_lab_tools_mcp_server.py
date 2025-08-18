@@ -57,8 +57,8 @@ async def sensing_data_extract(
     """
     Extract raw sensor data from the GEMS Sensing database with automatic git logging.
 
-    This tool extracts environmental sensor data from the GEMS database, processes it,
-    and saves it to CSV or Parquet format. All operations are automatically logged
+    This tool extracts environmental sensor data from the GEMS (Geospatial Environmental Monitoring and Sensing) database, processes it,
+    and saves it to CSV (Comma Separated Values) or Parquet format. All operations are automatically logged
     to git for tracking and reproducibility. Perfect for research data analysis,
     environmental monitoring studies, and scientific investigations.
     The node_id for this function is the node_id in the Particle ecosystem,
@@ -156,7 +156,7 @@ async def sensing_data_list_projects() -> Dict[str, Any]:
     List all available projects in the GEMS Sensing database.
 
     Retrieves a comprehensive list of all environmental monitoring projects
-    available in the GEMS database, including project names and node counts.
+    available in the GEMS (Geospatial Environmental Monitoring and Sensing) database, including project names and node counts.
     Use this to discover what data is available before extracting sensor data.
     Nodes in the Particle ecosystem have a name and a node_id.
     Projects in the database only contain the node_id but not the name,
@@ -223,11 +223,11 @@ async def visualization_create(
     Create professional visualizations from sensor data with automatic git logging.
 
     Generates time-series plots, multi-parameter comparisons, and custom visualizations
-    from GEMS sensor data. Automatically parses sensor messages and creates publication-ready
+    from GEMS (Geospatial Environmental Monitoring and Sensing) sensor data. Automatically parses sensor messages and creates publication-ready
     plots. All visualization operations are logged to git for reproducibility.
 
     Args:
-        file_path: Path to the CSV file containing sensor data (required)
+        file_path: Path to the CSV (Comma Separated Values) file containing sensor data (required)
         parameter: Parameter path to plot (e.g., "Data.Devices.0.Temperature") - single parameter mode
         node_id: Specific node ID to plot when using single parameter mode
         multi_param: List of parameters as "node_id,parameter_path" for multi-parameter plots
@@ -310,7 +310,7 @@ async def visualization_list_parameters(file_path: str) -> Dict[str, Any]:
     """
     List available parameters in a sensor data file for visualization.
 
-    Analyzes a sensor data CSV file and extracts all available parameters
+    Analyzes a sensor data CSV (Comma Separated Values) file and extracts all available parameters
     that can be visualized, organized by node ID. Essential for discovering
     what data is available for plotting before creating visualizations.
 
@@ -370,6 +370,10 @@ async def device_configuration_update_config(
 ) -> Dict[str, Any]:
     """
     Update configurations on multiple Particle devices with automatic git logging.
+
+    This tool allows you to update the configuration of multiple Particle devices at once.
+    You can provide a JSON (JavaScript Object Notation) file or a JSON string with the new configuration.
+    The tool will then connect to each device and apply the new settings.
 
     Args:
         config: Path to configuration JSON file OR JSON string (required)
@@ -503,7 +507,10 @@ async def device_configuration_decode_system_uid(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Decode system configuration UID from ConfigurationManager.
+    Decode system configuration UID (Unique IDentifier) from ConfigurationManager.
+
+    This tool decodes a system configuration UID to reveal the settings it represents.
+    This is useful for understanding the configuration of a device without having to connect to it.
 
     Args:
         uid: System configuration UID in decimal or hexadecimal format (with 0x prefix)
@@ -563,7 +570,10 @@ async def device_configuration_decode_sensor_uid(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Decode sensor configuration UID from ConfigurationManager.
+    Decode sensor configuration UID (Unique IDentifier) from ConfigurationManager.
+
+    This tool decodes a sensor configuration UID to reveal the settings it represents.
+    This is useful for understanding the configuration of a device without having to connect to it.
 
     Args:
         uid: Sensor configuration UID in decimal or hexadecimal format (with 0x prefix)
@@ -624,7 +634,10 @@ async def device_configuration_decode_both_uids(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Decode both system and sensor configuration UIDs from ConfigurationManager.
+    Decode both system and sensor configuration UIDs (Unique IDentifiers) from ConfigurationManager.
+
+    This tool decodes both a system and a sensor configuration UID to reveal the settings they represent.
+    This is useful for understanding the full configuration of a device without having to connect to it.
 
     Args:
         system_uid: System configuration UID in decimal or hexadecimal format (with 0x prefix)
@@ -687,6 +700,9 @@ async def device_configuration_verify_config(
 ) -> Dict[str, Any]:
     """
     Verify current device configuration by calling Particle functions.
+
+    This tool connects to a Particle device and retrieves its current configuration.
+    This is useful for checking the settings of a device before making changes.
 
     Args:
         device_id: The Particle device ID to verify
@@ -776,7 +792,10 @@ async def device_configuration_create_config(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Create a configuration JSON file with specified parameters.
+    Create a configuration JSON (JavaScript Object Notation) file with specified parameters.
+
+    This tool creates a JSON configuration file that can be used to update the settings of Particle devices.
+    This is useful for creating a standard configuration that can be applied to multiple devices.
 
     Args:
         output: Output file path (default: config.json)
@@ -920,6 +939,9 @@ async def device_configuration_create_devices(
     """
     Create a devices.txt file with specified device IDs.
 
+    This tool creates a text file containing a list of Particle device IDs.
+    This file can then be used with other tools to perform actions on multiple devices at once.
+
     Args:
         output: Output file path (default: devices.txt)
         devices: List of device IDs to include (optional)
@@ -1019,7 +1041,16 @@ async def device_configuration_create_devices(
 
 @mcp.tool("gridded_data_list_variables")
 async def gridded_data_list_variables() -> Dict[str, Any]:
-    """List available ERA5 variables for download."""
+    """
+    List available ERA5 variables for download.
+
+    **DEPRECATED**: This tool is deprecated and will be removed in a future version.
+    Please use `gridded_data_list_gee_datasets` and `gridded_data_list_gee_variables` instead.
+
+    This tool lists the available variables from the ERA5 dataset.
+    ERA5 is a global climate reanalysis dataset produced by the European Centre for Medium-Range Weather Forecasts (ECMWF).
+
+    """
     try:
         original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
@@ -1055,7 +1086,10 @@ async def gridded_data_list_gee_datasets(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    List available GEE datasets.
+    List available Google Earth Engine (GEE) datasets.
+
+    This tool queries the system for all available GEE datasets that can be used with other tools.
+    It's a good starting point to see what data is available for analysis.
 
     Args:
         note: Description for this operation (optional)
@@ -1113,7 +1147,10 @@ async def gridded_data_list_gee_variables(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    List available variables for a given GEE dataset.
+    List available variables for a given Google Earth Engine (GEE) dataset.
+
+    This tool inspects a specific GEE dataset and lists all the variables (e.g., temperature, precipitation) it contains.
+    This is useful for understanding what data you can extract from a dataset.
 
     Args:
         source: Dataset to list variables from (required)
@@ -1179,7 +1216,10 @@ async def gridded_data_get_gee_point(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Download GEE point data to the local path.
+    Download Google Earth Engine (GEE) point data to the local path.
+
+    This tool extracts time-series data for specific variables from a GEE dataset for a given point of interest.
+    It's useful for getting data for a specific location, like a weather station or a field site.
 
     Args:
         source: A source of gridded data to download (short name).
@@ -1261,7 +1301,10 @@ async def gridded_data_get_gee_raster(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Download GEE raster data to gdrive or gbucket.
+    Download Google Earth Engine (GEE) raster data to Google Drive or Google Cloud Storage.
+
+    This tool downloads a raster image (i.e., a grid of pixels) from a GEE dataset for a specific region of interest.
+    This is useful for getting spatial data, like a satellite image or a climate map.
 
     Args:
         source: A source of gridded data to download (short name).
@@ -1269,7 +1312,7 @@ async def gridded_data_get_gee_raster(
         start_date: Start date (YYYY-MM-DD).
         end_date: End date (YYYY-MM-DD).
         roi: Region of interest coordinates file path.
-        out_dest: Output destination: drive (google-drive) or bucket (google-bucket).
+        out_dest: Output destination: drive (Google Drive) or bucket (Google Cloud Storage).
         folder: Output destination folder.
         note: Description for this operation (optional).
 
@@ -1334,6 +1377,86 @@ async def gridded_data_get_gee_raster(
         }
 
 
+@mcp.tool("gridded_data_gee_search")
+async def gridded_data_gee_search(
+    source: str,
+    start_date: str,
+    end_date: str,
+    roi: str,
+    out_dir: str,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Search for Google Earth Engine (GEE) imagery between dates.
+
+    This tool searches for GEE imagery within a specified date range and region of interest.
+    It returns a list of available images that can then be downloaded.
+
+    Args:
+        source: A source of GEE data to search.
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        roi: Region of interest coordinates file path.
+        out_dir: Local output directory.
+        note: Description for this operation (optional).
+
+    Returns:
+        Dict with success status and search results.
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "gee-search",
+            "--source",
+            source,
+            "--start-date",
+            start_date,
+            "--end-date",
+            end_date,
+            "--roi",
+            roi,
+            "--out-dir",
+            out_dir,
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to search GEE imagery: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
 @mcp.tool("gridded_data_planet_search")
 async def gridded_data_planet_search(
     source: str,
@@ -1345,7 +1468,10 @@ async def gridded_data_planet_search(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Search for PlanetLabs imagery between dates.
+    Search for Planet Labs imagery between dates.
+
+    This tool searches for Planet Labs imagery within a specified date range and region of interest.
+    It returns a list of available images that can then be downloaded.
 
     Args:
         source: A source of Planet data: PSScene (PlanetScope), SkySatScene (SkySat).
@@ -1428,7 +1554,10 @@ async def gridded_data_download_scenes(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Downloading PlanetLabs scenes.
+    Download Planet Labs scenes.
+
+    This tool downloads full Planet Labs scenes to your local computer.
+    You can either provide a list of scene IDs or a date range and region of interest to download.
 
     Args:
         source: A source of Planet data: PSScene (PlanetScope), SkySatScene (SkySat).
@@ -1518,7 +1647,10 @@ async def gridded_data_download_clipped_scenes(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Downloading clipped PlanetLabs scenes.
+    Download clipped Planet Labs scenes.
+
+    This tool downloads Planet Labs scenes that are clipped to a specific region of interest.
+    This is useful for reducing the file size and processing time of your imagery.
 
     Args:
         source: One source of Planet data: PSScene (PlanetScope) or SkySatScene (SkySat).
@@ -1608,6 +1740,9 @@ async def agricultural_crop_parameters(
     """
     Get crop parameters for growing degree day calculations.
 
+    This tool retrieves the base and upper temperature thresholds for a specific crop, which are used to calculate growing degree days (GDD).
+    GDD is a measure of heat accumulation used to predict plant development rates.
+
     Args:
         crop: Specific crop to show parameters for (optional - if not provided, lists all crops)
         note: Description for this operation (optional)
@@ -1673,6 +1808,9 @@ async def agricultural_calculate_gdd(
 ) -> Dict[str, Any]:
     """
     Calculate Growing Degree Days for a crop.
+
+    This tool calculates the Growing Degree Days (GDD) for a specific crop based on the minimum and maximum daily temperatures.
+    GDD is a measure of heat accumulation used to predict plant development rates.
 
     Args:
         t_min: Minimum temperature (°C)
@@ -1745,6 +1883,9 @@ async def agricultural_calculate_chu(
     """
     Calculate Corn Heat Units (CHU).
 
+    This tool calculates the Corn Heat Units (CHU) based on the minimum and maximum daily temperatures.
+    CHU is a measure of heat accumulation used to predict the development of corn.
+
     Args:
         t_min: Minimum temperature (°C)
         t_max: Maximum temperature (°C)
@@ -1811,7 +1952,10 @@ async def agricultural_calculate_et(
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Calculate reference evapotranspiration from weather data CSV.
+    Calculate reference evapotranspiration from weather data CSV (Comma Separated Values).
+
+    This tool calculates the reference evapotranspiration (ET) from a CSV file containing weather data.
+    ET is the amount of water that is evaporated from the soil and transpired by plants.
 
     Args:
         input_file: Path to the CSV file containing weather data (required)
@@ -1881,6 +2025,8 @@ async def agricultural_et_requirements(
     """
     Show required columns for evapotranspiration calculation.
 
+    This tool lists the required columns that must be present in the input CSV (Comma Separated Values) file for the `agricultural_calculate_et` tool to work correctly.
+
     Args:
         note: Description for this operation (optional)
 
@@ -1949,10 +2095,10 @@ async def device_monitoring_monitor(
     """
     Monitor device data and analyze for alerts with automatic git logging.
 
-    Monitors environmental sensor devices for battery voltage, system current,
-    and error conditions. Analyzes data against thresholds and provides
-    notification-ready results. All monitoring operations are logged to git
-    for tracking and reproducibility.
+    This tool monitors environmental sensor devices for battery voltage, system current,
+    and error conditions. It analyzes the data against predefined thresholds and provides
+    a summary of the results, which can be used to generate alerts.
+    All monitoring operations are logged to git for tracking and reproducibility.
 
     Args:
         start_date: Start date in YYYY-MM-DD format (default: yesterday)
