@@ -724,11 +724,11 @@ async def device_configuration_verify_config(
 
         # Call getSystemConfig and getSensorConfig functions
         try:
-            system_config_success, system_config_value, system_config_timeout = particle_api.call_function(
-                device_id, "getSystemConfig", ""
+            system_config_success, system_config_value, system_config_timeout = (
+                particle_api.call_function(device_id, "getSystemConfig", "")
             )
-            sensor_config_success, sensor_config_value, sensor_config_timeout = particle_api.call_function(
-                device_id, "getSensorConfig", ""
+            sensor_config_success, sensor_config_value, sensor_config_timeout = (
+                particle_api.call_function(device_id, "getSensorConfig", "")
             )
 
             verification_results = {

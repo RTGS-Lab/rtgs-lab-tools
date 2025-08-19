@@ -87,9 +87,7 @@ def update_config(
 
         # Create updater with appropriate postgres logging settings
         # Disable particle-specific postgres logging if CLI postgres logging is enabled to avoid duplicates
-        enable_particle_postgres_log = (
-            not no_postgres_log
-        )
+        enable_particle_postgres_log = not no_postgres_log
 
         updater = ParticleConfigUpdater(
             enable_postgres_logging=enable_particle_postgres_log, config=app_config
