@@ -47,7 +47,6 @@ def update_config(
     online_timeout,
     max_concurrent,
     dry_run,
-    no_particle_git_log,
     verbose,
     log_file,
     no_postgres_log,
@@ -88,9 +87,7 @@ def update_config(
 
         # Create updater with appropriate postgres logging settings
         # Disable particle-specific postgres logging if CLI postgres logging is enabled to avoid duplicates
-        enable_particle_postgres_log = (
-            not no_particle_postgres_log and not no_postgres_log
-        )
+        enable_particle_postgres_log = not no_postgres_log
 
         updater = ParticleConfigUpdater(
             enable_postgres_logging=enable_particle_postgres_log, config=app_config

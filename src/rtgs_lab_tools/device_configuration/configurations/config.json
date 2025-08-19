@@ -12,7 +12,7 @@
       "sensors": {
         "numET": 0,
         "numHaar": 0,
-        "numSoil": 1,
+        "numSoil": 2,
         "numApogeeSolar": 0,
         "numCO2": 0,
         "numO2": 0,

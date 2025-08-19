@@ -397,13 +397,13 @@ async def device_configuration_update_config(
         try:
             from ..core.config import Config
             from ..device_configuration.particle_client import (
-                ParticleAPI,
+                ParticleClient,
                 parse_device_input,
             )
 
             device_ids = parse_device_input(devices)
             app_config = Config()
-            particle_api = ParticleAPI(app_config.particle_access_token)
+            particle_api = ParticleClient(app_config)
 
             # Verify a sample of devices (first 3) to avoid overwhelming the API
             sample_devices = device_ids[:3] if len(device_ids) > 3 else device_ids
@@ -713,35 +713,35 @@ async def device_configuration_verify_config(
     """
     try:
         from ..core.config import Config
-        from ..device_configuration.particle_client import ParticleAPI
+        from ..device_configuration.particle_client import ParticleClient
 
         original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
 
         # Initialize Particle API
         app_config = Config()
-        particle_api = ParticleAPI(app_config.particle_access_token)
+        particle_api = ParticleClient(app_config)
 
         # Call getSystemConfig and getSensorConfig functions
         try:
-            system_config_result = particle_api.call_function(
-                device_id, "getSystemConfig", ""
+            system_config_success, system_config_value, system_config_timeout = (
+                particle_api.call_function(device_id, "getSystemConfig", "")
             )
-            sensor_config_result = particle_api.call_function(
-                device_id, "getSensorConfig", ""
+            sensor_config_success, sensor_config_value, sensor_config_timeout = (
+                particle_api.call_function(device_id, "getSensorConfig", "")
             )
 
             verification_results = {
                 "device_id": device_id,
                 "system_config": {
-                    "success": system_config_result.get("return_value") is not None,
-                    "raw_value": system_config_result.get("return_value"),
-                    "error": system_config_result.get("error"),
+                    "success": system_config_success,
+                    "raw_value": system_config_value,
+                    "timeout": system_config_timeout,
                 },
                 "sensor_config": {
-                    "success": sensor_config_result.get("return_value") is not None,
-                    "raw_value": sensor_config_result.get("return_value"),
-                    "error": sensor_config_result.get("error"),
+                    "success": sensor_config_success,
+                    "raw_value": sensor_config_value,
+                    "timeout": sensor_config_timeout,
                 },
             }
 
