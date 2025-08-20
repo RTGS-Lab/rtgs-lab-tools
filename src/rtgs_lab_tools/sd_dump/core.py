@@ -238,14 +238,14 @@ def receive_sd_dump(
                     full_path = full_path.replace(
                         "System Volume Information", "_System Volume Information_"
                     )
-                
+
                 file_size = int(parts[2])
                 total_chunks = int(parts[3])
                 file_num = int(parts[4])
 
                 # Create directory structure if needed
                 # This robustly removes the leading slash on any OS
-                relative_path_str = full_path.lstrip('/')
+                relative_path_str = full_path.lstrip("/")
                 file_path = Path(relative_path_str)
 
                 output_file_path = output_dir / file_path
