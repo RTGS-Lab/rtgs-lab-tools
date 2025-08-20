@@ -264,6 +264,7 @@ The package is organized into specialized modules, each with its own detailed do
 
 - **[Agricultural Modeling](src/rtgs_lab_tools/agricultural_modeling/README.md)** - Crop calculations, unit conversions, and agricultural modeling
 - **[Audit](src/rtgs_lab_tools/audit/README.md)** - Track and analyze tool usage and generate reports
+- **[SD Dump](src/rtgs_lab_tools/sd_dump/README.md)** - Extract and process data from SD cards and data loggers
 - **[Authentication](auth)** - Google Cloud authentication for secure credential management
 
 ### Command Overview

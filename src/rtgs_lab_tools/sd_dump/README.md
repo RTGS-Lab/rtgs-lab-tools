@@ -2,6 +2,63 @@
 
 This module provides tools for both reading from and writing to SD cards on Particle devices over serial communication with CRC verification. The module follows the standard rtgs-lab-tools architecture with a `core.py` module containing the main functionality and a thin CLI wrapper.
 
+### Complete Workflow
+
+1. Connect Particle device to computer via USB with switch turned off.
+2. Power the device on with the switch.
+2. Run the dump command quickly after power-on:
+   ```bash
+   rtgs sd-dump dump --recent 3
+   ```
+3. Tool will:
+   - Auto-detect the device
+   - Send trigger to enter command mode
+   - Download all files with integrity verification
+   - Save files to specified directory
+   - Report progress and completion status
+
+The most common commands are:
+```bash
+rtgs sd-dump dump                # Dump all files from device SD card
+rtgs sd-dump dump --recent 3     # Dump only the most recent 3 files of each type
+rtgs sd-dump dump --recent 3 --skip-trigger  # Dump recent files if already in command mode
+rtgs sd-dump write <filepath>    # Upload config.json to device SD card
+rtgs sd-dump write <filepath> --skip-trigger  # Upload if already in command mode
+```
+
+
+### Troubleshooting
+
+**Already in command mode: (if the lights on the device are already slow blinking)**
+```bash
+rtgs sd-dump dump --skip-trigger
+```
+
+**Slow loading or hangs during detection:**
+- cancel the operation with Ctrl+C and try again
+
+**Device not detected:**
+```bash
+rtgs sd-dump list-ports
+rtgs sd-dump dump --port /dev/ttyUSB0
+```
+
+**Upload configuration file:**
+```bash
+rtgs sd-dump write config.json
+```
+
+**Recent files only:**
+```bash
+rtgs sd-dump dump --recent 5
+```
+
+**Different baud rate:**
+```bash
+rtgs sd-dump dump --baudrate 115200
+rtgs sd-dump write config.json --baudrate 115200
+```
+
 ## Features
 
 - **Auto-detection** of Particle devices on serial ports
@@ -123,7 +180,7 @@ The module implements a robust serial communication protocol for both directions
 
 ## Firmware Requirements
 
-The Particle device must be running firmware with both `dumpSDOverSerial()` and `writeFileOverSerial()` functions implemented in the KestrelFileHandler class.
+The Particle device must be running firmware with both `dumpSDOverSerial()` and `writeFileOverSerial()` functions implemented in the KestrelFileHandler class. This means the device must be v40 or greater to ensure compatibility
 
 ### Required Firmware Commands
 
@@ -166,8 +223,9 @@ The tool handles various error conditions:
 
 ### Complete Workflow
 
-1. Connect Particle device to computer via USB
-2. Run the dump command:
+1. Connect Particle device to computer via USB with switch turned off.
+2. Power the device on with the switch.
+2. Run the dump command quickly after power-on:
    ```bash
    rtgs sd-dump dump --output-dir /home/user/particle_backup
    ```
