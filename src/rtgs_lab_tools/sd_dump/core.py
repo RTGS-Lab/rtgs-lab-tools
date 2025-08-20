@@ -233,15 +233,20 @@ def receive_sd_dump(
             elif line.startswith("FILE_START:"):
                 parts = line.split(":")
                 full_path = parts[1]
+                if "System Volume Information" in full_path:
+                    log(f"Sanitizing protected path: {full_path}")
+                    full_path = full_path.replace(
+                        "System Volume Information", "_System Volume Information_"
+                    )
+
                 file_size = int(parts[2])
                 total_chunks = int(parts[3])
                 file_num = int(parts[4])
 
                 # Create directory structure if needed
-                file_path = Path(full_path)
-                if file_path.parts[0] == "/":
-                    # Remove leading slash to make it relative
-                    file_path = Path(*file_path.parts[1:])
+                # This robustly removes the leading slash on any OS
+                relative_path_str = full_path.lstrip("/")
+                file_path = Path(relative_path_str)
 
                 output_file_path = output_dir / file_path
                 output_file_path.parent.mkdir(parents=True, exist_ok=True)
