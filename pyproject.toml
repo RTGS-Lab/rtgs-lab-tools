@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rtgs-lab-tools"
-version = "0.2.0"
+version = "0.3.0"
 description = "Environmental sensing data tools, gridded climate data access, and IoT device management for RTGS Lab"
 authors = [
     {name = "RTGS Lab", email = "rtgs@umn.edu"},
