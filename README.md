@@ -64,7 +64,11 @@ Before installing RTGS Lab Tools, ensure you have the following software install
   pip3 --version
   ```
 
-#### 4. Additional Requirements
+#### 4. Gcloud CLI
+**Installation**
+Please follow instructions for your operating system: [gcloud install instructions](https://cloud.google.com/sdk/docs/install)
+
+#### 5. Additional Requirements
 - **PostgreSQL client libraries** (for GEMS database access)
 - **[UMN VPN connection](https://it.umn.edu/services-technologies/virtual-private-network-vpn)** (for database access)
 
