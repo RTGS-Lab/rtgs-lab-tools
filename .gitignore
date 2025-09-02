@@ -17,6 +17,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Google Cloud SDK (installed by install.sh)
+google-cloud-sdk/
+GoogleCloudSDKInstaller.exe
+
 # Log files
 *.log
 

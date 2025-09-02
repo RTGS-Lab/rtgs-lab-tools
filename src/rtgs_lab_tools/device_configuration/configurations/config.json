@@ -16,7 +16,8 @@
         "numApogeeSolar": 0,
         "numCO2": 0,
         "numO2": 0,
-        "numPressure": 0
+        "numPressure": 0,
+        "numApogeeAnalog": 1
       }
     }
   }

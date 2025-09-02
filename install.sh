@@ -305,6 +305,170 @@ check_pip() {
    print_success "Found pip at $(which $PIP_CMD)"
 }
 
+# Check if gcloud CLI is available, install if not
+check_gcloud() {
+    print_status "Checking Google Cloud CLI installation..."
+    
+    if command -v gcloud &> /dev/null; then
+        GCLOUD_VERSION=$(gcloud version --format="value(Google Cloud SDK)" 2>/dev/null)
+        print_success "Found gcloud CLI: $GCLOUD_VERSION"
+    else
+        print_status "Google Cloud CLI not found. Installing automatically (no sudo required)..."
+        install_gcloud
+        
+        # Verify installation
+        if command -v gcloud &> /dev/null; then
+            GCLOUD_VERSION=$(gcloud version --format="value(Google Cloud SDK)" 2>/dev/null)
+            print_success "Google Cloud CLI installed successfully: $GCLOUD_VERSION"
+        else
+            print_error "Failed to install Google Cloud CLI automatically."
+            print_error "Please install manually from: https://cloud.google.com/sdk/docs/install"
+            exit 1
+        fi
+    fi
+}
+
+# Install gcloud CLI based on operating system (no sudo required)
+install_gcloud() {
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    GCLOUD_DIR="$SCRIPT_DIR/google-cloud-sdk"
+    
+    case "$OS" in
+        "macos")
+            install_gcloud_macos "$GCLOUD_DIR"
+            ;;
+        "linux")
+            install_gcloud_linux "$GCLOUD_DIR"
+            ;;
+        "windows")
+            install_gcloud_windows "$GCLOUD_DIR"
+            ;;
+        *)
+            print_error "Unsupported OS for automatic gcloud installation: $OS"
+            print_error "Please install manually from: https://cloud.google.com/sdk/docs/install"
+            exit 1
+            ;;
+    esac
+    
+    # Add gcloud to PATH for current session
+    export PATH="$GCLOUD_DIR/bin:$PATH"
+}
+
+# Install gcloud CLI for macOS
+install_gcloud_macos() {
+    local gcloud_dir="$1"
+    print_status "Installing Google Cloud CLI for macOS..."
+    
+    # Detect architecture
+    if [[ "$(uname -m)" == "arm64" ]]; then
+        GCLOUD_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-darwin-arm.tar.gz"
+        ARCHIVE_NAME="google-cloud-cli-darwin-arm.tar.gz"
+    else
+        GCLOUD_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-darwin-x86_64.tar.gz"
+        ARCHIVE_NAME="google-cloud-cli-darwin-x86_64.tar.gz"
+    fi
+    
+    # Download and extract
+    if command -v curl &> /dev/null; then
+        print_status "Downloading Google Cloud CLI archive..."
+        curl -L -o "$ARCHIVE_NAME" "$GCLOUD_URL"
+    elif command -v wget &> /dev/null; then
+        print_status "Downloading Google Cloud CLI archive..."
+        wget -O "$ARCHIVE_NAME" "$GCLOUD_URL"
+    else
+        print_error "Neither curl nor wget found. Cannot download gcloud CLI."
+        exit 1
+    fi
+    
+    print_status "Extracting Google Cloud CLI..."
+    tar -xf "$ARCHIVE_NAME"
+    rm -f "$ARCHIVE_NAME"
+    
+    # Run installation script
+    print_status "Running Google Cloud CLI installation script..."
+    if [[ -x "./google-cloud-sdk/install.sh" ]]; then
+        # Run with non-interactive flags and add to PATH
+        echo -e "y\ny" | ./google-cloud-sdk/install.sh --quiet --path-update=false --command-completion=false
+    else
+        print_error "Installation script not found or not executable"
+        exit 1
+    fi
+}
+
+# Install gcloud CLI for Linux
+install_gcloud_linux() {
+    local gcloud_dir="$1"
+    print_status "Installing Google Cloud CLI for Linux..."
+    
+    GCLOUD_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz"
+    ARCHIVE_NAME="google-cloud-cli-linux-x86_64.tar.gz"
+    
+    # Download and extract
+    if command -v curl &> /dev/null; then
+        print_status "Downloading Google Cloud CLI archive..."
+        curl -L -o "$ARCHIVE_NAME" "$GCLOUD_URL"
+    elif command -v wget &> /dev/null; then
+        print_status "Downloading Google Cloud CLI archive..."
+        wget -O "$ARCHIVE_NAME" "$GCLOUD_URL"
+    else
+        print_error "Neither curl nor wget found. Cannot download gcloud CLI."
+        exit 1
+    fi
+    
+    print_status "Extracting Google Cloud CLI..."
+    tar -xf "$ARCHIVE_NAME"
+    rm -f "$ARCHIVE_NAME"
+    
+    # Run installation script
+    print_status "Running Google Cloud CLI installation script..."
+    if [[ -x "./google-cloud-sdk/install.sh" ]]; then
+        # Run with non-interactive flags and add to PATH
+        echo -e "y\ny" | ./google-cloud-sdk/install.sh --quiet --path-update=false --command-completion=false
+    else
+        print_error "Installation script not found or not executable"
+        exit 1
+    fi
+}
+
+# Install gcloud CLI for Windows
+install_gcloud_windows() {
+    local gcloud_dir="$1"
+    print_status "Installing Google Cloud CLI for Windows..."
+    
+    # For Windows, we'll try to download and run the installer
+    GCLOUD_INSTALLER_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe"
+    INSTALLER_NAME="GoogleCloudSDKInstaller.exe"
+    
+    # Download installer
+    if command -v curl &> /dev/null; then
+        print_status "Downloading Google Cloud CLI installer..."
+        curl -L -o "$INSTALLER_NAME" "$GCLOUD_INSTALLER_URL"
+    elif command -v wget &> /dev/null; then
+        print_status "Downloading Google Cloud CLI installer..."
+        wget -O "$INSTALLER_NAME" "$GCLOUD_INSTALLER_URL"
+    else
+        print_error "Neither curl nor wget found. Cannot download gcloud CLI installer."
+        print_warning "Please download and install manually from: https://cloud.google.com/sdk/docs/install#windows"
+        return 1
+    fi
+    
+    # For Windows, we need to use a different approach since we can't run GUI installers
+    # Let's try the archive method instead
+    print_warning "Windows GUI installer download complete, but automatic installation requires manual steps."
+    print_warning "Running the installer: $INSTALLER_NAME"
+    print_warning "Alternatively, download and extract the archive manually from: https://cloud.google.com/sdk/docs/install#windows"
+    
+    # Try to run installer if in interactive mode
+    if [[ -f "$INSTALLER_NAME" ]]; then
+        print_status "Starting Google Cloud CLI installer..."
+        if command -v cmd.exe &> /dev/null; then
+            cmd.exe /c start "$INSTALLER_NAME"
+        else
+            print_warning "Please run the installer manually: $INSTALLER_NAME"
+        fi
+    fi
+}
+
 # Check if uv is available, install if not
 check_uv() {
    print_status "Checking uv installation..."
@@ -578,6 +742,7 @@ update_installation() {
     update_from_git
     init_submodules
     check_python
+    check_gcloud
     activate_venv
     ensure_uv_in_venv
     install_package
@@ -650,10 +815,14 @@ show_next_steps() {
     echo -e "   ${YELLOW}Device Management (optional for IoT devices):${NC}"
     echo -e "     • PARTICLE_ACCESS_TOKEN"
     
-    echo -e "\n4. ${BLUE}Test the installation:${NC}"
+    echo -e "\n4. ${BLUE}Authenticate with Google Cloud (if using GEE features):${NC}"
+    echo -e "   ${BLUE}gcloud auth login${NC}"
+    echo -e "   ${BLUE}gcloud auth application-default login${NC}"
+    
+    echo -e "\n5. ${BLUE}Test the installation:${NC}"
     echo -e "   ${BLUE}rtgs --help${NC}"
     
-    echo -e "\n5. ${BLUE}List available projects:${NC}"
+    echo -e "\n6. ${BLUE}List available projects:${NC}"
     echo -e "   ${BLUE}rtgs sensing-data list-projects${NC}"
     
     echo -e "\n${BLUE}Documentation:${NC}"
@@ -678,6 +847,7 @@ main() {
         init_submodules
         check_python
         check_pip
+        check_gcloud
         check_uv
         create_venv
         activate_venv
