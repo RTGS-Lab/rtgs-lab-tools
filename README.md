@@ -218,13 +218,18 @@ uv pip install -e ".[all]"
 
 ## Quick Start
 
-### 0. Check Installation and Version
+### 0. Check Installation and Version, and Login
 ```bash
 # Check current version
 rtgs core version
 
 # Check for updates
 rtgs core update
+
+# Login
+rtgs auth login
+# for MSI
+rtgs auth login --headless
 ```
 
 ### 1. List Available Projects
