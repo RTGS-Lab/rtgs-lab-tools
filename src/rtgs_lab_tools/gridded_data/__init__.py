@@ -1,5 +1,8 @@
 """Gridded climate data access tools for RTGS Lab Tools."""
 
+# Import sources for immediate availability
+from .utils import sources
+
 # Empty __init__.py to avoid loading heavy dependencies at import time
 # Functions are imported directly from submodules when needed
 
