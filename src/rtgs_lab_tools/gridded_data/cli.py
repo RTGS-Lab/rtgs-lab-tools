@@ -67,11 +67,11 @@ def download_clipped_scenes(
     cli_ctx.setup("download-scenes", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_clipped_scenes, load_roi
+        from ..gridded_data import download_clipped_scenes, load_roi_json
 
-        # Load ROI from file
+        # Load ROI from file (Planet Labs doesn't use Earth Engine)
         if roi:
-            roi = load_roi(roi).getInfo()
+            roi = load_roi_json(roi)
 
         download_clipped_scenes(
             source=source,
@@ -79,7 +79,7 @@ def download_clipped_scenes(
             roi=roi,
             start_date=start_date,
             end_date=end_date,
-            clouds=clouds,
+            clouds=int(clouds) if clouds else None,
             out_dir=out_dir,
         )
 
@@ -141,11 +141,11 @@ def download_scenes(
     cli_ctx.setup("download-scenes", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_scenes, load_roi
+        from ..gridded_data import download_scenes, load_roi_json
 
-        # Load ROI from file
+        # Load ROI from file (Planet Labs doesn't use Earth Engine)
         if roi:
-            roi = load_roi(roi).getInfo()
+            roi = load_roi_json(roi)
 
         download_scenes(
             source=source,
@@ -153,7 +153,7 @@ def download_scenes(
             roi=roi,
             start_date=start_date,
             end_date=end_date,
-            clouds=clouds,
+            clouds=int(clouds) if clouds else None,
             out_dir=out_dir,
         )
 
@@ -211,11 +211,11 @@ def planet_search(
     cli_ctx.setup("planet-search", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import load_roi, quick_search
+        from ..gridded_data import load_roi_json, quick_search
 
-        # Load ROI from file
+        # Load ROI from file (Planet Labs doesn't use Earth Engine)
         if roi:
-            roi = load_roi(roi).getInfo()
+            roi = load_roi_json(roi)
         # print(roi_bounds)
 
         quick_search(
@@ -223,7 +223,7 @@ def planet_search(
             roi=roi,
             start_date=start_date,
             end_date=end_date,
-            clouds=clouds,
+            clouds=int(clouds) if clouds else None,
             out_dir=out_dir,
         )
 

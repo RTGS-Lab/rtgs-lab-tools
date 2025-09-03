@@ -245,6 +245,7 @@ def download_GEE_raster(
 
     roi = roi.geometry()
 
+    qa_band = None  # Initialize qa_band for climate datasets
     if name in qa_bands.keys():
         qa_band = qa_bands[name]
 

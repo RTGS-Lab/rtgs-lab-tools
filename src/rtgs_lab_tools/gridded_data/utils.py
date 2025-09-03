@@ -21,3 +21,17 @@ qa_bands = {
     "MYD": "state_1km",  # Aqua
     "VIIRS": "QF1",
 }
+
+
+def load_roi_json(path):
+    """Load ROI as plain JSON for Planet Labs (no Earth Engine)"""
+    import json
+    with open(path) as f:
+        roi_geom = json.load(f)
+    
+    # Convert to format Planet Labs functions expect
+    return {
+        "features": [{
+            "geometry": roi_geom
+        }]
+    }
