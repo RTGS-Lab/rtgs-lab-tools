@@ -197,6 +197,10 @@ def download_GEE_point(name, source, bands, roi, start_date, end_date, out_dir):
 
     size = collection.size().getInfo()
     print(f"Found {size} images to process")
+    
+    if size == 0:
+        print("No images found for the specified date range and location")
+        return None
 
     scale = collection.first().select(bands[0]).projection().nominalScale().getInfo()
 
