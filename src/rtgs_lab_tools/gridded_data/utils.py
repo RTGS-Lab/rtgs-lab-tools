@@ -26,12 +26,9 @@ qa_bands = {
 def load_roi_json(path):
     """Load ROI as plain JSON for Planet Labs (no Earth Engine)"""
     import json
+
     with open(path) as f:
         roi_geom = json.load(f)
-    
+
     # Convert to format Planet Labs functions expect
-    return {
-        "features": [{
-            "geometry": roi_geom
-        }]
-    }
+    return {"features": [{"geometry": roi_geom}]}
