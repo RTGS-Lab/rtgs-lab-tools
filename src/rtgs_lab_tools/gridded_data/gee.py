@@ -198,6 +198,10 @@ def download_GEE_point(name, source, bands, roi, start_date, end_date, out_dir):
     size = collection.size().getInfo()
     print(f"Found {size} images to process")
 
+    if size == 0:
+        print("No images found for the specified date range and location")
+        return None
+
     scale = collection.first().select(bands[0]).projection().nominalScale().getInfo()
 
     os.makedirs(out_dir, exist_ok=True)
@@ -245,6 +249,7 @@ def download_GEE_raster(
 
     roi = roi.geometry()
 
+    qa_band = None  # Initialize qa_band for climate datasets
     if name in qa_bands.keys():
         qa_band = qa_bands[name]
 
