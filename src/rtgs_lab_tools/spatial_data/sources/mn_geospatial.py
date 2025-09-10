@@ -40,6 +40,8 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
         
         if access_method == "rest_api":
             return self._extract_from_rest_api()
+        elif access_method == "download":
+            return self._extract_from_download()
         else:
             raise ValueError(f"Unsupported access method: {access_method}")
     
@@ -91,3 +93,117 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
         except Exception as e:
             self.logger.error(f"Failed to process spatial data: {e}")
             raise
+    
+    def _extract_from_download(self) -> "gpd.GeoDataFrame":
+        """Extract from direct file download (GeoPackage, Shapefile, etc.).
+        
+        Returns:
+            GeoDataFrame with extracted features
+        """
+        import tempfile
+        import zipfile
+        import os
+        
+        download_url = self.dataset_config.get("download_url")
+        if not download_url:
+            raise ValueError("No download_url provided in dataset configuration")
+        
+        try:
+            self.logger.info(f"Downloading data from: {download_url}")
+            
+            # Download the file
+            response = self.session.get(download_url, timeout=60)
+            response.raise_for_status()
+            
+            self.logger.info(f"Downloaded {len(response.content)} bytes")
+            
+            # Handle zipped files
+            if download_url.endswith('.zip'):
+                return self._extract_from_zip(response.content)
+            else:
+                # Direct file (GeoPackage, Shapefile, etc.)
+                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                    temp_file.write(response.content)
+                    temp_path = temp_file.name
+                
+                try:
+                    gdf = gpd.read_file(temp_path)
+                    return self._process_extracted_data(gdf)
+                finally:
+                    os.unlink(temp_path)
+                    
+        except Exception as e:
+            self.logger.error(f"Failed to download from {download_url}: {e}")
+            raise
+    
+    def _extract_from_zip(self, zip_content: bytes) -> "gpd.GeoDataFrame":
+        """Extract spatial data from zip file content.
+        
+        Args:
+            zip_content: Raw zip file bytes
+            
+        Returns:
+            GeoDataFrame with extracted features
+        """
+        import tempfile
+        import zipfile
+        import os
+        
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_zip:
+            temp_zip.write(zip_content)
+            temp_zip_path = temp_zip.name
+        
+        try:
+            with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
+                file_list = zip_ref.namelist()
+                self.logger.debug(f"Files in zip: {file_list}")
+                
+                # Look for spatial files (priority order)
+                spatial_extensions = ['.gpkg', '.shp', '.geojson', '.gml']
+                spatial_file = None
+                
+                for ext in spatial_extensions:
+                    matching_files = [f for f in file_list if f.endswith(ext)]
+                    if matching_files:
+                        spatial_file = matching_files[0]  # Take first match
+                        break
+                
+                if not spatial_file:
+                    raise ValueError(f"No spatial files found in zip. Files: {file_list}")
+                
+                self.logger.info(f"Found spatial file: {spatial_file}")
+                
+                # Extract and read
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    zip_ref.extract(spatial_file, temp_dir)
+                    spatial_path = os.path.join(temp_dir, spatial_file)
+                    
+                    gdf = gpd.read_file(spatial_path)
+                    return self._process_extracted_data(gdf)
+                    
+        finally:
+            os.unlink(temp_zip_path)
+    
+    def _process_extracted_data(self, gdf: "gpd.GeoDataFrame") -> "gpd.GeoDataFrame":
+        """Process extracted GeoDataFrame with validation and standardization.
+        
+        Args:
+            gdf: Raw extracted GeoDataFrame
+            
+        Returns:
+            Processed and validated GeoDataFrame
+        """
+        self.logger.info(f"Processing {len(gdf)} extracted features")
+        
+        # Validate and standardize
+        if not self.validate_spatial_integrity(gdf):
+            self.logger.warning("Spatial integrity validation failed")
+        
+        gdf = self.standardize_crs(gdf)
+        
+        # Log summary
+        self.logger.info(f"Successfully processed {len(gdf)} features")
+        self.logger.info(f"CRS: {gdf.crs}")
+        self.logger.info(f"Geometry types: {gdf.geom_type.value_counts().to_dict()}")
+        
+        return gdf

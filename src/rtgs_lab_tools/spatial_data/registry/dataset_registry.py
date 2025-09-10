@@ -9,14 +9,14 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/bdry-dnr-wildlife-mgmt-areas-pub",
-        "service_url": "https://services3.arcgis.com/It5SEVVk6Di7yUwt/arcgis/rest/services/DNR_WILDLIFE_MGMT_AREAS_PUB/FeatureServer/0",
-        "access_method": "rest_api",
-        "file_format": "vector",
+        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/bdry_dnr_wildlife_mgmt_areas_pub/gpkg_bdry_dnr_wildlife_mgmt_areas_pub.zip",
+        "access_method": "download",
+        "file_format": "geopackage",
         "update_frequency": "yearly",
-        "spatial_type": "polygon",
+        "spatial_type": "multipolygon",
         "model_critical": True,
-        "coordinate_system": "EPSG:4326",
-        "expected_features": 1200  # Approximate count for validation
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1731  # Actual count from test
     }
 }
 
