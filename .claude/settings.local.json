@@ -1,0 +1,7 @@
+{
+  "enabledMcpjsonServers": [
+    "particle",
+    "rtgs_lab_tools"
+  ],
+  "enableAllProjectMcpServers": true
+}
