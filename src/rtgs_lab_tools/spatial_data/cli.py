@@ -45,20 +45,23 @@ def list_datasets():
 
 @spatial_data_cli.command()
 @click.option('--dataset', required=True, help='Dataset name to extract')
-@click.option('--output-dir', help='Output directory (default: ./data)')
+@click.option('--output-dir', default='./data', help='Output directory (default: ./data)')
 @click.option('--output-format', default='geoparquet', 
               type=click.Choice(['geoparquet', 'shapefile', 'csv']), 
-              help='Output format')
+              help='Output format (default: geoparquet)')
 @click.option('--create-zip', is_flag=True, help='Create zip archive')
 @click.option('--note', help='Note for logging')
 @click.pass_context
-def extract(ctx, dataset: str, output_dir: Optional[str], output_format: str, 
+def extract(ctx, dataset: str, output_dir: str, output_format: str, 
            create_zip: bool, note: Optional[str]):
-    """Extract spatial dataset."""
+    """Extract spatial dataset and save to file."""
     from .core.extractor import extract_spatial_data
     
     try:
         click.echo(f"Starting extraction of dataset: {dataset}")
+        click.echo(f"Output directory: {output_dir}")
+        click.echo(f"Output format: {output_format}")
+        click.echo()
         
         result = extract_spatial_data(
             dataset_name=dataset,
@@ -74,11 +77,19 @@ def extract(ctx, dataset: str, output_dir: Optional[str], output_format: str,
             click.echo(f"Geometry: {result.get('geometry_type', 'Unknown')}")
             click.echo(f"Duration: {result['duration_seconds']:.1f} seconds")
             
+            # Show file output information
+            if result.get('output_file'):
+                click.echo(f"Output file: {result['output_file']}")
+                if result.get('file_size_mb'):
+                    click.echo(f"File size: {result['file_size_mb']:.2f} MB")
+            
             if result.get('bounds'):
                 bounds = result['bounds']
                 click.echo(f"Bounds: [{bounds[0]:.2f}, {bounds[1]:.2f}, {bounds[2]:.2f}, {bounds[3]:.2f}]")
             
             click.echo(f"Columns: {', '.join(result['columns'])}")
+            click.echo()
+            click.echo("Extraction completed successfully and logged to database!")
         
     except Exception as e:
         click.echo(f"ERROR: Extraction failed: {e}", err=True)

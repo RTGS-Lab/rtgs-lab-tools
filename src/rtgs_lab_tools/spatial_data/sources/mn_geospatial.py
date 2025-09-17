@@ -159,7 +159,8 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
                 self.logger.debug(f"Files in zip: {file_list}")
                 
                 # Look for spatial files (priority order)
-                spatial_extensions = ['.gpkg', '.shp', '.geojson', '.gml']
+                # Vector formats first, then raster formats
+                spatial_extensions = ['.gpkg', '.shp', '.geojson', '.gml', '.asc', '.grid']
                 spatial_file = None
                 
                 for ext in spatial_extensions:
@@ -167,6 +168,13 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
                     if matching_files:
                         spatial_file = matching_files[0]  # Take first match
                         break
+                
+                # Special handling for AAIGRID format (ASCII Grid)
+                if not spatial_file:
+                    # Look for typical AAIGRID files
+                    aaigrid_files = [f for f in file_list if any(keyword in f.lower() for keyword in ['grid', 'asc', 'ascii'])]
+                    if aaigrid_files:
+                        spatial_file = aaigrid_files[0]
                 
                 if not spatial_file:
                     raise ValueError(f"No spatial files found in zip. Files: {file_list}")
@@ -178,11 +186,75 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
                     zip_ref.extract(spatial_file, temp_dir)
                     spatial_path = os.path.join(temp_dir, spatial_file)
                     
-                    gdf = gpd.read_file(spatial_path)
+                    # Handle raster files differently
+                    if any(ext in spatial_file.lower() for ext in ['.asc', 'grid', 'ascii']):
+                        gdf = self._read_raster_as_geodataframe(spatial_path)
+                    else:
+                        gdf = gpd.read_file(spatial_path)
+                    
                     return self._process_extracted_data(gdf)
                     
         finally:
             os.unlink(temp_zip_path)
+    
+    def _read_raster_as_geodataframe(self, raster_path: str) -> "gpd.GeoDataFrame":
+        """Read raster file and convert to GeoDataFrame with grid cell polygons.
+        
+        Args:
+            raster_path: Path to the raster file
+            
+        Returns:
+            GeoDataFrame with raster cells as polygons
+        """
+        try:
+            import rasterio
+            import numpy as np
+            from shapely.geometry import box
+        except ImportError as e:
+            raise ImportError(f"rasterio is required for raster processing: {e}")
+        
+        try:
+            with rasterio.open(raster_path) as src:
+                # Read the data
+                data = src.read(1)  # Read first band
+                transform = src.transform
+                crs = src.crs
+                
+                self.logger.info(f"Raster shape: {data.shape}, CRS: {crs}")
+                
+                # Get non-null cells
+                rows, cols = np.where(~np.isnan(data) & (data != src.nodata))
+                
+                if len(rows) == 0:
+                    self.logger.warning("No valid data found in raster")
+                    return gpd.GeoDataFrame()
+                
+                # Convert pixel coordinates to geographic coordinates
+                geometries = []
+                values = []
+                
+                for row, col in zip(rows, cols):
+                    # Get pixel bounds
+                    left, top = rasterio.transform.xy(transform, row, col, offset='ul')
+                    right, bottom = rasterio.transform.xy(transform, row + 1, col + 1, offset='ul')
+                    
+                    # Create polygon for this cell
+                    geom = box(left, bottom, right, top)
+                    geometries.append(geom)
+                    values.append(data[row, col])
+                
+                # Create GeoDataFrame
+                gdf = gpd.GeoDataFrame({
+                    'value': values,
+                    'geometry': geometries
+                }, crs=crs)
+                
+                self.logger.info(f"Converted raster to {len(gdf)} polygon features")
+                return gdf
+                
+        except Exception as e:
+            self.logger.error(f"Failed to read raster file {raster_path}: {e}")
+            raise
     
     def _process_extracted_data(self, gdf: "gpd.GeoDataFrame") -> "gpd.GeoDataFrame":
         """Process extracted GeoDataFrame with validation and standardization.

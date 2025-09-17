@@ -17,6 +17,22 @@ MN_GEOSPATIAL_DATASETS = {
         "model_critical": True,
         "coordinate_system": "EPSG:26915",
         "expected_features": 1731  # Actual count from test
+    },
+    "groundwater_recharge": {
+        "description": "Mean annual potential groundwater recharge rates from 1996-2010 for Minnesota",
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gisdata.mn.gov/id/dataset/geos-gw-recharge-1996-2010-mean",
+        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_pca/geos_gw_recharge_1996_2010_mean/aaigrid_geos_gw_recharge_1996_2010_mean.zip",
+        "access_method": "download",
+        "file_format": "aaigrid",
+        "update_frequency": "static",
+        "spatial_type": "raster",
+        "model_critical": True,
+        "coordinate_system": "unknown",  # Will be determined during extraction
+        "data_source": "U.S. Geological Survey",
+        "temporal_coverage": "1996-2010",
+        "units": "inches/year"
     }
 }
 
