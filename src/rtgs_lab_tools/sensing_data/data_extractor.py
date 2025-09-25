@@ -1,6 +1,7 @@
 """Data extraction functions for GEMS sensing database."""
 
 import logging
+import re
 import time
 from datetime import datetime
 from typing import List, Optional, Tuple
@@ -12,6 +13,39 @@ from ..core import DatabaseManager
 from ..core.exceptions import DatabaseError, ValidationError
 
 logger = logging.getLogger(__name__)
+
+
+def sanitize_filename(filename: str) -> str:
+    """Sanitize filename to be Windows-compatible.
+
+    Args:
+        filename: Original filename string
+
+    Returns:
+        Sanitized filename safe for Windows filesystems
+    """
+    # Replace invalid Windows filename characters with underscores
+    # Invalid characters: < > : " | ? * \ /
+    filename = re.sub(r'[<>:"|?*\\/]', '_', filename)
+
+    # Replace spaces and hyphens with underscores for consistency
+    filename = re.sub(r'[ -]+', '_', filename)
+
+    # Remove multiple consecutive underscores
+    filename = re.sub(r'_+', '_', filename)
+
+    # Remove leading/trailing underscores
+    filename = filename.strip('_')
+
+    # Ensure filename is not empty and not a reserved name
+    reserved_names = {'CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5',
+                     'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4',
+                     'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'}
+
+    if not filename or filename.upper() in reserved_names:
+        filename = 'data_export'
+
+    return filename
 
 
 def list_projects(
@@ -214,9 +248,12 @@ def extract_data(
         if project.lower() == "all":
             filename = f"all_projects_{start_date}_to_{end_date}_{timestamp}"
         else:
-            filename = (
-                f"{project.replace(' ', '_')}_{start_date}_to_{end_date}_{timestamp}"
-            )
+            # Sanitize project name for Windows compatibility
+            sanitized_project = sanitize_filename(project)
+            filename = f"{sanitized_project}_{start_date}_to_{end_date}_{timestamp}"
+
+        # Sanitize the entire filename to ensure Windows compatibility
+        filename = sanitize_filename(filename)
 
         # Save data
         file_path = save_data(df, output_directory, filename, output_format)

@@ -23,7 +23,137 @@ class AuthService:
             )
             return result.returncode == 0
         except (subprocess.TimeoutExpired, FileNotFoundError):
+            # On Windows, try common installation paths
+            if sys.platform.lower() == "win32":
+                return self._check_windows_gcloud_paths()
             return False
+
+    def _check_windows_gcloud_paths(self) -> bool:
+        """Check common Windows paths for gcloud installation."""
+        import shutil
+
+        # Try using shutil.which which checks PATH and PATHEXT on Windows
+        if shutil.which("gcloud"):
+            return True
+
+        # Common Windows installation paths
+        common_paths = [
+            os.path.expanduser("~\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd"),
+            "C:\\Program Files (x86)\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd",
+            "C:\\Program Files\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd",
+            os.path.expanduser("~\\google-cloud-sdk\\bin\\gcloud.cmd"),
+        ]
+
+        for path in common_paths:
+            if os.path.exists(path):
+                try:
+                    result = subprocess.run(
+                        [path, "--version"], capture_output=True, text=True, timeout=10
+                    )
+                    if result.returncode == 0:
+                        return True
+                except (subprocess.TimeoutExpired, FileNotFoundError):
+                    continue
+
+        return False
+
+    def _update_env_file_with_project(self, project_id: str) -> None:
+        """Update .env file with Google Cloud project ID.
+
+        Args:
+            project_id: The Google Cloud project ID to add
+        """
+        env_file_path = ".env"
+
+        # Check if .env file exists in current directory or parent directories
+        current_dir = os.getcwd()
+        while current_dir != os.path.dirname(current_dir):  # Stop at root
+            env_path = os.path.join(current_dir, ".env")
+            if os.path.exists(env_path):
+                env_file_path = env_path
+                break
+            current_dir = os.path.dirname(current_dir)
+
+        try:
+            # Read existing .env file if it exists
+            lines = []
+            env_var_exists = False
+
+            if os.path.exists(env_file_path):
+                with open(env_file_path, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+
+                # Check if GOOGLE_CLOUD_PROJECT already exists and update it
+                for i, line in enumerate(lines):
+                    if line.strip().startswith('GOOGLE_CLOUD_PROJECT'):
+                        lines[i] = f'GOOGLE_CLOUD_PROJECT={project_id}\n'
+                        env_var_exists = True
+                        break
+
+            # Add the environment variable if it doesn't exist
+            if not env_var_exists:
+                # Add a newline if file doesn't end with one
+                if lines and not lines[-1].endswith('\n'):
+                    lines.append('\n')
+                lines.append(f'GOOGLE_CLOUD_PROJECT={project_id}\n')
+
+            # Write back to file
+            with open(env_file_path, 'w', encoding='utf-8') as f:
+                f.writelines(lines)
+
+        except Exception as e:
+            # Don't fail the login if we can't update .env file
+            import logging
+            logging.warning(f"Could not update .env file with project ID: {e}")
+
+    def _get_gcloud_command(self) -> str:
+        """Get the correct gcloud command for the current platform."""
+        # On Windows, use shutil.which first as it handles PATH and PATHEXT properly
+        if sys.platform.lower() == "win32":
+            import shutil
+
+            # Try shutil.which which handles Windows PATH and file extensions correctly
+            gcloud_path = shutil.which("gcloud")
+            if gcloud_path:
+                try:
+                    result = subprocess.run(
+                        [gcloud_path, "--version"], capture_output=True, text=True, timeout=5
+                    )
+                    if result.returncode == 0:
+                        return gcloud_path
+                except (subprocess.TimeoutExpired, FileNotFoundError):
+                    pass
+
+            # Try common Windows installation paths with proper path handling
+            common_paths = [
+                os.path.expanduser(r"~\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd"),
+                r"C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd",
+                r"C:\Program Files\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd",
+                os.path.expanduser(r"~\google-cloud-sdk\bin\gcloud.cmd"),
+            ]
+
+            for path in common_paths:
+                if os.path.exists(path):
+                    try:
+                        result = subprocess.run(
+                            [path, "--version"], capture_output=True, text=True, timeout=5
+                        )
+                        if result.returncode == 0:
+                            return path
+                    except (subprocess.TimeoutExpired, FileNotFoundError):
+                        continue
+
+        # For non-Windows or as fallback, try the standard command
+        try:
+            result = subprocess.run(
+                ["gcloud", "--version"], capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                return "gcloud"
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+
+        return "gcloud"  # Final fallback
 
     def install_gcloud_instructions(self) -> str:
         """Get platform-specific gcloud installation instructions."""
@@ -34,7 +164,10 @@ class AuthService:
 To install Google Cloud CLI on Windows:
 1. Download the installer: https://cloud.google.com/sdk/docs/install-sdk#windows
 2. Or use the Windows installer: https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe
-3. Restart Git Bash after installation
+3. Make sure to check "Add gcloud to PATH" during installation
+4. Restart your terminal/command prompt after installation
+
+If gcloud is installed but not found, you may need to add it to your PATH manually or restart your terminal.
 """
         elif platform == "darwin":
             return """
@@ -73,8 +206,11 @@ To install Google Cloud CLI on Linux:
             }
 
         try:
+            # Get the correct gcloud command
+            gcloud_cmd = self._get_gcloud_command()
+
             # Prepare command based on environment
-            cmd = ["gcloud", "auth", "application-default", "login"]
+            cmd = [gcloud_cmd, "auth", "application-default", "login"]
             if headless:
                 cmd.append("--no-browser")
                 print("Starting headless Google Cloud authentication...")
@@ -93,11 +229,16 @@ To install Google Cloud CLI on Linux:
             # Test authentication by checking Secret Manager access
             auth_status = self.get_auth_status()
             if auth_status["authenticated"]:
+                # Auto-add project ID to .env file if available
+                project_id = auth_status.get("project")
+                if project_id:
+                    self._update_env_file_with_project(project_id)
+
                 return {
                     "success": True,
                     "message": "Successfully authenticated with Google Cloud",
                     "user": auth_status.get("user"),
-                    "project": auth_status.get("project"),
+                    "project": project_id,
                     "secret_manager_access": auth_status.get(
                         "secret_manager_access", False
                     ),
@@ -133,10 +274,13 @@ To install Google Cloud CLI on Linux:
             return status
 
         try:
+            # Get the correct gcloud command
+            gcloud_cmd = self._get_gcloud_command()
+
             # Check if authenticated
             result = subprocess.run(
                 [
-                    "gcloud",
+                    gcloud_cmd,
                     "auth",
                     "list",
                     "--filter=status:ACTIVE",
@@ -153,7 +297,7 @@ To install Google Cloud CLI on Linux:
 
             # Get current project
             result = subprocess.run(
-                ["gcloud", "config", "get-value", "project"],
+                [gcloud_cmd, "config", "get-value", "project"],
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -181,9 +325,12 @@ To install Google Cloud CLI on Linux:
             return {"success": False, "error": "gcloud CLI not found"}
 
         try:
+            # Get the correct gcloud command
+            gcloud_cmd = self._get_gcloud_command()
+
             # Try gcloud revoke with shorter timeout first
             result = subprocess.run(
-                ["gcloud", "auth", "application-default", "revoke"],
+                [gcloud_cmd, "auth", "application-default", "revoke"],
                 capture_output=True,
                 text=True,
                 timeout=10,
