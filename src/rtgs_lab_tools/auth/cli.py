@@ -1,26 +1,27 @@
 """CLI commands for Google Cloud authentication."""
 
 import click
+from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
-from dotenv import load_dotenv
 
 from .auth_service import AuthService
 
 # Load environment variables from .env file
 load_dotenv()
 
+
 # Configure console for Windows Unicode support
 def _create_console():
     """Create a console with Windows Unicode support."""
-    import sys
     import os
+    import sys
 
     # Set UTF-8 encoding for Windows
     if sys.platform.lower() == "win32":
         # Try to set UTF-8 encoding
         try:
-            os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
+            os.environ.setdefault("PYTHONIOENCODING", "utf-8")
         except Exception:
             pass
 
@@ -34,6 +35,7 @@ def _create_console():
     except Exception:
         # Final fallback
         return Console()
+
 
 console = _create_console()
 
@@ -94,6 +96,7 @@ def login(headless):
     else:
         # Use a Windows-compatible spinner
         import sys
+
         spinner_style = "line" if sys.platform.lower() == "win32" else "dots"
         with console.status(
             "[bold blue]Authenticating with Google Cloud...", spinner=spinner_style
@@ -160,7 +163,9 @@ def status():
     if auth_status["authenticated"]:
         table.add_row("Authentication", "[OK] Active", f"User: {auth_status['user']}")
     else:
-        table.add_row("Authentication", "[X] Not authenticated", "Run 'rtgs auth login'")
+        table.add_row(
+            "Authentication", "[X] Not authenticated", "Run 'rtgs auth login'"
+        )
 
     # Project
     if auth_status["project"]:
@@ -321,6 +326,7 @@ def logout():
     if click.confirm("Are you sure you want to logout?"):
         # Use a Windows-compatible spinner
         import sys
+
         spinner_style = "line" if sys.platform.lower() == "win32" else "dots"
         with console.status("[bold blue]Logging out...", spinner=spinner_style):
             result = auth_service.logout()

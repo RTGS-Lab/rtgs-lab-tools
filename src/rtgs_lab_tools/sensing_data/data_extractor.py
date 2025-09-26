@@ -26,24 +26,45 @@ def sanitize_filename(filename: str) -> str:
     """
     # Replace invalid Windows filename characters with underscores
     # Invalid characters: < > : " | ? * \ /
-    filename = re.sub(r'[<>:"|?*\\/]', '_', filename)
+    filename = re.sub(r'[<>:"|?*\\/]', "_", filename)
 
     # Replace spaces and hyphens with underscores for consistency
-    filename = re.sub(r'[ -]+', '_', filename)
+    filename = re.sub(r"[ -]+", "_", filename)
 
     # Remove multiple consecutive underscores
-    filename = re.sub(r'_+', '_', filename)
+    filename = re.sub(r"_+", "_", filename)
 
     # Remove leading/trailing underscores
-    filename = filename.strip('_')
+    filename = filename.strip("_")
 
     # Ensure filename is not empty and not a reserved name
-    reserved_names = {'CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5',
-                     'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4',
-                     'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'}
+    reserved_names = {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9",
+    }
 
     if not filename or filename.upper() in reserved_names:
-        filename = 'data_export'
+        filename = "data_export"
 
     return filename
 

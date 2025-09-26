@@ -38,7 +38,9 @@ class AuthService:
 
         # Common Windows installation paths
         common_paths = [
-            os.path.expanduser("~\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd"),
+            os.path.expanduser(
+                "~\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd"
+            ),
             "C:\\Program Files (x86)\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd",
             "C:\\Program Files\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd",
             os.path.expanduser("~\\google-cloud-sdk\\bin\\gcloud.cmd"),
@@ -80,30 +82,31 @@ class AuthService:
             env_var_exists = False
 
             if os.path.exists(env_file_path):
-                with open(env_file_path, 'r', encoding='utf-8') as f:
+                with open(env_file_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
 
                 # Check if GOOGLE_CLOUD_PROJECT already exists and update it
                 for i, line in enumerate(lines):
-                    if line.strip().startswith('GOOGLE_CLOUD_PROJECT'):
-                        lines[i] = f'GOOGLE_CLOUD_PROJECT={project_id}\n'
+                    if line.strip().startswith("GOOGLE_CLOUD_PROJECT"):
+                        lines[i] = f"GOOGLE_CLOUD_PROJECT={project_id}\n"
                         env_var_exists = True
                         break
 
             # Add the environment variable if it doesn't exist
             if not env_var_exists:
                 # Add a newline if file doesn't end with one
-                if lines and not lines[-1].endswith('\n'):
-                    lines.append('\n')
-                lines.append(f'GOOGLE_CLOUD_PROJECT={project_id}\n')
+                if lines and not lines[-1].endswith("\n"):
+                    lines.append("\n")
+                lines.append(f"GOOGLE_CLOUD_PROJECT={project_id}\n")
 
             # Write back to file
-            with open(env_file_path, 'w', encoding='utf-8') as f:
+            with open(env_file_path, "w", encoding="utf-8") as f:
                 f.writelines(lines)
 
         except Exception as e:
             # Don't fail the login if we can't update .env file
             import logging
+
             logging.warning(f"Could not update .env file with project ID: {e}")
 
     def _get_gcloud_command(self) -> str:
@@ -117,7 +120,10 @@ class AuthService:
             if gcloud_path:
                 try:
                     result = subprocess.run(
-                        [gcloud_path, "--version"], capture_output=True, text=True, timeout=5
+                        [gcloud_path, "--version"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
                     )
                     if result.returncode == 0:
                         return gcloud_path
@@ -126,7 +132,9 @@ class AuthService:
 
             # Try common Windows installation paths with proper path handling
             common_paths = [
-                os.path.expanduser(r"~\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd"),
+                os.path.expanduser(
+                    r"~\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd"
+                ),
                 r"C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd",
                 r"C:\Program Files\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd",
                 os.path.expanduser(r"~\google-cloud-sdk\bin\gcloud.cmd"),
@@ -136,7 +144,10 @@ class AuthService:
                 if os.path.exists(path):
                     try:
                         result = subprocess.run(
-                            [path, "--version"], capture_output=True, text=True, timeout=5
+                            [path, "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=5,
                         )
                         if result.returncode == 0:
                             return path
