@@ -19,10 +19,7 @@ class Config:
         Args:
             env_file: Path to .env file. If None, looks for .env in current directory.
         """
-        # Initialize Secret Manager client
-        self._secret_client = get_secret_manager_client()
-
-        # Load .env file as fallback
+        # Load .env file first so environment variables are available
         if env_file:
             env_path = Path(env_file)
             if env_path.exists():
@@ -32,6 +29,9 @@ class Config:
             env_path = Path.cwd() / ".env"
             if env_path.exists():
                 load_dotenv(env_path)
+
+        # Initialize Secret Manager client after .env is loaded
+        self._secret_client = get_secret_manager_client()
 
     def _get_secret(
         self, secret_name: str, env_var: str, required: bool = True

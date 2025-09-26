@@ -17,7 +17,6 @@ UV_COMMAND = "uv"
 
 # Get the root directory of the project - this should be where your .env file is
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
-print(f"Project root: {PROJECT_ROOT}")
 
 
 # Load environment variables from .env file if it exists
@@ -28,10 +27,8 @@ def load_env_file():
         from dotenv import load_dotenv
 
         load_dotenv(env_file)
-        print(f"Loaded .env file from: {env_file}")
         return True
     else:
-        print(f"No .env file found at: {env_file}")
         return False
 
 
@@ -2579,12 +2576,10 @@ async def run_command_with_env(
     Returns:
         Tuple of (stdout, stderr) as strings
     """
-    print(f"Running command with MCP env in {cwd}: {' '.join(cmd)}")
-    print(f"DB_USER in env: {'DB_USER' in env}")
-    print(f"MCP_SESSION in env: {env.get('MCP_SESSION', 'not set')}")
 
     process = await asyncio.create_subprocess_exec(
         *cmd,
+        stdin=asyncio.subprocess.DEVNULL,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         env=env,
@@ -2746,16 +2741,6 @@ async def check_environment() -> Dict[str, Any]:
 
 # Start the server when the script is run directly
 if __name__ == "__main__":
-    # Print some debug info
-    print(f"UV command: {UV_COMMAND}")
-    print(f"Project root: {PROJECT_ROOT}")
-    print(f"Current working directory: {os.getcwd()}")
-    print(f"Environment loaded: {env_loaded}")
-
-    # Check if .env file exists
-    env_file = PROJECT_ROOT / ".env"
-    print(f".env file exists: {env_file.exists()}")
-    if env_file.exists():
-        print(f".env file path: {env_file}")
+    # Start the MCP server
 
     mcp.run(transport="stdio")

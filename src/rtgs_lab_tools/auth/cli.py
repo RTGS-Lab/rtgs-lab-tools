@@ -1,12 +1,43 @@
 """CLI commands for Google Cloud authentication."""
 
 import click
+from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
 
 from .auth_service import AuthService
 
-console = Console()
+# Load environment variables from .env file
+load_dotenv()
+
+
+# Configure console for Windows Unicode support
+def _create_console():
+    """Create a console with Windows Unicode support."""
+    import os
+    import sys
+
+    # Set UTF-8 encoding for Windows
+    if sys.platform.lower() == "win32":
+        # Try to set UTF-8 encoding
+        try:
+            os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+        except Exception:
+            pass
+
+    try:
+        if sys.platform.lower() == "win32":
+            # Use legacy Windows mode to avoid Unicode issues
+            console = Console(force_terminal=True, legacy_windows=True)
+        else:
+            console = Console(force_terminal=True, legacy_windows=False)
+        return console
+    except Exception:
+        # Final fallback
+        return Console()
+
+
+console = _create_console()
 
 
 @click.group()
@@ -30,7 +61,7 @@ def login(headless):
 
     # Check if gcloud is installed first
     if not auth_service.check_gcloud_installed():
-        console.print("❌ [bold red]gcloud CLI not found[/bold red]")
+        console.print("[X] [bold red]gcloud CLI not found[/bold red]")
         console.print()
         console.print(auth_service.install_gcloud_instructions())
         return
@@ -39,11 +70,11 @@ def login(headless):
     status = auth_service.get_auth_status()
     if status["authenticated"] and status["secret_manager_access"]:
         console.print(
-            f"✅ Already authenticated as: [bold green]{status['user']}[/bold green]"
+            f"[OK] Already authenticated as: [bold green]{status['user']}[/bold green]"
         )
-        console.print(f"✅ Secret Manager access: [bold green]Working[/bold green]")
+        console.print(f"[OK] Secret Manager access: [bold green]Working[/bold green]")
         if status["project"]:
-            console.print(f"✅ Project: [bold green]{status['project']}[/bold green]")
+            console.print(f"[OK] Project: [bold green]{status['project']}[/bold green]")
         console.print()
         console.print(
             "You're already set up! Run [bold blue]rtgs sensing-data list-projects[/bold blue] to get started."
@@ -53,7 +84,7 @@ def login(headless):
     # Show headless mode info
     if headless:
         console.print(
-            "🖥️  [bold yellow]Headless Mode:[/bold yellow] Authentication will not open a browser"
+            "[PC] [bold yellow]Headless Mode:[/bold yellow] Authentication will not open a browser"
         )
         console.print("You'll need to copy a URL and verification code manually")
         console.print()
@@ -63,19 +94,23 @@ def login(headless):
         # Don't use spinner for headless mode as user needs to see the output
         result = auth_service.login(headless=True)
     else:
+        # Use a Windows-compatible spinner
+        import sys
+
+        spinner_style = "line" if sys.platform.lower() == "win32" else "dots"
         with console.status(
-            "[bold blue]Authenticating with Google Cloud...", spinner="dots"
+            "[bold blue]Authenticating with Google Cloud...", spinner=spinner_style
         ):
             result = auth_service.login(headless=False)
 
     console.print()
 
     if result["success"]:
-        console.print("✅ [bold green]Authentication successful![/bold green]")
+        console.print("[OK] [bold green]Authentication successful![/bold green]")
         console.print()
         console.print(f"User: [bold]{result.get('user', 'Unknown')}[/bold]")
         if result.get("project"):
-            console.print(f"📋 Project: [bold]{result['project']}[/bold]")
+            console.print(f"[Project]: [bold]{result['project']}[/bold]")
 
         if result.get("secret_manager_access"):
             console.print("Secret Manager access: [bold green]Working[/bold green]")
@@ -90,7 +125,7 @@ def login(headless):
         console.print("3. Documentation: [bold]rtgs --help[/bold]")
 
     else:
-        console.print("❌ [bold red]Authentication failed[/bold red]")
+        console.print("[X] [bold red]Authentication failed[/bold red]")
         console.print(f"Error: {result['error']}")
 
         if "instructions" in result:
@@ -116,23 +151,25 @@ def status():
 
     # gcloud CLI
     if auth_status["gcloud_installed"]:
-        table.add_row("gcloud CLI", "✅ Installed", "")
+        table.add_row("gcloud CLI", "[OK] Installed", "")
     else:
         table.add_row(
             "gcloud CLI",
-            "❌ Missing",
+            "[X] Missing",
             "Run 'rtgs auth login' for installation instructions",
         )
 
     # Authentication
     if auth_status["authenticated"]:
-        table.add_row("Authentication", "✅ Active", f"User: {auth_status['user']}")
+        table.add_row("Authentication", "[OK] Active", f"User: {auth_status['user']}")
     else:
-        table.add_row("Authentication", "❌ Not authenticated", "Run 'rtgs auth login'")
+        table.add_row(
+            "Authentication", "[X] Not authenticated", "Run 'rtgs auth login'"
+        )
 
     # Project
     if auth_status["project"]:
-        table.add_row("Project", "✅ Set", auth_status["project"])
+        table.add_row("Project", "[OK] Set", auth_status["project"])
     else:
         table.add_row(
             "Project", "Not set", "Run 'gcloud config set project PROJECT_ID'"
@@ -140,13 +177,13 @@ def status():
 
     # Secret Manager
     if auth_status["secret_manager_access"]:
-        table.add_row("Secret Manager", "✅ Accessible", "Ready to use secrets")
+        table.add_row("Secret Manager", "[OK] Accessible", "Ready to use secrets")
     elif auth_status["authenticated"]:
         table.add_row(
-            "Secret Manager", "❌ No access", "Contact admin for IAM permissions"
+            "Secret Manager", "[X] No access", "Contact admin for IAM permissions"
         )
     else:
-        table.add_row("Secret Manager", "❌ No access", "Authentication required")
+        table.add_row("Secret Manager", "[X] No access", "Authentication required")
 
     console.print(table)
     console.print()
@@ -166,7 +203,7 @@ def status():
         )
     else:
         console.print(
-            "✅ [bold green]All systems ready![/bold green] You can use RTGS Lab Tools with Secret Manager."
+            "[OK] [bold green]All systems ready![/bold green] You can use RTGS Lab Tools with Secret Manager."
         )
 
 
@@ -176,7 +213,7 @@ def particle_login():
     import os
     import subprocess
 
-    console.print("🔌 [bold blue]Particle Cloud Authentication[/bold blue]")
+    console.print("[Particle] [bold blue]Particle Cloud Authentication[/bold blue]")
     console.print()
     console.print(
         "This will create a temporary 7-day access token using the Particle CLI."
@@ -188,7 +225,7 @@ def particle_login():
     try:
         subprocess.run(["particle", "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        console.print("❌ [bold red]Particle CLI not found[/bold red]")
+        console.print("[X] [bold red]Particle CLI not found[/bold red]")
         console.print()
         console.print("Please install the Particle CLI first:")
         console.print("npm install -g particle-cli")
@@ -247,7 +284,7 @@ def particle_login():
                     f.writelines(env_lines)
 
                 console.print(
-                    "✅ [bold green]Particle authentication successful![/bold green]"
+                    "[OK] [bold green]Particle authentication successful![/bold green]"
                 )
                 console.print()
                 console.print(f"Access token created and saved to .env file")
@@ -258,14 +295,14 @@ def particle_login():
                 console.print("2. Token will automatically expire in 7 days")
                 console.print("3. Run this command again when the token expires")
             else:
-                console.print("❌ [bold red]Invalid token format[/bold red]")
+                console.print("[X] [bold red]Invalid token format[/bold red]")
                 console.print("Particle tokens should be 40 characters long")
         else:
-            console.print("❌ [bold red]Token creation failed[/bold red]")
+            console.print("[X] [bold red]Token creation failed[/bold red]")
             console.print("Please check your Particle CLI installation and credentials")
 
     except Exception as e:
-        console.print("❌ [bold red]Error creating token[/bold red]")
+        console.print("[X] [bold red]Error creating token[/bold red]")
         console.print(f"Error: {str(e)}")
 
 
@@ -280,24 +317,28 @@ def logout():
     # Check current status
     status = auth_service.get_auth_status()
     if not status["authenticated"]:
-        console.print("ℹ[bold yellow]Not currently authenticated[/bold yellow]")
+        console.print("[i] [bold yellow]Not currently authenticated[/bold yellow]")
         return
 
     console.print(f"Currently authenticated as: [bold]{status['user']}[/bold]")
     console.print()
 
     if click.confirm("Are you sure you want to logout?"):
-        with console.status("[bold blue]Logging out...", spinner="dots"):
+        # Use a Windows-compatible spinner
+        import sys
+
+        spinner_style = "line" if sys.platform.lower() == "win32" else "dots"
+        with console.status("[bold blue]Logging out...", spinner=spinner_style):
             result = auth_service.logout()
 
         console.print()
         if result["success"]:
-            console.print("✅ [bold green]Successfully logged out[/bold green]")
+            console.print("[OK] [bold green]Successfully logged out[/bold green]")
             console.print(
                 "Your application will now fall back to .env file credentials"
             )
         else:
-            console.print("❌ [bold red]Logout failed[/bold red]")
+            console.print("[X] [bold red]Logout failed[/bold red]")
             console.print(f"Error: {result['error']}")
     else:
         console.print("Logout cancelled")
