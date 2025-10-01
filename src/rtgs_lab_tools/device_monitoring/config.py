@@ -6,8 +6,17 @@ BATTERY_VOLTAGE_MIN = 3.6
 # System power threshold 0.364W (double the average of 0.182)
 SYSTEM_POWER_MAX = 0.364
 
+# inbox relative humidity threshold
+INBOX_HUMIDITY_MAX = 65
+
 # Critical errors that trigger alerts
-CRITICAL_ERRORS = ["SD_ACCESS_FAIL", "FRAM_ACCESS_FAIL"]
+CRITICAL_ERRORS = [
+    "SD_ACCESS_FAIL",
+    "FRAM_ACCESS_FAIL",
+    "FIND_FAIL",
+    "FRAM_SPACE_CRITICAL",
+    "FRAM_SPACE_WARNING",
+]
 
 # Historic monitoring thresholds
 MISSING_NODE_THRESHOLD_HOURS = 24  # Hours since last contact to mark node as missing

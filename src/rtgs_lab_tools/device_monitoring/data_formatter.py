@@ -55,11 +55,15 @@ def format_data_with_parser(data_frame):
     # system usage
     system_usage_df = create_system_usage_dataframe(parsed_df)
 
+    # inbox humidity
+    inbox_humidity_df = create_inbox_humidity_dataframe(parsed_df)
+
     final_dict = {
         "parsed_data": parsed_df,
         "battery_data": battery_voltages_df,
         "error_data": error_counts_df,
         "system_current_data": system_usage_df,
+        "inbox_humidity_data": inbox_humidity_df,
     }
 
     return final_dict
@@ -133,3 +137,22 @@ def create_error_count_dataframe(df):
     )
 
     return error_counts
+
+
+# Create a DataFrame with inbox humidity data by node id
+def create_inbox_humidity_dataframe(df):
+    """Extract inbox humidity from Kestrel devices by node_id."""
+    kestrel_inbox_humidity = df[
+        (df["device_type"] == "Kestrel") & (df["measurement_name"] == "RH")
+    ].copy()
+    kestrel_inbox_humidity["timestamp"] = pd.to_datetime(
+        kestrel_inbox_humidity["timestamp"]
+    )
+    kestrel_inbox_humidity["inbox_humidity"] = pd.to_numeric(
+        kestrel_inbox_humidity["value"], errors="coerce"
+    )
+    return (
+        kestrel_inbox_humidity.sort_values("timestamp")
+        .groupby("node_id")
+        .last()[["inbox_humidity", "timestamp"]]
+    )
