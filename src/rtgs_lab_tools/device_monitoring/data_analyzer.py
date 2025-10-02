@@ -21,6 +21,7 @@ import pandas as pd
 from .config import (
     BATTERY_VOLTAGE_MIN,
     CRITICAL_ERRORS,
+    INBOX_HUMIDITY_MAX,
     MISSING_NODE_THRESHOLD_HOURS,
     SYSTEM_POWER_MAX,
 )
@@ -43,6 +44,7 @@ def analyze_data(data):
     battery_df = data.get("battery_data")
     error_df = data.get("error_data")
     system_df = data.get("system_current_data")
+    humidity_df = data.get("inbox_humidity_data")
 
     # Get all unique node_ids from all DataFrames
     all_node_ids = set()
@@ -52,6 +54,8 @@ def analyze_data(data):
         all_node_ids.update(error_df.index)
     if system_df is not None and hasattr(system_df, "index"):
         all_node_ids.update(system_df.index)
+    if humidity_df is not None and hasattr(humidity_df, "index"):
+        all_node_ids.update(humidity_df.index)
 
     # Identify nodes that haven't been heard from in the last X hours
     cutoff_time = datetime.now() - timedelta(hours=MISSING_NODE_THRESHOLD_HOURS)
@@ -85,6 +89,19 @@ def analyze_data(data):
                 ):
                     most_recent_timestamp = system_timestamp
 
+        if humidity_df is not None and node_id in humidity_df.index:
+            inbox_timestamp = humidity_df.loc[node_id, "timestamp"]
+            if inbox_timestamp and pd.notna(inbox_timestamp):
+                if hasattr(inbox_timestamp, "to_pydatetime"):
+                    inbox_timestamp = inbox_timestamp.to_pydatetime()
+                elif isinstance(inbox_timestamp, str):
+                    inbox_timestamp = pd.to_datetime(inbox_timestamp).to_pydatetime()
+                if (
+                    most_recent_timestamp is None
+                    or inbox_timestamp > most_recent_timestamp
+                ):
+                    most_recent_timestamp = inbox_timestamp
+
         # If node has data within last 24 hours, it's considered "recent"
         if most_recent_timestamp and most_recent_timestamp > cutoff_time:
             recent_node_ids.add(node_id)
@@ -93,6 +110,7 @@ def analyze_data(data):
         flagged = False
         battery_val = None
         system_val = None
+        humidity_val = None
         errors_dict = {}
 
         # Get battery voltage
@@ -105,6 +123,12 @@ def analyze_data(data):
         if system_df is not None and node_id in system_df.index:
             system_val = float(system_df.loc[node_id, "avg_p_1"])
             if system_val > SYSTEM_POWER_MAX:
+                flagged = True
+
+        # Get inbox humidity
+        if humidity_df is not None and node_id in humidity_df.index:
+            humidity_val = float(humidity_df.loc[node_id, "inbox_humidity"])
+            if humidity_val > INBOX_HUMIDITY_MAX:
                 flagged = True
 
         # Get errors
@@ -126,6 +150,7 @@ def analyze_data(data):
         # Get timestamps
         battery_timestamp = None
         system_timestamp = None
+        humidity_timestamp = None
 
         if battery_df is not None and node_id in battery_df.index:
             battery_timestamp = battery_df.loc[node_id, "timestamp"]
@@ -133,11 +158,16 @@ def analyze_data(data):
         if system_df is not None and node_id in system_df.index:
             system_timestamp = system_df.loc[node_id, "timestamp"]
 
+        if humidity_df is not None and node_id in humidity_df.index:
+            humidity_timestamp = humidity_df.loc[node_id, "timestamp"]
+
         # Determine if this node is missing (not heard from in 24+ hours)
         is_missing_node = node_id not in recent_node_ids
 
         # Calculate time since last heard from
-        most_recent_timestamp = system_timestamp or battery_timestamp
+        most_recent_timestamp = (
+            system_timestamp or battery_timestamp or humidity_timestamp
+        )
         last_heard = None
         if most_recent_timestamp:
             if hasattr(most_recent_timestamp, "to_pydatetime"):
@@ -151,9 +181,11 @@ def analyze_data(data):
             "flagged": flagged or is_missing_node,  # Flag missing nodes
             "battery": battery_val,
             "system": system_val,
+            "humidity": humidity_val,
             "errors": errors_dict,
             "battery_timestamp": battery_timestamp,
             "system_timestamp": system_timestamp,
+            "humidity_timestamp": humidity_timestamp,
             "is_missing": is_missing_node,
             "last_heard": last_heard,
         }
