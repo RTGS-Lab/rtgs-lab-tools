@@ -1,8 +1,9 @@
 """CLI commands for spatial data extraction."""
 
-import click
 import logging
 from typing import Optional
+
+import click
 
 # Reuse existing CLI utilities
 from ..core.cli_utils import CLIContext

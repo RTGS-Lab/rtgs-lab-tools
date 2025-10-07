@@ -5,13 +5,13 @@ import os
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 # Reuse existing rtgs-lab-tools infrastructure
-from ...core.exceptions import ValidationError, RTGSLabToolsError
+from ...core.exceptions import RTGSLabToolsError, ValidationError
+from ..db_logger import SpatialDataLogger
 from ..registry.dataset_registry import get_dataset_config
 from ..sources.mn_geospatial import MNGeospatialExtractor
-from ..db_logger import SpatialDataLogger
 
 logger = logging.getLogger(__name__)
 

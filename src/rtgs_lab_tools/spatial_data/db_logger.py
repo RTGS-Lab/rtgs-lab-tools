@@ -4,19 +4,19 @@ import json
 import logging
 import subprocess
 from datetime import datetime
-from typing import Any, Dict, Optional, List
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (
-    text,
+    ARRAY,
+    Boolean,
     Column,
+    DateTime,
     Integer,
+    Numeric,
     String,
     Text,
-    DateTime,
-    Boolean,
-    Numeric,
-    ARRAY,
+    text,
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base

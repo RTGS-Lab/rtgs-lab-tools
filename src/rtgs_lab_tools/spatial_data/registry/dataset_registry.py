@@ -1,6 +1,6 @@
 """Dataset registry for MN Geospatial Commons and other spatial data sources."""
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 # Start with just MN Geospatial Commons datasets for MVP
 MN_GEOSPATIAL_DATASETS = {

@@ -1,8 +1,10 @@
 """MN Geospatial Commons data extractor."""
 
-import requests
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
+import requests
+
 from .base import SpatialSourceExtractor
 
 try:
@@ -100,9 +102,9 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
         Returns:
             GeoDataFrame with extracted features
         """
+        import os
         import tempfile
         import zipfile
-        import os
 
         download_url = self.dataset_config.get("download_url")
         if not download_url:
@@ -145,9 +147,9 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
         Returns:
             GeoDataFrame with extracted features
         """
+        import os
         import tempfile
         import zipfile
-        import os
 
         with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_zip:
             temp_zip.write(zip_content)
@@ -224,8 +226,8 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
             GeoDataFrame with raster cells as polygons
         """
         try:
-            import rasterio
             import numpy as np
+            import rasterio
             from shapely.geometry import box
         except ImportError as e:
             raise ImportError(f"rasterio is required for raster processing: {e}")

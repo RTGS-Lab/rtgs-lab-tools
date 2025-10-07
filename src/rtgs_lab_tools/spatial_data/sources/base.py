@@ -1,8 +1,8 @@
 """Base class for spatial data source extractors."""
 
-from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
 import logging
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
 
 # Import geopandas with lazy loading for better performance
 try:
