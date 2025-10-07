@@ -16,7 +16,7 @@ MN_GEOSPATIAL_DATASETS = {
         "spatial_type": "multipolygon",
         "model_critical": True,
         "coordinate_system": "EPSG:26915",
-        "expected_features": 1731  # Actual count from test
+        "expected_features": 1731,  # Actual count from test
     },
     "groundwater_recharge": {
         "description": "Mean annual potential groundwater recharge rates from 1996-2010 for Minnesota",
@@ -32,8 +32,8 @@ MN_GEOSPATIAL_DATASETS = {
         "coordinate_system": "unknown",  # Will be determined during extraction
         "data_source": "U.S. Geological Survey",
         "temporal_coverage": "1996-2010",
-        "units": "inches/year"
-    }
+        "units": "inches/year",
+    },
 }
 
 
