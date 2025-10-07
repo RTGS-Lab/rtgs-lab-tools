@@ -26,6 +26,7 @@ from .config import (
     BATTERY_VOLTAGE_MIN,
     CRITICAL_ERRORS,
     HTTP_SUCCESS_CODE,
+    INBOX_HUMIDITY_MAX,
     MISSING_NODE_THRESHOLD_HOURS,
     MISSING_NODES_HEADER,
     MISSING_NODES_SEPARATOR_LENGTH,
@@ -102,12 +103,14 @@ def generate_device_card_html(node_id, result, device_name, console_url):
     flagged = result.get("flagged", False)
     battery = result.get("battery")
     system = result.get("system")
+    humidity = result.get("humidity")
     errors = result.get("errors", {})
     battery_timestamp = result.get("battery_timestamp")
     system_timestamp = result.get("system_timestamp")
+    humidity_timestamp = result.get("humidity_timestamp")
 
     # Format timestamp
-    timestamp = system_timestamp or battery_timestamp
+    timestamp = system_timestamp or battery_timestamp or humidity_timestamp
     timestamp_str = UNKNOWN_VALUE_TEXT
     if timestamp is not None:
         if hasattr(timestamp, "strftime"):
@@ -138,6 +141,7 @@ def generate_device_card_html(node_id, result, device_name, console_url):
         if system is not None
         else UNKNOWN_VALUE_TEXT
     )
+    humidity_str = f"{humidity:.1f}%" if humidity is not None else UNKNOWN_VALUE_TEXT
 
     # Color code metrics
     battery_color = (
@@ -147,6 +151,11 @@ def generate_device_card_html(node_id, result, device_name, console_url):
     )
     system_color = (
         "#fd7e14" if (system is not None and system > SYSTEM_POWER_MAX) else "#17a2b8"
+    )
+    humidity_color = (
+        "#fd7e14"
+        if (humidity is not None and humidity > INBOX_HUMIDITY_MAX)
+        else "#17a2b8"
     )
     error_color = "#dc3545" if len(errors) > 0 else "#6c757d"
 
@@ -169,6 +178,10 @@ def generate_device_card_html(node_id, result, device_name, console_url):
         if system is not None and system > SYSTEM_POWER_MAX:
             issues.append(
                 f"System power HIGH ({system:.{SYSTEM_POWER_DECIMAL_PRECISION}f}{POWER_UNIT} > {SYSTEM_POWER_MAX}{POWER_UNIT})"
+            )
+        if humidity is not None and humidity > INBOX_HUMIDITY_MAX:
+            issues.append(
+                f"Inbox humidity HIGH ({humidity:.1f}% > {INBOX_HUMIDITY_MAX}%)"
             )
 
         # Check for critical errors
@@ -199,17 +212,22 @@ def generate_device_card_html(node_id, result, device_name, console_url):
         
         <table style="width: 100%; margin-bottom: 8px;">
             <tr>
-                <td style="text-align: center; padding: 8px; background-color: #f8f9fa; border-radius: 4px; width: 33%;">
+                <td style="text-align: center; padding: 8px; background-color: #f8f9fa; border-radius: 4px; width: 25%;">
                     <div style="font-size: 20px; font-weight: bold; margin-bottom: 3px; color: {battery_color};">{battery_str}</div>
                     <div style="font-size: 11px; color: #6c757d; text-transform: uppercase;">Battery</div>
                 </td>
                 <td style="width: 2%;"></td>
-                <td style="text-align: center; padding: 8px; background-color: #f8f9fa; border-radius: 4px; width: 33%;">
+                <td style="text-align: center; padding: 8px; background-color: #f8f9fa; border-radius: 4px; width: 25%;">
                     <div style="font-size: 20px; font-weight: bold; margin-bottom: 3px; color: {system_color};">{system_str}</div>
                     <div style="font-size: 11px; color: #6c757d; text-transform: uppercase;">System Power</div>
                 </td>
                 <td style="width: 2%;"></td>
-                <td style="text-align: center; padding: 8px; background-color: #f8f9fa; border-radius: 4px; width: 33%;">
+                <td style="text-align: center; padding: 8px; background-color: #f8f9fa; border-radius: 4px; width: 25%;">
+                    <div style="font-size: 20px; font-weight: bold; margin-bottom: 3px; color: {humidity_color};">{humidity_str}</div>
+                    <div style="font-size: 11px; color: #6c757d; text-transform: uppercase;">Inbox RH</div>
+                </td>
+                <td style="width: 2%;"></td>
+                <td style="text-align: center; padding: 8px; background-color: #f8f9fa; border-radius: 4px; width: 25%;">
                     <div style="font-size: 20px; font-weight: bold; margin-bottom: 3px; color: {error_color};">{len(errors)}</div>
                     <div style="font-size: 11px; color: #6c757d; text-transform: uppercase;">Errors</div>
                 </td>
@@ -354,12 +372,14 @@ def _process_node(node_id, result, lines, add_spacing=False):
     # Get all metrics
     battery = result.get("battery")
     system = result.get("system")
+    humidity = result.get("humidity")
     errors = result.get("errors", {})
     battery_timestamp = result.get("battery_timestamp")
     system_timestamp = result.get("system_timestamp")
+    humidity_timestamp = result.get("humidity_timestamp")
 
     # Format timestamp - use the most recent one available
-    timestamp = system_timestamp or battery_timestamp
+    timestamp = system_timestamp or battery_timestamp or humidity_timestamp
     timestamp_str = ""
     if timestamp is not None:
         if hasattr(timestamp, "strftime"):
@@ -380,10 +400,9 @@ def _process_node(node_id, result, lines, add_spacing=False):
         if system is not None
         else UNKNOWN_VALUE_TEXT
     )
+    humidity_str = f"{humidity:.1f}%" if humidity is not None else UNKNOWN_VALUE_TEXT
 
-    metrics_line = (
-        f"  Battery: {battery_str} | System: {system_str} | Errors: {len(errors)} types"
-    )
+    metrics_line = f"  Battery: {battery_str} | System: {system_str} | Inbox RH: {humidity_str} | Errors: {len(errors)} types"
     lines.append(metrics_line)
 
     # Show errors if any
@@ -442,6 +461,10 @@ def _process_node(node_id, result, lines, add_spacing=False):
         if system is not None and system > SYSTEM_POWER_MAX:
             issues.append(
                 f"System power HIGH ({system:.{SYSTEM_POWER_DECIMAL_PRECISION}f}{POWER_UNIT} > {SYSTEM_POWER_MAX}{POWER_UNIT})"
+            )
+        if humidity is not None and humidity > INBOX_HUMIDITY_MAX:
+            issues.append(
+                f"Inbox humidity HIGH ({humidity:.1f}% > {INBOX_HUMIDITY_MAX}%)"
             )
 
         # Check for critical errors
