@@ -1,0 +1,49 @@
+# Planet Search Configuration for Golf Course Monitoring
+
+# Search parameters
+search:
+  # Data source - PSScene for PlanetScope imagery
+  source: "PSScene"
+
+  # Date range - full year example
+  start_date: "2021-01-01"
+  end_date: "2021-12-31"
+
+# Filters - matching the notebook criteria
+filters:
+  # Cloud cover threshold - 5% or less
+  cloud_cover:
+    lte: 0.05
+
+  # Instrument filter - PSB.SD sensors (PlanetScope SuperDove)
+  instrument:
+    - "PSB.SD"
+    # - "PS2.SD"  # Uncomment to include PS2.SD
+
+  # Quality category - standard quality images only
+  quality_category:
+    - "standard"
+
+  # Asset types - surface reflectance corrected 4-band ortho imagery
+  asset_types:
+    - "ortho_analytic_4b_sr"
+
+# Output settings
+output:
+  # Directory for search results
+  directory: "./planet_search_results"
+
+  # Filename pattern for output CSV files
+  # Will create files like: search_results_Course_01A_Outline_2021-01-01_2021-12-31.csv
+  filename_pattern: "search_results_{roi_name}_{start_date}_{end_date}.csv"
+
+  # Sort results by acquisition date
+  sort_by: "acquired"
+  sort_order: "asc"
+
+  # De-duplicate by date - keep the best image per day
+  deduplicate_by_date: true
+
+  # When deduplicating, sort by clear confidence (highest first)
+  # This matches the notebook behavior of keeping the clearest image per day
+  deduplicate_sort_by: "clear_confidence_percent"

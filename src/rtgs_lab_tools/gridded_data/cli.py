@@ -67,11 +67,14 @@ def download_clipped_scenes(
     cli_ctx.setup("download-scenes", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_clipped_scenes, load_roi
+        import json
 
-        # Load ROI from file
+        from ..gridded_data.planet import download_clipped_scenes
+
+        # Load ROI from file (no GEE needed for Planet downloads)
         if roi:
-            roi = load_roi(roi).getInfo()
+            with open(roi) as f:
+                roi = json.load(f)
 
         download_clipped_scenes(
             source=source,
@@ -141,11 +144,14 @@ def download_scenes(
     cli_ctx.setup("download-scenes", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_scenes, load_roi
+        import json
 
-        # Load ROI from file
+        from ..gridded_data.planet import download_scenes
+
+        # Load ROI from file (no GEE needed for Planet downloads)
         if roi:
-            roi = load_roi(roi).getInfo()
+            with open(roi) as f:
+                roi = json.load(f)
 
         download_scenes(
             source=source,
@@ -211,11 +217,14 @@ def planet_search(
     cli_ctx.setup("planet-search", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import load_roi, quick_search
+        import json
 
-        # Load ROI from file
+        from ..gridded_data.planet import quick_search
+
+        # Load ROI from file (no GEE needed for Planet searches)
         if roi:
-            roi = load_roi(roi).getInfo()
+            with open(roi) as f:
+                roi = json.load(f)
         # print(roi_bounds)
 
         quick_search(
@@ -236,6 +245,71 @@ def planet_search(
             "end_date": end_date,
             "roi": roi,
             "out_dir": out_dir,
+            "note": note,
+        }
+        raise
+
+
+########################################################
+# BATCH PLANET SEARCH WITH YAML CONFIG
+########################################################
+@gridded_data_cli.command()
+@click.option(
+    "--config",
+    "-c",
+    required=True,
+    help="Path to YAML configuration file with search criteria and filters",
+)
+@click.option(
+    "--roi-dir",
+    "-r",
+    required=True,
+    help="Directory containing GeoJSON ROI files to search",
+)
+@add_common_options
+@click.pass_context
+@handle_common_errors("planet-batch-search")
+def planet_batch_search(
+    ctx,
+    config,
+    roi_dir,
+    verbose,
+    log_file,
+    no_postgres_log,
+    note,
+):
+    """Batch search for PlanetLabs imagery using YAML config and multiple ROIs."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("planet-batch-search", verbose, log_file, no_postgres_log)
+
+    try:
+        from ..gridded_data.planet import batch_search_from_config
+
+        click.echo(f"Starting batch Planet search with config: {config}")
+        click.echo(f"Processing ROIs from directory: {roi_dir}")
+
+        results = batch_search_from_config(
+            config_path=config,
+            roi_dir=roi_dir,
+        )
+
+        # Print summary
+        click.echo("\n" + "=" * 50)
+        click.echo("BATCH SEARCH SUMMARY")
+        click.echo("=" * 50)
+        total_features = 0
+        for roi_name, df in results.items():
+            count = len(df)
+            total_features += count
+            click.echo(f"  {roi_name}: {count} images found")
+
+        click.echo(f"\nTotal: {total_features} images across {len(results)} ROIs")
+        click.echo("=" * 50)
+
+    except Exception as e:
+        parameters = {
+            "config": config,
+            "roi_dir": roi_dir,
             "note": note,
         }
         raise
@@ -281,7 +355,8 @@ def gee_search(
     cli_ctx.setup("gee-search", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import init_ee, load_roi, search_images, sources
+        from ..gridded_data.gee import init_ee, load_roi, search_images
+        from ..gridded_data.utils import sources
 
         init_ee()
 
@@ -358,7 +433,8 @@ def get_gee_point(
     cli_ctx.setup("gee-point", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_GEE_point, init_ee, load_roi, sources
+        from ..gridded_data.gee import download_GEE_point, init_ee, load_roi
+        from ..gridded_data.utils import sources
 
         init_ee()
 
@@ -482,7 +558,8 @@ def get_gee_raster(
     cli_ctx.setup("gee-data", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import download_GEE_raster, init_ee, load_roi, sources
+        from ..gridded_data.gee import download_GEE_raster, init_ee, load_roi
+        from ..gridded_data.utils import sources
 
         init_ee()
 
@@ -575,7 +652,7 @@ def list_gee_datasets(ctx, verbose, log_file, no_postgres_log, note):
     cli_ctx.setup("gee-datasets", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import sources
+        from ..gridded_data.utils import sources
 
         click.echo("Available GEE datasets:")
         for key in list(sources.keys()):
@@ -603,7 +680,8 @@ def list_gee_variables(ctx, source, verbose, log_file, no_postgres_log, note):
     cli_ctx.setup("gee-dataset-varaibles", verbose, log_file, no_postgres_log)
 
     try:
-        from ..gridded_data import init_ee, list_GEE_vars, sources
+        from ..gridded_data.gee import init_ee, list_GEE_vars
+        from ..gridded_data.utils import sources
 
         init_ee()
 

@@ -1,5 +1,6 @@
 """Planet Labs access using python API"""
 
+import json
 import logging
 import os
 import time
@@ -10,6 +11,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import geopandas as gpd
 import pandas as pd
 import requests
+import yaml
 
 from ..core import Config
 from ..core.exceptions import APIError, ValidationError
@@ -19,6 +21,287 @@ logger = logging.getLogger(__name__)
 
 cfg = Config()
 API_KEY = cfg.PL_API_KEY
+
+
+def load_yaml_config(config_path: str) -> Dict:
+    """Load and validate YAML configuration file.
+
+    Args:
+        config_path: Path to YAML configuration file
+
+    Returns:
+        Dictionary containing configuration
+
+    Raises:
+        ValidationError: If configuration is invalid
+    """
+    try:
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+
+        # Validate required fields
+        if "search" not in config:
+            raise ValidationError("Configuration must contain 'search' section")
+
+        search = config["search"]
+        if "source" not in search:
+            raise ValidationError("'search.source' is required")
+        if "start_date" not in search:
+            raise ValidationError("'search.start_date' is required")
+        if "end_date" not in search:
+            raise ValidationError("'search.end_date' is required")
+
+        return config
+
+    except yaml.YAMLError as e:
+        raise ValidationError(f"Invalid YAML configuration: {e}")
+    except FileNotFoundError:
+        raise ValidationError(f"Configuration file not found: {config_path}")
+
+
+def build_planet_filters(config: Dict, roi_geometry: Dict) -> Dict:
+    """Build Planet API filters from YAML configuration.
+
+    Args:
+        config: Configuration dictionary from YAML
+        roi_geometry: GeoJSON geometry for the region of interest
+
+    Returns:
+        Dictionary containing Planet API filter configuration
+    """
+    search = config["search"]
+    filters_config = config.get("filters", {})
+
+    # Always include date and geometry filters
+    filter_list = []
+
+    # Date filter
+    date_filter = {
+        "type": "DateRangeFilter",
+        "field_name": "acquired",
+        "config": {
+            "gte": search["start_date"] + "T00:00:00.000Z",
+            "lte": search["end_date"] + "T00:00:00.000Z",
+        },
+    }
+    filter_list.append(date_filter)
+
+    # Geometry filter
+    geometry_filter = {
+        "type": "GeometryFilter",
+        "field_name": "geometry",
+        "config": roi_geometry,
+    }
+    filter_list.append(geometry_filter)
+
+    # Cloud cover filter
+    if "cloud_cover" in filters_config:
+        cloud_config = filters_config["cloud_cover"]
+        cloud_filter = {
+            "type": "RangeFilter",
+            "field_name": "cloud_cover",
+            "config": cloud_config,
+        }
+        filter_list.append(cloud_filter)
+
+    # Instrument filter
+    if "instrument" in filters_config:
+        instrument_filter = {
+            "type": "StringInFilter",
+            "field_name": "instrument",
+            "config": filters_config["instrument"],
+        }
+        filter_list.append(instrument_filter)
+
+    # Quality category filter
+    if "quality_category" in filters_config:
+        quality_filter = {
+            "type": "StringInFilter",
+            "field_name": "quality_category",
+            "config": filters_config["quality_category"],
+        }
+        filter_list.append(quality_filter)
+
+    # Asset filter
+    if "asset_types" in filters_config:
+        asset_filter = {
+            "type": "AssetFilter",
+            "config": filters_config["asset_types"],
+        }
+        filter_list.append(asset_filter)
+
+    # Additional range filters (generic)
+    for key, value in filters_config.items():
+        if key not in [
+            "cloud_cover",
+            "instrument",
+            "quality_category",
+            "asset_types",
+        ] and isinstance(value, dict):
+            if "gte" in value or "lte" in value or "gt" in value or "lt" in value:
+                range_filter = {
+                    "type": "RangeFilter",
+                    "field_name": key,
+                    "config": value,
+                }
+                filter_list.append(range_filter)
+
+    # Additional string filters (generic)
+    for key, value in filters_config.items():
+        if key not in [
+            "cloud_cover",
+            "instrument",
+            "quality_category",
+            "asset_types",
+        ] and isinstance(value, list):
+            string_filter = {
+                "type": "StringInFilter",
+                "field_name": key,
+                "config": value,
+            }
+            filter_list.append(string_filter)
+
+    # Combine all filters with AND
+    and_filter = {"type": "AndFilter", "config": filter_list}
+
+    return and_filter
+
+
+def batch_search_from_config(config_path: str, roi_dir: str) -> Dict[str, pd.DataFrame]:
+    """Perform batch Planet search using YAML config and directory of ROI files.
+
+    Args:
+        config_path: Path to YAML configuration file
+        roi_dir: Directory containing GeoJSON ROI files
+
+    Returns:
+        Dictionary mapping ROI names to DataFrames of search results
+    """
+    # Load configuration
+    config = load_yaml_config(config_path)
+
+    # Get output settings
+    output_config = config.get("output", {})
+    out_dir = output_config.get("directory", "./planet_search_results")
+    filename_pattern = output_config.get(
+        "filename_pattern", "search_results_{roi_name}_{start_date}_{end_date}.csv"
+    )
+    sort_by = output_config.get("sort_by")
+    sort_order = output_config.get("sort_order", "asc")
+    deduplicate = output_config.get("deduplicate_by_date", False)
+    dedup_sort_by = output_config.get("deduplicate_sort_by", "clear_confidence_percent")
+
+    # Create output directory
+    os.makedirs(out_dir, exist_ok=True)
+
+    # Find all GeoJSON files in directory
+    roi_path = Path(roi_dir)
+    geojson_files = list(roi_path.glob("*.geojson"))
+
+    if not geojson_files:
+        raise ValidationError(f"No GeoJSON files found in directory: {roi_dir}")
+
+    logger.info(f"Found {len(geojson_files)} ROI files in {roi_dir}")
+
+    # Process each ROI
+    results = {}
+    search_config = config["search"]
+
+    # Authentication
+    URL = "https://api.planet.com/data/v1"
+    session = requests.Session()
+    session.auth = (API_KEY, "")
+    res = session.get(URL)
+    if res.status_code != 200:
+        raise APIError("Connection to PlanetLabs API failed")
+
+    quick_url = f"{URL}/quick-search"
+    source = search_config["source"].split(",")
+
+    for geojson_file in geojson_files:
+        roi_name = geojson_file.stem  # Filename without extension
+
+        logger.info(f"Processing ROI: {roi_name}")
+
+        # Load ROI geometry
+        with open(geojson_file, "r") as f:
+            roi_data = json.load(f)
+
+        # Extract geometry from first feature
+        if "features" in roi_data and len(roi_data["features"]) > 0:
+            roi_geometry = roi_data["features"][0]["geometry"]
+        else:
+            logger.warning(f"Skipping {roi_name}: No features found in GeoJSON")
+            continue
+
+        # Build filters
+        planet_filter = build_planet_filters(config, roi_geometry)
+
+        # Create request
+        request = {"item_types": source, "interval": "year", "filter": planet_filter}
+
+        # Send request
+        res = session.post(quick_url, json=request)
+        result = res.json()
+
+        if "features" not in result:
+            logger.warning(f"No results for {roi_name}: {result}")
+            continue
+
+        features = result["features"]
+
+        # Process features into DataFrame
+        data = []
+        columns = None
+        for feature in features:
+            id = feature["id"]
+            prop = feature["properties"]
+            prop["id"] = id
+            if prop.get("publishing_stage") == "finalized":
+                if columns is None:
+                    columns = list(prop.keys())
+                data.append(list(prop.values()))
+
+        if columns is None or len(data) == 0:
+            logger.warning(f"No finalized features found for {roi_name}")
+            df = pd.DataFrame()
+        else:
+            df = pd.DataFrame(columns=columns, data=data)
+            logger.info(f"Found {len(df)} features for {roi_name}")
+
+            # Add date column for easier processing
+            if "acquired" in df.columns:
+                df["date_acquired"] = pd.to_datetime(df["acquired"].str[:10])
+
+            # Sort if specified
+            if sort_by and sort_by in df.columns:
+                ascending = sort_order == "asc"
+                df = df.sort_values(by=sort_by, ascending=ascending)
+
+            # Deduplicate by date if specified
+            if deduplicate and "date_acquired" in df.columns:
+                if dedup_sort_by in df.columns:
+                    # Sort by dedup field (descending for confidence, ascending for cloud)
+                    ascending = "cloud" in dedup_sort_by.lower()
+                    df = df.sort_values(by=dedup_sort_by, ascending=ascending)
+                # Keep first occurrence of each date (best based on sort)
+                df = df.drop_duplicates(subset="date_acquired", keep="first")
+                logger.info(f"After deduplication: {len(df)} unique dates for {roi_name}")
+
+            # Save to file
+            output_filename = filename_pattern.format(
+                roi_name=roi_name,
+                start_date=search_config["start_date"],
+                end_date=search_config["end_date"],
+                source=search_config["source"],
+            )
+            output_path = os.path.join(out_dir, output_filename)
+            df.to_csv(output_path, index=False)
+            logger.info(f"Saved results to: {output_path}")
+
+        results[roi_name] = df
+
+    return results
 
 
 def download_file(url, out_dir, filename=None):
@@ -84,21 +367,25 @@ def download_clipped_scenes(
             },
         }
 
-        cloud_filter = {
-            "type": "RangeFilter",
-            "field_name": "cloud_cover",
-            "config": {"lte": clouds / 100},
-        }
-
         geometry_filter = {
             "type": "GeometryFilter",
             "field_name": "geometry",
             "config": roi["features"][0]["geometry"],
         }
 
+        # Build filter list - only add cloud filter if clouds parameter is provided
+        filters = [date_filter, geometry_filter]
+        if clouds is not None:
+            cloud_filter = {
+                "type": "RangeFilter",
+                "field_name": "cloud_cover",
+                "config": {"lte": clouds / 100},
+            }
+            filters.append(cloud_filter)
+
         and_filter = {
             "type": "AndFilter",
-            "config": [date_filter, geometry_filter, cloud_filter],
+            "config": filters,
         }
 
         request = {
@@ -208,21 +495,25 @@ def download_scenes(source, meta_file, roi, start_date, end_date, clouds, out_di
             },
         }
 
-        cloud_filter = {
-            "type": "RangeFilter",
-            "field_name": "cloud_cover",
-            "config": {"lte": clouds / 100},
-        }
-
         geometry_filter = {
             "type": "GeometryFilter",
             "field_name": "geometry",
             "config": roi["features"][0]["geometry"],
         }
 
+        # Build filter list - only add cloud filter if clouds parameter is provided
+        filters = [date_filter, geometry_filter]
+        if clouds is not None:
+            cloud_filter = {
+                "type": "RangeFilter",
+                "field_name": "cloud_cover",
+                "config": {"lte": clouds / 100},
+            }
+            filters.append(cloud_filter)
+
         and_filter = {
             "type": "AndFilter",
-            "config": [date_filter, geometry_filter, cloud_filter],
+            "config": filters,
         }
 
         request = {"item_types": source, "interval": "year", "filter": and_filter}
@@ -302,21 +593,25 @@ def quick_search(source, roi, start_date, end_date, clouds, out_dir):
         },
     }
 
-    cloud_filter = {
-        "type": "RangeFilter",
-        "field_name": "cloud_cover",
-        "config": {"lte": clouds / 100},
-    }
-
     geometry_filter = {
         "type": "GeometryFilter",
         "field_name": "geometry",
         "config": roi["features"][0]["geometry"],
     }
 
+    # Build filter list - only add cloud filter if clouds parameter is provided
+    filters = [date_filter, geometry_filter]
+    if clouds is not None:
+        cloud_filter = {
+            "type": "RangeFilter",
+            "field_name": "cloud_cover",
+            "config": {"lte": clouds / 100},
+        }
+        filters.append(cloud_filter)
+
     and_filter = {
         "type": "AndFilter",
-        "config": [date_filter, geometry_filter, cloud_filter],
+        "config": filters,
     }
 
     request = {"item_types": source, "interval": "year", "filter": and_filter}
@@ -327,12 +622,22 @@ def quick_search(source, roi, start_date, end_date, clouds, out_dir):
 
     features = result["features"]
     data = []
+    columns = None
     for feature in features:
         id = feature["id"]
         prop = feature["properties"]
         prop["id"] = id
         if prop["publishing_stage"] == "finalized":
+            if columns is None:
+                columns = list(prop.keys())
             data.append(list(prop.values()))
-    df = pd.DataFrame(columns=prop.keys(), data=data)
+
+    if columns is None:
+        # No features found, create empty DataFrame
+        df = pd.DataFrame()
+        print("No features found matching the search criteria")
+    else:
+        df = pd.DataFrame(columns=columns, data=data)
+        print(f"Found {len(df)} features")
+
     df.to_csv(f"{out_dir}/search_results_PlanetLabs_{start_date}_{end_date}")
-    print(f"Found {len(df)} features")

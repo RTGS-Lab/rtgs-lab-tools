@@ -105,6 +105,141 @@ rtgs gridded-data download-clipped-scenes \
   --roi ./data/test_bbox_roi.json
 ```
 
+### PlanetLabs Batch Search with YAML Configuration
+
+**New Feature**: Search multiple ROIs at once using YAML configuration files.
+
+The batch search functionality allows you to:
+- Define search criteria and filters once in a YAML configuration file
+- Search multiple regions of interest (ROIs) in a single command
+- Automatically process all GeoJSON files in a directory
+- Get consistent, reproducible search results with proper deduplication
+
+#### Quick Start
+
+1. **Create a YAML configuration file** (see `example_golf_course_search.yaml`):
+
+```yaml
+search:
+  source: "PSScene"
+  start_date: "2021-01-01"
+  end_date: "2021-12-31"
+
+filters:
+  cloud_cover:
+    lte: 0.05  # 5% or less
+  instrument:
+    - "PSB.SD"
+  quality_category:
+    - "standard"
+  asset_types:
+    - "ortho_analytic_4b_sr"
+
+output:
+  directory: "./planet_search_results"
+  deduplicate_by_date: true
+  deduplicate_sort_by: "clear_confidence_percent"
+```
+
+2. **Organize your ROI files** in a directory:
+
+```
+geojson/
+├── Course_01A_Outline.geojson
+├── Course_01B_Outline.geojson
+├── Course_02D_Outline.geojson
+└── ...
+```
+
+3. **Run the batch search**:
+
+```bash
+rtgs gridded-data planet-batch-search \
+  --config example_golf_course_search.yaml \
+  --roi-dir geojson/
+```
+
+4. **Review results** - one CSV file per ROI:
+
+```
+planet_search_results/
+├── search_results_Course_01A_Outline_2021-01-01_2021-12-31.csv
+├── search_results_Course_01B_Outline_2021-01-01_2021-12-31.csv
+└── ...
+```
+
+#### YAML Configuration Reference
+
+**Required fields:**
+```yaml
+search:
+  source: "PSScene"           # or "SkySatScene"
+  start_date: "YYYY-MM-DD"
+  end_date: "YYYY-MM-DD"
+```
+
+**Optional filters:**
+```yaml
+filters:
+  # Cloud cover (0-1 scale)
+  cloud_cover:
+    lte: 0.05   # Less than or equal to 5%
+
+  # Specific sensors
+  instrument:
+    - "PSB.SD"   # PlanetScope SuperDove
+    - "PS2.SD"   # PlanetScope 2
+
+  # Quality
+  quality_category:
+    - "standard"
+
+  # Asset types
+  asset_types:
+    - "ortho_analytic_4b_sr"  # Surface reflectance corrected
+
+  # Any other Planet API filters
+  clear_confidence_percent:
+    gte: 80
+```
+
+**Output settings:**
+```yaml
+output:
+  directory: "./results"
+
+  # Filename pattern (supports: {roi_name}, {start_date}, {end_date}, {source})
+  filename_pattern: "search_results_{roi_name}_{start_date}_{end_date}.csv"
+
+  # Sort results
+  sort_by: "acquired"
+  sort_order: "asc"
+
+  # Keep best image per day
+  deduplicate_by_date: true
+  deduplicate_sort_by: "clear_confidence_percent"
+```
+
+#### Deduplication Strategy
+
+When `deduplicate_by_date: true`, only one image per day per ROI is kept:
+- `clear_confidence_percent`: Keeps the clearest image (higher is better)
+- `cloud_cover`: Keeps the least cloudy image (lower is better)
+
+#### Python API
+
+```python
+from rtgs_lab_tools.gridded_data.planet import batch_search_from_config
+
+# Run batch search
+results = batch_search_from_config("config.yaml", "geojson/")
+# Returns: Dict[str, pd.DataFrame] mapping ROI names to results
+
+# Access individual results
+for roi_name, df in results.items():
+    print(f"{roi_name}: {len(df)} images found")
+```
+
 ### Command Options
 
 **Common Options:**

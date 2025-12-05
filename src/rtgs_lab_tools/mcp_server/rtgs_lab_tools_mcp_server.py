@@ -1542,6 +1542,75 @@ async def gridded_data_planet_search(
         }
 
 
+@mcp.tool("gridded_data_planet_batch_search")
+async def gridded_data_planet_batch_search(
+    config: str,
+    roi_dir: str,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Batch search for Planet Labs imagery using YAML configuration and multiple ROIs.
+
+    This tool performs a batch search across multiple regions of interest (ROIs) using
+    a YAML configuration file that defines search criteria and filters. It's designed
+    to efficiently search Planet imagery for many golf courses or study sites at once.
+
+    Args:
+        config: Path to YAML configuration file with search criteria and filters.
+        roi_dir: Directory containing GeoJSON ROI files to search.
+        note: Description for this operation (optional).
+
+    Returns:
+        Dict with success status and search results summary.
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "planet-batch-search",
+            "--config",
+            config,
+            "--roi-dir",
+            roi_dir,
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+            "git_logging_enabled": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to perform batch Planet search: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
 @mcp.tool("gridded_data_download_scenes")
 async def gridded_data_download_scenes(
     source: str,

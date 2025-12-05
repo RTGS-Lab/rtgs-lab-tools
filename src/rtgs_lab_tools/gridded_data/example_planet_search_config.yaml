@@ -1,0 +1,63 @@
+# Example Planet Search Configuration
+# This YAML file defines search criteria and filters for Planet Labs imagery searches
+
+# Search parameters
+search:
+  # Data source - PSScene (PlanetScope) or SkySatScene (SkySat)
+  source: "PSScene"
+
+  # Date range for imagery search
+  start_date: "2021-01-01"
+  end_date: "2021-12-31"
+
+# Filters - all filters are optional
+filters:
+  # Cloud cover threshold (0-1 scale, where 0.05 = 5%)
+  cloud_cover:
+    lte: 0.05  # Less than or equal to 5%
+
+  # Instrument filter - specific sensors to search
+  # Uncomment to use
+  instrument:
+    - "PSB.SD"
+    - "PS2.SD"
+    # - "PS2"
+
+  # Quality category filter
+  quality_category:
+    - "standard"
+
+  # Asset types to search for
+  asset_types:
+    - "ortho_analytic_4b_sr"
+    # - "basic_analytic_4b"
+
+  # Optional: Additional range filters
+  # Examples:
+  # clear_confidence_percent:
+  #   gte: 80  # Greater than or equal to 80%
+  #   lte: 100
+  #
+  # ground_control:
+  #   gte: 0
+
+  # Optional: Additional string filters
+  # Examples:
+  # publishing_stage:
+  #   - "finalized"
+
+# Output settings
+output:
+  directory: "./planet_search_results"
+
+  # Output filename pattern
+  # Available variables: {roi_name}, {start_date}, {end_date}, {source}
+  filename_pattern: "search_results_{roi_name}_{start_date}_{end_date}.csv"
+
+  # Sort results by (optional)
+  sort_by: "acquired"  # or "cloud_cover", "clear_confidence_percent"
+  sort_order: "asc"  # or "desc"
+
+  # De-duplicate by date (keep best image per day)
+  deduplicate_by_date: true
+  deduplicate_sort_by: "clear_confidence_percent"  # or "cloud_cover"
