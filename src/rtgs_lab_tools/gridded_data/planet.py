@@ -240,7 +240,7 @@ def batch_search_from_config(config_path: str, roi_dir: str) -> Dict[str, pd.Dat
         # Create request
         request = {"item_types": source, "interval": "year", "filter": planet_filter}
 
-        # Send request
+        # Send initial request
         res = session.post(quick_url, json=request)
         result = res.json()
 
@@ -248,7 +248,28 @@ def batch_search_from_config(config_path: str, roi_dir: str) -> Dict[str, pd.Dat
             logger.warning(f"No results for {roi_name}: {result}")
             continue
 
-        features = result["features"]
+        # Collect all features with pagination
+        all_features = []
+        all_features.extend(result["features"])
+        page_count = 1
+        logger.info(f"Page {page_count}: Found {len(result['features'])} features for {roi_name}")
+
+        # Follow pagination links to get all results
+        while "_links" in result and "_next" in result["_links"] and result["_links"]["_next"]:
+            next_url = result["_links"]["_next"]
+            res = session.get(next_url)
+            result = res.json()
+
+            if "features" in result and len(result["features"]) > 0:
+                all_features.extend(result["features"])
+                page_count += 1
+                logger.info(f"Page {page_count}: Found {len(result['features'])} features for {roi_name}")
+            else:
+                break
+
+        logger.info(f"Total: {len(all_features)} features across {page_count} pages for {roi_name}")
+
+        features = all_features
 
         # Process features into DataFrame
         data = []
@@ -287,6 +308,11 @@ def batch_search_from_config(config_path: str, roi_dir: str) -> Dict[str, pd.Dat
                 # Keep first occurrence of each date (best based on sort)
                 df = df.drop_duplicates(subset="date_acquired", keep="first")
                 logger.info(f"After deduplication: {len(df)} unique dates for {roi_name}")
+
+                # Re-sort by original sort field after deduplication
+                if sort_by and sort_by in df.columns:
+                    ascending = sort_order == "asc"
+                    df = df.sort_values(by=sort_by, ascending=ascending)
 
             # Save to file
             output_filename = filename_pattern.format(

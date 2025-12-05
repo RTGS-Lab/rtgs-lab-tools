@@ -6,23 +6,23 @@ search:
   source: "PSScene"
 
   # Date range - full year example
-  start_date: "2021-01-01"
-  end_date: "2021-12-31"
+  start_date: "2017-01-01"
+  end_date: "2025-12-03"
 
 # Filters - matching the notebook criteria
 filters:
   # Cloud cover threshold - 5% or less
-  cloud_cover:
-    lte: 0.05
+  #cloud_cover:
+  #  lte: 0.05
 
   # Instrument filter - PSB.SD sensors (PlanetScope SuperDove)
-  instrument:
-    - "PSB.SD"
+  #instrument:
+  #  - "PSB.SD"
     # - "PS2.SD"  # Uncomment to include PS2.SD
 
   # Quality category - standard quality images only
-  quality_category:
-    - "standard"
+  #quality_category:
+    #- "standard"
 
   # Asset types - surface reflectance corrected 4-band ortho imagery
   asset_types:

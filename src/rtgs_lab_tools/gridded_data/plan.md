@@ -304,3 +304,7 @@ rtgs gridded-data planet-index status --download-ready
 ✅ Weekly automation via cron works reliably
 ✅ All operations logged to PostgreSQL audit system
 ✅ CLI commands follow existing rtgs-lab-tools patterns
+
+geometry filter and asset filters only
+remove quality standard
+leave open for everything else ( potentially get rid of date filter)
