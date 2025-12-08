@@ -1620,13 +1620,18 @@ async def gridded_data_download_scenes(
     end_date: Optional[str] = None,
     roi: Optional[str] = None,
     clouds: Optional[str] = None,
+    confirmed: bool = False,
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Download Planet Labs scenes.
+    Download Planet Labs scenes with user confirmation.
+
+    **IMPORTANT**: This tool requires two steps:
+    1. First call WITHOUT confirmed=True to review parameters
+    2. After user confirms, call again WITH confirmed=True to download
 
     This tool downloads full Planet Labs scenes to your local computer.
-    You can either provide a list of scene IDs or a date range and region of interest to download.
+    Planet imagery consumes quota credits, so user confirmation is required.
 
     Args:
         source: A source of Planet data: PSScene (PlanetScope), SkySatScene (SkySat).
@@ -1636,12 +1641,31 @@ async def gridded_data_download_scenes(
         end_date: End date (YYYY-MM-DD) (optional).
         roi: Region of interest coordinates file path (optional).
         clouds: Cloud percentage threshold (optional).
+        confirmed: Set to True to proceed with download after reviewing (default: False).
         note: Description for this operation (optional).
 
     Returns:
         Dict with success status and download details.
     """
     try:
+        # Require explicit confirmation before downloading
+        if not confirmed:
+            return {
+                "success": False,
+                "requires_confirmation": True,
+                "message": "⚠️  Planet Labs Download - Quota Confirmation Required\n\n"
+                          f"This will download Planet imagery with the following parameters:\n"
+                          f"• Source: {source}\n"
+                          f"• ROI: {roi or 'From meta_file'}\n"
+                          f"• Date range: {start_date or 'N/A'} to {end_date or 'N/A'}\n"
+                          f"• Cloud threshold: {clouds or 'None'}%\n"
+                          f"• Meta file: {meta_file or 'None'}\n"
+                          f"• Output: {out_dir}\n\n"
+                          "Planet imagery consumes quota credits. Each full scene is larger than clipped scenes.\n\n"
+                          "To proceed with the download, call this tool again with confirmed=True",
+                "next_step": "Set confirmed=True to proceed with download",
+            }
+
         original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
 
@@ -1676,7 +1700,7 @@ async def gridded_data_download_scenes(
             cmd.extend(["--roi", roi])
 
         if clouds:
-            cmd.extend(["--clouds", clouds])
+            cmd.extend(["--clouds", str(clouds)])
 
         if note:
             cmd.extend(["--note", note])
@@ -1713,13 +1737,18 @@ async def gridded_data_download_clipped_scenes(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     clouds: Optional[str] = None,
+    confirmed: bool = False,
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Download clipped Planet Labs scenes.
+    Download clipped Planet Labs scenes with user confirmation.
+
+    **IMPORTANT**: This tool requires two steps:
+    1. First call WITHOUT confirmed=True to preview quota cost
+    2. After user confirms, call again WITH confirmed=True to download
 
     This tool downloads Planet Labs scenes that are clipped to a specific region of interest.
-    This is useful for reducing the file size and processing time of your imagery.
+    Planet imagery consumes quota credits, so user confirmation is required.
 
     Args:
         source: One source of Planet data: PSScene (PlanetScope) or SkySatScene (SkySat).
@@ -1729,12 +1758,30 @@ async def gridded_data_download_clipped_scenes(
         start_date: Start date (YYYY-MM-DD) (optional).
         end_date: End date (YYYY-MM-DD) (optional).
         clouds: Cloud percentage threshold (optional).
+        confirmed: Set to True to proceed with download after reviewing preview (default: False).
         note: Description for this operation (optional).
 
     Returns:
-        Dict with success status and download details.
+        Dict with success status and download details (or preview if not confirmed).
     """
     try:
+        # Require explicit confirmation before downloading
+        if not confirmed:
+            return {
+                "success": False,
+                "requires_confirmation": True,
+                "message": "⚠️  Planet Labs Download - Quota Confirmation Required\n\n"
+                          f"This will download Planet imagery with the following parameters:\n"
+                          f"• Source: {source}\n"
+                          f"• ROI: {roi}\n"
+                          f"• Date range: {start_date or 'N/A'} to {end_date or 'N/A'}\n"
+                          f"• Cloud threshold: {clouds or 'None'}%\n"
+                          f"• Output: {out_dir}\n\n"
+                          "Planet imagery consumes quota credits. Each scene costs ~1 credit.\n\n"
+                          "To proceed with the download, call this tool again with confirmed=True",
+                "next_step": "Set confirmed=True to proceed with download",
+            }
+
         original_cwd = os.getcwd()
         os.chdir(PROJECT_ROOT)
 
@@ -1768,7 +1815,7 @@ async def gridded_data_download_clipped_scenes(
             cmd.extend(["--end-date", end_date])
 
         if clouds:
-            cmd.extend(["--clouds", clouds])
+            cmd.extend(["--clouds", str(clouds)])
 
         if note:
             cmd.extend(["--note", note])

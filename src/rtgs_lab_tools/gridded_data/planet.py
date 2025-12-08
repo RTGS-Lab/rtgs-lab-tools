@@ -342,8 +342,15 @@ def download_file(url, out_dir, filename=None):
         # Construct a filename from the location url
         else:
             filename = url.split("=")[1][:10]
+
+    # Construct full output path
+    output_path = os.path.join(out_dir, filename)
+
+    # Ensure parent directory exists (handles subdirectories in filename)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
     # Save the file
-    with open(os.path.join(out_dir, filename), "wb") as f:
+    with open(output_path, "wb") as f:
         for chunk in res.iter_content(chunk_size=1024):
             if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
@@ -353,7 +360,7 @@ def download_file(url, out_dir, filename=None):
 
 
 def download_clipped_scenes(
-    source, meta_file, roi, start_date, end_date, clouds, out_dir
+    source, meta_file, roi, start_date, end_date, clouds, out_dir, skip_confirmation=False
 ):
     """A function to download clipped listed scenes.
 
@@ -363,6 +370,7 @@ def download_clipped_scenes(
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
         out_dir: Local output directory
+        skip_confirmation: If True, skip the interactive confirmation prompt
     """
     # Authentication
     URL = "https://api.planet.com/data/v1"
@@ -425,15 +433,23 @@ def download_clipped_scenes(
         result = res.json()
 
         features = result["features"]
-    print(
-        "=" * 10,
-        "WARNING",
-        "=" * 10,
-    )
-    answer = input(
-        f"Total number of scenes: {len(features)}\nRequired storage size: {len(features)*330/1024} Gb\n\nPlanetLabs imagery is distributed by quota. Please make sure that you want to derive every scene.\nProceed? (y/n)"
-    )
-    proceed = True if answer == "y" else False
+
+    # Show quota information
+    estimated_storage_gb = len(features) * 330 / 1024
+    print(f"Total number of scenes: {len(features)}")
+    print(f"Required storage size: {estimated_storage_gb:.2f} Gb")
+
+    # Get user confirmation unless skipped
+    if not skip_confirmation:
+        print("=" * 10, "WARNING", "=" * 10)
+        answer = input(
+            f"\nPlanetLabs imagery is distributed by quota. Please make sure that you want to derive every scene.\nProceed? (y/n) "
+        )
+        proceed = True if answer == "y" else False
+    else:
+        proceed = True
+        print("Skipping confirmation (auto-confirmed)")
+
     if proceed:
         # Extract item IDs for clipping
         item_ids = [feature["id"] for feature in features]
@@ -476,13 +492,76 @@ def download_clipped_scenes(
                 time.sleep(30)
 
         if state == "success":
+            print(f"\nOrder URL for future downloads: {status_url}")
+            print("You can re-download from this order without using more quota.\n")
+
             for result in order_info["_links"]["results"]:
                 location_url = result["location"]
                 download_file(location_url, out_dir)
                 print(f"File {result['name']} downloaded!")
 
+            return order_id
 
-def download_scenes(source, meta_file, roi, start_date, end_date, clouds, out_dir):
+
+def download_from_order(order_url, out_dir, overwrite=False):
+    """Download files from an existing Planet order without consuming more quota.
+
+    Args:
+        order_url: Full Planet order URL (e.g., https://api.planet.com/compute/ops/orders/v2/ORDER_ID)
+        out_dir: Local output directory
+        overwrite: If True, re-download files that already exist (default: False)
+
+    Returns:
+        Dictionary mapping filenames to local file paths
+    """
+    # Authentication
+    session = requests.Session()
+    session.auth = (API_KEY, "")
+
+    # Get order info
+    print(f"Fetching order from: {order_url}")
+    res = session.get(order_url)
+    if res.status_code != 200:
+        raise APIError(f"Failed to fetch order: {res.status_code} - {res.text}")
+
+    order_info = res.json()
+    state = order_info.get("state")
+
+    print(f"Order state: {state}")
+
+    if state == "failed":
+        raise APIError(f"Order failed: {order_info}")
+    elif state not in ["success", "partial"]:
+        print(f"Warning: Order state is '{state}', not 'success'. Attempting download anyway...")
+
+    # Download files
+    if "_links" not in order_info or "results" not in order_info["_links"]:
+        raise APIError("No results found in order")
+
+    results = order_info["_links"]["results"]
+    print(f"\n{len(results)} files available for download")
+
+    downloaded_files = {}
+    for result in results:
+        filename = result["name"]
+        location_url = result["location"]
+        output_path = os.path.join(out_dir, filename)
+
+        if not overwrite and os.path.exists(output_path):
+            print(f"{filename} already exists, skipping")
+            downloaded_files[filename] = output_path
+            continue
+
+        print(f"Downloading {filename}...")
+        download_file(location_url, out_dir, filename=filename)
+        downloaded_files[filename] = output_path
+        print(f"  → {output_path}")
+
+    print(f"\nDownloaded {len(downloaded_files)} files to {out_dir}")
+    return downloaded_files
+
+
+def download_scenes(source, meta_file, roi, start_date, end_date, clouds, out_dir, skip_confirmation=False):
     """A function to download listed scenes.
 
     Args:
@@ -491,6 +570,7 @@ def download_scenes(source, meta_file, roi, start_date, end_date, clouds, out_di
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
         out_dir: Local output directory
+        skip_confirmation: If True, skip the interactive confirmation prompt
     """
     # Authentication
     URL = "https://api.planet.com/data/v1"
@@ -549,15 +629,23 @@ def download_scenes(source, meta_file, roi, start_date, end_date, clouds, out_di
         result = res.json()
 
         features = result["features"]
-    print(
-        "=" * 10,
-        "WARNING",
-        "=" * 10,
-    )
-    answer = input(
-        f"Total number of scenes: {len(features)}\nRequired storage size: {len(features)*330/1024} Gb\n\nPlanetLabs imagery is distributed by quota. Please make sure that you want to derive every scene.\nProceed? (y/n)"
-    )
-    proceed = True if answer == "y" else False
+
+    # Show quota information
+    estimated_storage_gb = len(features) * 330 / 1024
+    print(f"Total number of scenes: {len(features)}")
+    print(f"Required storage size: {estimated_storage_gb:.2f} Gb")
+
+    # Get user confirmation unless skipped
+    if not skip_confirmation:
+        print("=" * 10, "WARNING", "=" * 10)
+        answer = input(
+            f"\nPlanetLabs imagery is distributed by quota. Please make sure that you want to derive every scene.\nProceed? (y/n) "
+        )
+        proceed = True if answer == "y" else False
+    else:
+        proceed = True
+        print("Skipping confirmation (auto-confirmed)")
+
     if proceed:
         for feature in features:
             assets_url = feature["_links"]["assets"]

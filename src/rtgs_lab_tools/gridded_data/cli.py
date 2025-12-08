@@ -43,7 +43,7 @@ def gridded_data_cli(ctx):
     required=True,
     help="Region of interest coordinates file path: path/to/file.json",
 )
-@click.option("--clouds", help="Cloud percentage threshold")
+@click.option("--clouds", type=float, help="Cloud percentage threshold")
 @click.option("--out-dir", "-o", required=True, help="Local output directory")
 @add_common_options
 @click.pass_context
@@ -101,6 +101,63 @@ def download_clipped_scenes(
 
 
 ########################################################
+# DOWNLOAD FROM EXISTING PLANET ORDER
+########################################################
+@gridded_data_cli.command()
+@click.option(
+    "--order-url",
+    required=True,
+    help="Planet order URL (e.g., https://api.planet.com/compute/ops/orders/v2/ORDER_ID)",
+)
+@click.option("--out-dir", "-o", required=True, help="Local output directory")
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Re-download files that already exist",
+)
+@add_common_options
+@click.pass_context
+@handle_common_errors("download-from-order")
+def download_from_order(
+    ctx,
+    order_url,
+    out_dir,
+    overwrite,
+    verbose,
+    log_file,
+    no_postgres_log,
+    note,
+):
+    """Download files from an existing Planet order without consuming more quota.
+
+    This allows you to re-download files from a previous order without creating
+    a new order and consuming additional quota credits.
+    """
+    cli_ctx = ctx.obj
+    cli_ctx.setup("download-from-order", verbose, log_file, no_postgres_log)
+
+    try:
+        from ..gridded_data.planet import download_from_order
+
+        downloaded_files = download_from_order(
+            order_url=order_url,
+            out_dir=out_dir,
+            overwrite=overwrite,
+        )
+
+        click.echo(f"\nSuccessfully downloaded {len(downloaded_files)} files to: {out_dir}")
+
+    except Exception as e:
+        parameters = {
+            "order_url": order_url,
+            "out_dir": out_dir,
+            "overwrite": overwrite,
+            "note": note,
+        }
+        raise
+
+
+########################################################
 # DOWNLOAD RAW PLANET IMAGES
 ########################################################
 @gridded_data_cli.command()
@@ -120,7 +177,7 @@ def download_clipped_scenes(
     "--roi",
     help="Region of interest coordinates file path: path/to/file.json",
 )
-@click.option("--clouds", help="Cloud percentage threshold")
+@click.option("--clouds", type=float, help="Cloud percentage threshold")
 @click.option("--out-dir", "-o", required=True, help="Local output directory")
 @add_common_options
 @click.pass_context
@@ -194,7 +251,7 @@ def download_scenes(
     required=True,
     help="Region of interest coordinates file path: path/to/file.json",
 )
-@click.option("--clouds", help="Cloud percentage threshold")
+@click.option("--clouds", type=float, help="Cloud percentage threshold")
 @click.option("--out-dir", "-o", required=True, help="Local output directory")
 @add_common_options
 @click.pass_context
@@ -409,7 +466,7 @@ def gee_search(
     required=True,
     help="Region of interest coordinates file path: path/to/file.json",
 )
-@click.option("--clouds", help="Cloud percentage threshold")
+@click.option("--clouds", type=float, help="Cloud percentage threshold")
 @click.option("--out-dir", "-o", required=True, help="Local output directory")
 @add_common_options
 @click.pass_context
@@ -527,7 +584,7 @@ def get_gee_point(
     required=True,
     help="Region of interest coordinates file path: path/to/file.json",
 )
-@click.option("--clouds", help="Cloud percentage threshold")
+@click.option("--clouds", type=float, help="Cloud percentage threshold")
 @click.option(
     "--out-dest",
     "-o",
