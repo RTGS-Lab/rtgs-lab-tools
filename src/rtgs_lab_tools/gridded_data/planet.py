@@ -503,13 +503,13 @@ def download_clipped_scenes(
             return order_id
 
 
-def download_from_order(order_url, out_dir, overwrite=False):
+def download_from_order(order_url, out_dir, overwrite=None):
     """Download files from an existing Planet order without consuming more quota.
 
     Args:
         order_url: Full Planet order URL (e.g., https://api.planet.com/compute/ops/orders/v2/ORDER_ID)
         out_dir: Local output directory
-        overwrite: If True, re-download files that already exist (default: False)
+        overwrite: If None, prompt user for existing files. If True, overwrite all. If False, skip all existing files.
 
     Returns:
         Dictionary mapping filenames to local file paths
@@ -541,15 +541,59 @@ def download_from_order(order_url, out_dir, overwrite=False):
     results = order_info["_links"]["results"]
     print(f"\n{len(results)} files available for download")
 
+    # Check for existing files if output directory exists
+    existing_files = []
+    if os.path.exists(out_dir):
+        for result in results:
+            filename = result["name"]
+            output_path = os.path.join(out_dir, filename)
+            if os.path.exists(output_path):
+                existing_files.append(filename)
+
+    # Handle existing files
+    if existing_files and overwrite is None:
+        print(f"\n⚠️  Found {len(existing_files)} existing files in {out_dir}")
+        print("\nExisting files:")
+        for f in existing_files[:5]:  # Show first 5
+            print(f"  - {f}")
+        if len(existing_files) > 5:
+            print(f"  ... and {len(existing_files) - 5} more")
+
+        print("\nOptions:")
+        print("  1. Skip existing files (download only new ones)")
+        print("  2. Overwrite all existing files")
+        print("  3. Cancel download")
+
+        while True:
+            choice = input("\nEnter your choice (1/2/3): ").strip()
+            if choice == "1":
+                overwrite = False
+                break
+            elif choice == "2":
+                overwrite = True
+                break
+            elif choice == "3":
+                print("Download cancelled.")
+                return {}
+            else:
+                print("Invalid choice. Please enter 1, 2, or 3.")
+
+    # Default behavior if no existing files or overwrite was specified
+    if overwrite is None:
+        overwrite = False
+
     downloaded_files = {}
+    skipped_count = 0
+
     for result in results:
         filename = result["name"]
         location_url = result["location"]
         output_path = os.path.join(out_dir, filename)
 
         if not overwrite and os.path.exists(output_path):
-            print(f"{filename} already exists, skipping")
+            print(f"Skipping {filename} (already exists)")
             downloaded_files[filename] = output_path
+            skipped_count += 1
             continue
 
         print(f"Downloading {filename}...")
@@ -557,7 +601,11 @@ def download_from_order(order_url, out_dir, overwrite=False):
         downloaded_files[filename] = output_path
         print(f"  → {output_path}")
 
-    print(f"\nDownloaded {len(downloaded_files)} files to {out_dir}")
+    print(f"\nDownload complete:")
+    print(f"  - Downloaded: {len(downloaded_files) - skipped_count} files")
+    print(f"  - Skipped: {skipped_count} files")
+    print(f"  - Total: {len(downloaded_files)} files in {out_dir}")
+
     return downloaded_files
 
 

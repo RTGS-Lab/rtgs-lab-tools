@@ -113,7 +113,14 @@ def download_clipped_scenes(
 @click.option(
     "--overwrite",
     is_flag=True,
-    help="Re-download files that already exist",
+    default=None,
+    help="Force overwrite all existing files without prompting",
+)
+@click.option(
+    "--skip-existing",
+    is_flag=True,
+    default=None,
+    help="Skip all existing files without prompting",
 )
 @add_common_options
 @click.pass_context
@@ -123,6 +130,7 @@ def download_from_order(
     order_url,
     out_dir,
     overwrite,
+    skip_existing,
     verbose,
     log_file,
     no_postgres_log,
@@ -132,6 +140,9 @@ def download_from_order(
 
     This allows you to re-download files from a previous order without creating
     a new order and consuming additional quota credits.
+
+    By default, if existing files are found, you will be prompted to choose what to do.
+    Use --overwrite to force overwrite all, or --skip-existing to skip all without prompting.
     """
     cli_ctx = ctx.obj
     cli_ctx.setup("download-from-order", verbose, log_file, no_postgres_log)
@@ -139,10 +150,18 @@ def download_from_order(
     try:
         from ..gridded_data.planet import download_from_order
 
+        # Determine overwrite behavior
+        overwrite_param = None
+        if overwrite:
+            overwrite_param = True
+        elif skip_existing:
+            overwrite_param = False
+        # else remains None for interactive prompt
+
         downloaded_files = download_from_order(
             order_url=order_url,
             out_dir=out_dir,
-            overwrite=overwrite,
+            overwrite=overwrite_param,
         )
 
         click.echo(f"\nSuccessfully downloaded {len(downloaded_files)} files to: {out_dir}")
