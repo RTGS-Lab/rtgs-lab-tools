@@ -392,6 +392,117 @@ def planet_batch_search(
 
 
 ########################################################
+# ESTIMATE IMAGERY COVERAGE
+########################################################
+@gridded_data_cli.command()
+@click.option(
+    "--geojson-dir",
+    "-d",
+    required=True,
+    help="Directory containing GeoJSON ROI files",
+)
+@click.option(
+    "--years",
+    "-y",
+    type=float,
+    default=2.0,
+    help="Number of years of imagery coverage (default: 2.0)",
+)
+@click.option(
+    "--images-per-day",
+    "-i",
+    type=float,
+    default=1.0,
+    help="Average number of images per day per ROI (default: 1.0)",
+)
+@click.option(
+    "--mb-per-sqkm",
+    "-m",
+    type=float,
+    default=0.7,
+    help="Estimated MB per image per km² (default: 0.7 for clipped PlanetScope SR+UDM2)",
+)
+@click.option(
+    "--show-rois",
+    is_flag=True,
+    help="Show individual ROI areas",
+)
+@add_common_options
+@click.pass_context
+@handle_common_errors("estimate-coverage")
+def estimate_coverage(
+    ctx,
+    geojson_dir,
+    years,
+    images_per_day,
+    mb_per_sqkm,
+    show_rois,
+    verbose,
+    log_file,
+    no_postgres_log,
+    note,
+):
+    """Estimate imagery storage requirements for a directory of GeoJSON ROIs.
+
+    Calculates total area of all GeoJSON files and estimates storage needed
+    for a given number of years of daily imagery.
+
+    Example:
+        rtgs estimate-coverage -d ./geojson --years 2 --images-per-day 1
+    """
+    cli_ctx = ctx.obj
+    cli_ctx.setup("estimate-coverage", verbose, log_file, no_postgres_log)
+
+    try:
+        from ..gridded_data.planet import estimate_imagery_coverage
+
+        result = estimate_imagery_coverage(
+            geojson_dir=geojson_dir,
+            years=years,
+            images_per_day=images_per_day,
+            mb_per_image_per_sqkm=mb_per_sqkm,
+        )
+
+        # Display results
+        click.echo("\n" + "=" * 60)
+        click.echo("IMAGERY COVERAGE ESTIMATE")
+        click.echo("=" * 60)
+
+        click.echo(f"\nInput Parameters:")
+        click.echo(f"  Directory:        {geojson_dir}")
+        click.echo(f"  Years:            {years}")
+        click.echo(f"  Images/day:       {images_per_day}")
+        click.echo(f"  MB/km²/image:     {mb_per_sqkm}")
+
+        click.echo(f"\nArea Summary:")
+        click.echo(f"  Number of ROIs:   {result['num_rois']}")
+        click.echo(f"  Total Area:       {result['total_area_sqkm']:.4f} km²")
+
+        if show_rois:
+            click.echo(f"\nIndividual ROI Areas:")
+            sorted_rois = sorted(result['roi_areas'].items(), key=lambda x: x[1], reverse=True)
+            for roi_name, area in sorted_rois:
+                click.echo(f"    {roi_name}: {area:.4f} km²")
+
+        click.echo(f"\nImagery Estimates:")
+        click.echo(f"  Total Images:     {result['total_images']:,}")
+        click.echo(f"  Quota Usage:      {result['quota_usage_sqkm']:,.2f} km²")
+        click.echo(f"  Total Storage:    {result['total_storage_gb']:.2f} GB ({result['total_storage_tb']:.2f} TB)")
+
+        click.echo("\n" + "=" * 60)
+
+    except Exception as e:
+        parameters = {
+            "geojson_dir": geojson_dir,
+            "years": years,
+            "images_per_day": images_per_day,
+            "mb_per_sqkm": mb_per_sqkm,
+            "note": note,
+        }
+        raise
+
+
+########################################################
 # SEARCH FOR GEE IMAGES
 # SEARCH FOR GEE IMAGES
 ########################################################

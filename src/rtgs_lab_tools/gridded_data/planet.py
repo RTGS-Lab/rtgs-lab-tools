@@ -726,6 +726,128 @@ def download_scenes(source, meta_file, roi, start_date, end_date, clouds, out_di
                 print(f"File {feature['id']} downloaded!")
 
 
+def estimate_imagery_coverage(
+    geojson_dir: str,
+    years: float = 2.0,
+    images_per_day: float = 1.0,
+    mb_per_image_per_sqkm: float = 0.7,
+) -> Dict:
+    """Calculate total area of GeoJSON files and estimate imagery storage requirements.
+
+    This function analyzes all GeoJSON files in a directory, calculates their
+    total area in square kilometers, and estimates the storage requirements
+    for a given number of years of daily imagery.
+
+    Args:
+        geojson_dir: Path to directory containing GeoJSON files
+        years: Number of years of imagery coverage (default: 2.0)
+        images_per_day: Average number of images per day per ROI (default: 1.0)
+        mb_per_image_per_sqkm: Estimated MB per image per square kilometer (default: 0.7)
+            - PlanetScope 4-band clipped SR + UDM2: ~0.7 MB/km² (based on actual data)
+            - PlanetScope full-scene unclipped: ~50 MB/km²
+            - SkySat clipped: ~1-2 MB/km²
+
+    Returns:
+        Dictionary containing:
+            - total_area_sqkm: Total area across all GeoJSON files in km²
+            - num_rois: Number of ROI files processed
+            - roi_areas: Dictionary mapping ROI names to their areas in km²
+            - total_images: Estimated total number of images
+            - total_storage_gb: Estimated total storage in GB
+            - total_storage_tb: Estimated total storage in TB
+            - parameters: Input parameters used for calculation
+    """
+    from pyproj import Geod
+    from shapely.geometry import shape
+    from shapely.ops import transform
+    import pyproj
+
+    geojson_path = Path(geojson_dir)
+
+    if not geojson_path.exists():
+        raise ValidationError(f"Directory does not exist: {geojson_dir}")
+
+    # Find all GeoJSON files
+    geojson_files = list(geojson_path.glob("*.geojson"))
+
+    if not geojson_files:
+        raise ValidationError(f"No GeoJSON files found in directory: {geojson_dir}")
+
+    # Use geodesic calculation for accurate area on Earth's surface
+    geod = Geod(ellps="WGS84")
+
+    roi_areas = {}
+    total_area_sqm = 0.0
+
+    for geojson_file in geojson_files:
+        roi_name = geojson_file.stem
+
+        try:
+            with open(geojson_file, "r") as f:
+                geojson_data = json.load(f)
+
+            # Extract geometry
+            if geojson_data.get("type") == "FeatureCollection":
+                if geojson_data.get("features"):
+                    geometry = geojson_data["features"][0]["geometry"]
+                else:
+                    logger.warning(f"Skipping {roi_name}: No features in FeatureCollection")
+                    continue
+            elif geojson_data.get("type") == "Feature":
+                geometry = geojson_data["geometry"]
+            else:
+                geometry = geojson_data
+
+            # Convert to shapely geometry and calculate geodesic area
+            geom = shape(geometry)
+
+            # Calculate geodesic area (returns negative for counter-clockwise, so abs())
+            area_sqm = abs(geod.geometry_area_perimeter(geom)[0])
+            area_sqkm = area_sqm / 1_000_000  # Convert to km²
+
+            roi_areas[roi_name] = area_sqkm
+            total_area_sqm += area_sqm
+
+            logger.debug(f"{roi_name}: {area_sqkm:.4f} km²")
+
+        except Exception as e:
+            logger.warning(f"Error processing {roi_name}: {e}")
+            continue
+
+    total_area_sqkm = total_area_sqm / 1_000_000
+
+    # Calculate imagery estimates
+    days = years * 365
+    total_images = len(roi_areas) * days * images_per_day
+
+    # Quota estimate: total area × images per day × days
+    # This represents the total km² that will be ordered/downloaded
+    quota_usage_sqkm = total_area_sqkm * images_per_day * days
+
+    # Storage estimate: each image covers the ROI area
+    # Total storage = total_area * images_per_roi * mb_per_sqkm
+    images_per_roi = days * images_per_day
+    total_storage_mb = total_area_sqkm * images_per_roi * mb_per_image_per_sqkm
+    total_storage_gb = total_storage_mb / 1024
+    total_storage_tb = total_storage_gb / 1024
+
+    return {
+        "total_area_sqkm": total_area_sqkm,
+        "num_rois": len(roi_areas),
+        "roi_areas": roi_areas,
+        "total_images": int(total_images),
+        "quota_usage_sqkm": quota_usage_sqkm,
+        "total_storage_gb": total_storage_gb,
+        "total_storage_tb": total_storage_tb,
+        "parameters": {
+            "geojson_dir": str(geojson_dir),
+            "years": years,
+            "images_per_day": images_per_day,
+            "mb_per_image_per_sqkm": mb_per_image_per_sqkm,
+        },
+    }
+
+
 def quick_search(source, roi, start_date, end_date, clouds, out_dir):
     """A function to get all available images for a give date range.
 

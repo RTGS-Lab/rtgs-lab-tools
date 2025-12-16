@@ -1611,6 +1611,82 @@ async def gridded_data_planet_batch_search(
         }
 
 
+@mcp.tool("gridded_data_estimate_coverage")
+async def gridded_data_estimate_coverage(
+    geojson_dir: str,
+    years: float = 2.0,
+    images_per_day: float = 1.0,
+    mb_per_sqkm: float = 0.7,
+    note: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Estimate imagery storage requirements and quota usage for Planet Labs imagery.
+
+    This tool calculates the total area of all GeoJSON ROI files in a directory
+    and estimates the storage requirements and Planet quota usage for a given
+    number of years of daily imagery coverage.
+
+    Args:
+        geojson_dir: Directory containing GeoJSON ROI files (required).
+        years: Number of years of imagery coverage (default: 2.0).
+        images_per_day: Average number of images per day per ROI (default: 1.0).
+        mb_per_sqkm: Estimated MB per image per km² (default: 0.7 for clipped PlanetScope).
+        note: Description for this operation (optional).
+
+    Returns:
+        Dict with total area, number of ROIs, estimated images, quota usage, and storage.
+    """
+    try:
+        original_cwd = os.getcwd()
+        os.chdir(PROJECT_ROOT)
+
+        # Set MCP environment variables
+        env = os.environ.copy()
+        env["MCP_SESSION"] = "true"
+        env["MCP_USER"] = "claude"
+
+        cmd = [
+            UV_COMMAND,
+            "run",
+            "-m",
+            "rtgs_lab_tools.cli",
+            "gridded-data",
+            "estimate-coverage",
+            "--geojson-dir",
+            geojson_dir,
+            "--years",
+            str(years),
+            "--images-per-day",
+            str(images_per_day),
+            "--mb-per-sqkm",
+            str(mb_per_sqkm),
+        ]
+
+        if note:
+            cmd.extend(["--note", note])
+
+        stdout, stderr = await run_command_with_env(cmd, env, cwd=PROJECT_ROOT)
+
+        os.chdir(original_cwd)
+
+        return {
+            "success": True,
+            "output": stdout,
+            "command": " ".join(cmd),
+            "mcp_execution": True,
+        }
+
+    except Exception as e:
+        if "original_cwd" in locals():
+            os.chdir(original_cwd)
+
+        return {
+            "success": False,
+            "error": f"Failed to estimate imagery coverage: {str(e)}",
+            "command": " ".join(cmd) if "cmd" in locals() else "N/A",
+        }
+
+
 @mcp.tool("gridded_data_download_scenes")
 async def gridded_data_download_scenes(
     source: str,
