@@ -40,10 +40,17 @@ dependencies = [
     "cloud-sql-python-connector>=1.0.0",
     "google-auth>=2.0.0",
     "google-cloud-secret-manager>=2.16.0",
-    "pg8000>=1.29.0",
+    "pg8000>=1.31.5",  # CVE-2025-61385: SQL injection fix
     "yagmail>=0.15.293",
     "keyring>=25.6.0",
     "pyserial>=3.5",
+    # Security fixes for transitive dependencies
+    "urllib3>=2.6.3",  # CVE-2026-21441: decompression bomb fixes
+    "aiohttp>=3.13.3",  # CVE-2025-69223: zip bomb and DoS fixes
+    "authlib>=1.6.4",  # CVE-2025-59420: JWT crit headers fix
+    "starlette>=0.49.1",  # CVE-2025-62727: Range header DoS fix
+    "fonttools>=4.60.2",  # CVE-2025-66034: arbitrary file write fix
+    "filelock>=3.20.1",  # CVE-2025-68146: TOCTOU symlink attack fix
 ]
 
 [project.optional-dependencies]
@@ -61,8 +68,8 @@ visualization = [
     "plotly>=5.0.0",
 ]
 mcp = [
-    "mcp[cli]>=0.1.0",
-    "fastmcp>=0.1.0",
+    "mcp[cli]>=1.23.0",  # CVE-2025-66416: DNS rebinding protection fix
+    "fastmcp>=2.14.0",  # Multiple security fixes including MCP 1.23+ update
 ]
 dev = [
     "pytest>=7.0.0",
