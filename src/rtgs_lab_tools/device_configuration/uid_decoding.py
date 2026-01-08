@@ -50,6 +50,7 @@ def decode_sensor_configuration_uid(uid: int) -> Dict[str, int]:
     config["num_co2"] = (uid >> 12) & 0xF  # 4 bits at position 12-15
     config["num_o2"] = (uid >> 8) & 0xF  # 4 bits at position 8-11
     config["num_pressure"] = (uid >> 4) & 0xF  # 4 bits at position 4-7
+    config["num_analog_mux"] = uid & 0xF  # 4 bits at position 0-3
 
     return config
 
@@ -98,6 +99,7 @@ def format_sensor_config(uid: int) -> str:
         f"Num CO2 Sensors:      {config['num_co2']}",
         f"Num O2 Sensors:       {config['num_o2']}",
         f"Num Pressure Sensors: {config['num_pressure']}",
+        f"Num Analog Mux:       {config['num_analog_mux']}",
     ]
     return "\n".join(lines)
 

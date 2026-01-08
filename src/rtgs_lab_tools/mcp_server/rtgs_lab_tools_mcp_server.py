@@ -786,6 +786,7 @@ async def device_configuration_create_config(
     num_co2: int = 0,
     num_o2: int = 0,
     num_pressure: int = 0,
+    num_analog_mux: int = 0,
     note: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
@@ -810,6 +811,7 @@ async def device_configuration_create_config(
         num_co2: Number of CO2 sensors (default: 0)
         num_o2: Number of O2 sensors (default: 0)
         num_pressure: Number of pressure sensors (default: 0)
+        num_analog_mux: Number of analog mux sensors (default: 0)
         note: Description for this operation (optional)
 
     Returns:
@@ -861,6 +863,8 @@ async def device_configuration_create_config(
             str(num_o2),
             "--num-pressure",
             str(num_pressure),
+            "--num-analog-mux",
+            str(num_analog_mux),
         ]
 
         if note:
@@ -890,6 +894,7 @@ async def device_configuration_create_config(
                     "numCO2": num_co2,
                     "numO2": num_o2,
                     "numPressure": num_pressure,
+                    "numAnalogMux": num_analog_mux,
                 },
             }
         }

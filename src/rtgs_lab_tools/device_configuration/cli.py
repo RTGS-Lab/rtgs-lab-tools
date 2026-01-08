@@ -348,6 +348,9 @@ def decode_both(ctx, system_uid, sensor_uid, verbose, log_file, no_postgres_log,
 @click.option("--num-co2", type=int, default=0, help="Number of CO2 sensors")
 @click.option("--num-o2", type=int, default=0, help="Number of O2 sensors")
 @click.option("--num-pressure", type=int, default=0, help="Number of pressure sensors")
+@click.option(
+    "--num-analog-mux", type=int, default=0, help="Number of analog mux sensors"
+)
 @add_common_options
 @click.pass_context
 @handle_common_errors("create-config")
@@ -368,6 +371,7 @@ def create_config(
     num_co2,
     num_o2,
     num_pressure,
+    num_analog_mux,
     verbose,
     log_file,
     no_postgres_log,
@@ -398,6 +402,7 @@ def create_config(
                     "numCO2": num_co2,
                     "numO2": num_o2,
                     "numPressure": num_pressure,
+                    "numAnalogMux": num_analog_mux,
                 },
             }
         }
@@ -432,6 +437,7 @@ def create_config(
             "num_co2": num_co2,
             "num_o2": num_o2,
             "num_pressure": num_pressure,
+            "num_analog_mux": num_analog_mux,
             "note": note,
         }
         results = {
