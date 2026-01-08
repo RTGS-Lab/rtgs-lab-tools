@@ -348,7 +348,9 @@ def decode_both(ctx, system_uid, sensor_uid, verbose, log_file, no_postgres_log,
 @click.option("--num-co2", type=int, default=0, help="Number of CO2 sensors")
 @click.option("--num-o2", type=int, default=0, help="Number of O2 sensors")
 @click.option("--num-pressure", type=int, default=0, help="Number of pressure sensors")
-@click.option("--num-analog-mux", type=int, default=0, help="Number of analog mux sensors")
+@click.option(
+    "--num-analog-mux", type=int, default=0, help="Number of analog mux sensors"
+)
 @add_common_options
 @click.pass_context
 @handle_common_errors("create-config")
