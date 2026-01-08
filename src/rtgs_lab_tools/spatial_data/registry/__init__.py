@@ -1,0 +1,1 @@
+"""Dataset registry for spatial data sources."""
