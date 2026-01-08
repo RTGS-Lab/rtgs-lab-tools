@@ -78,7 +78,7 @@ class TestDecodeSensorConfigurationUid:
         """Test decoding a basic sensor configuration UID."""
         # Create a test UID with known values
         # num_et=0, num_haar=0, num_soil=1, num_apogee_solar=0,
-        # num_co2=0, num_o2=0, num_pressure=0
+        # num_co2=0, num_o2=0, num_pressure=0, num_analog_mux=0
         # 0x00100000 = 1048576
         uid = 0x00100000
 
@@ -91,6 +91,7 @@ class TestDecodeSensorConfigurationUid:
         assert config["num_co2"] == 0
         assert config["num_o2"] == 0
         assert config["num_pressure"] == 0
+        assert config["num_analog_mux"] == 0
 
     def test_decode_zero_sensor_uid(self):
         """Test decoding a zero sensor UID."""
@@ -113,6 +114,7 @@ class TestDecodeSensorConfigurationUid:
         assert config["num_co2"] == 0xF  # 4 bits
         assert config["num_o2"] == 0xF  # 4 bits
         assert config["num_pressure"] == 0xF  # 4 bits
+        assert config["num_analog_mux"] == 0xF  # 4 bits
 
     def test_decode_sensor_config_bit_masks(self):
         """Test specific bit mask operations for sensor config."""
@@ -128,6 +130,7 @@ class TestDecodeSensorConfigurationUid:
         assert config["num_co2"] == (0x12345678 >> 12) & 0xF
         assert config["num_o2"] == (0x12345678 >> 8) & 0xF
         assert config["num_pressure"] == (0x12345678 >> 4) & 0xF
+        assert config["num_analog_mux"] == 0x12345678 & 0xF
 
 
 class TestFormatSystemConfig:
@@ -182,6 +185,7 @@ class TestFormatSensorConfig:
         assert "Num CO2 Sensors:      0" in formatted
         assert "Num O2 Sensors:       0" in formatted
         assert "Num Pressure Sensors: 0" in formatted
+        assert "Num Analog Mux:       0" in formatted
 
     def test_format_sensor_config_zero(self):
         """Test formatting a zero sensor configuration."""

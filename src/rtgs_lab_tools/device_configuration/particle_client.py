@@ -157,6 +157,7 @@ def calculate_config_uid(config: Dict[str, Any]) -> Tuple[int, int]:
             | (sensors.get("numCO2", 0) << 12)
             | (sensors.get("numO2", 0) << 8)
             | (sensors.get("numPressure", 0) << 4)
+            | sensors.get("numAnalogMux", 0)
         )
 
         return system_uid, sensor_uid
