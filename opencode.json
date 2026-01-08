@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "rtgs_lab_tools": {
+      "type": "local",
+      "command": [
+        "uv",
+        "run",
+        "-m",
+        "rtgs_lab_tools.mcp_server.rtgs_lab_tools_mcp_server"
+      ],
+      "enabled": true
+    },
+    "particle": {
+      "type": "local",
+      "command": [
+        "uv",
+        "--directory",
+        "./src/rtgs_lab_tools/mcp_server/particle-mcp-server/",
+        "run",
+        "particle.py"
+      ],
+      "enabled": true
+    }
+  }
+}
