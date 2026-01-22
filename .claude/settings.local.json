@@ -1,7 +1,21 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(source:*)",
+      "Bash(rtgs spatial-data list-datasets:*)",
+      "Bash(rtgs spatial-data test --dataset scientific_and_natural_areas)",
+      "WebSearch",
+      "Bash(curl:*)",
+      "Bash(rtgs spatial-data test --dataset TNC_lands)",
+      "Bash(rtgs spatial-data extract-all --help)",
+      "Bash(rtgs spatial-data test --dataset WAN)",
+      "Bash(rtgs spatial-data test --dataset land_use)",
+      "Bash(mkdir:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "particle",
     "rtgs_lab_tools"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

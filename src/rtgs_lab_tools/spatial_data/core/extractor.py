@@ -61,6 +61,39 @@ def extract_spatial_data(
         extractor = extractor_class(dataset_config)
         gdf = extractor.extract()
 
+        # 3.5 Apply attribute filter if specified
+        if "attribute_filter" in dataset_config and not gdf.empty:
+            filter_config = dataset_config["attribute_filter"]
+            columns = filter_config.get("columns", [])
+            values = filter_config.get("values", [])
+            match_type = filter_config.get("match_type", "any")
+
+            if columns and values:
+                logger.info(f"Applying attribute filter: {filter_config.get('description', 'No description')}")
+                original_count = len(gdf)
+
+                try:
+                    # Create a mask for rows where ANY column contains ANY of the target values
+                    import pandas as pd
+                    mask = pd.Series([False] * len(gdf))
+
+                    for col in columns:
+                        if col in gdf.columns:
+                            mask |= gdf[col].isin(values)
+                        else:
+                            logger.warning(f"Column '{col}' not found in dataset")
+
+                    gdf = gdf[mask]
+
+                    filtered_count = len(gdf)
+                    if original_count > 0:
+                        logger.info(f"Filter applied: {original_count} features -> {filtered_count} features ({filtered_count/original_count*100:.1f}% retained)")
+                    else:
+                        logger.info(f"Filter applied: {filtered_count} features extracted")
+                except Exception as e:
+                    logger.error(f"Failed to apply attribute filter: {e}")
+                    logger.warning("Continuing with unfiltered data")
+
         if gdf.empty:
             logger.warning(f"No features extracted for dataset: {dataset_name}")
 

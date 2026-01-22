@@ -1,0 +1,55 @@
+model_id: wildlife_corridor_suitability_hennepin
+model_type: weighted_overlay
+objective: Identify suitable locations for wildlife corridors connecting existing
+  protected areas in Hennepin County, Minnesota
+study_area: Hennepin County
+criteria:
+- dataset_name: wildlife_areas
+  criterion_name: Proximity to Protected Areas
+  weight: 40
+  scoring_function:
+    type: distance_decay
+    params:
+      max_distance: 2000
+      decay_rate: 0.001
+    output_range:
+    - 0
+    - 10
+- dataset_name: land_use
+  criterion_name: Habitat Quality
+  weight: 35
+  scoring_function:
+    type: categorical
+    params:
+      mapping:
+        Forest: 10
+        Wetland: 10
+        Grassland: 9
+        Prairie: 9
+        Open Water: 8
+        Agricultural: 4
+        Rural Residential: 3
+        Urban: 1
+        Industrial: 0
+        Commercial: 1
+        Transportation: 0
+    output_range:
+    - 0
+    - 10
+- dataset_name: watersheds
+  criterion_name: Water Access
+  weight: 25
+  scoring_function:
+    type: distance_decay
+    params:
+      max_distance: 1500
+      decay_rate: 0.0008
+    output_range:
+    - 0
+    - 10
+output_range:
+- 0
+- 100
+metadata:
+  created_by: Claude AI
+  method: weighted_overlay

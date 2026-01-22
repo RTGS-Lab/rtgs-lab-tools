@@ -33,6 +33,7 @@ class LazyGroup(click.Group):
             "core": ("rtgs_lab_tools.core.cli", "core_cli"),
             "sd-dump": ("rtgs_lab_tools.sd_dump.cli", "sd_dump_cli"),
             "spatial-data": ("rtgs_lab_tools.spatial_data.cli", "spatial_data_cli"),
+            "suitability": ("rtgs_lab_tools.suitability_modeling.cli", "suitability_cli"),
         }
 
     def get_command(self, ctx, cmd_name):

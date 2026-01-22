@@ -205,7 +205,7 @@ INSERT INTO spatial_datasets (
     spatial_type, coordinate_system, update_frequency, model_critical, expected_features
 ) VALUES 
 (
-    'protected_areas',
+    'wildlife_areas',
     'DNR Wildlife Management Areas',
     'mn_geospatial',
     'https://gisdata.mn.gov/dataset/bdry-dnr-wildlife-mgmt-areas-pub',

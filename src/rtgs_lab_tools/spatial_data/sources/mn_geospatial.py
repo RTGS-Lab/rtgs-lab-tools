@@ -48,7 +48,7 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
             raise ValueError(f"Unsupported access method: {access_method}")
 
     def _extract_from_rest_api(self) -> "gpd.GeoDataFrame":
-        """Extract from ArcGIS REST API service.
+        """Extract from ArcGIS REST API service with pagination support.
 
         Returns:
             GeoDataFrame with extracted features
@@ -61,23 +61,70 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
         # by appending '/query' and query parameters
         query_url = f"{service_url}/query"
 
-        # Basic query to get all features
-        params = {
-            "where": "1=1",  # Get all features
-            "outFields": "*",  # Get all fields
-            "f": "geojson",  # Return as GeoJSON
-            "returnGeometry": "true",
-        }
-
         try:
             self.logger.info(f"Extracting data from: {query_url}")
 
-            # Make the request
-            response = self.session.get(query_url, params=params, timeout=30)
-            response.raise_for_status()
+            # First, check if pagination is needed by getting count
+            count_params = {
+                "where": "1=1",
+                "returnCountOnly": "true",
+                "f": "json",
+            }
 
-            # Read directly from the response
-            gdf = gpd.read_file(response.text)
+            count_response = self.session.get(query_url, params=count_params, timeout=30)
+            count_response.raise_for_status()
+            count_data = count_response.json()
+            total_count = count_data.get("count", 0)
+
+            self.logger.info(f"Total features to extract: {total_count}")
+
+            # Check if service supports pagination
+            max_record_count = 2000  # Default ArcGIS limit
+
+            # If total features are less than max, get them all at once
+            if total_count <= max_record_count:
+                params = {
+                    "where": "1=1",  # Get all features
+                    "outFields": "*",  # Get all fields
+                    "f": "geojson",  # Return as GeoJSON
+                    "returnGeometry": "true",
+                }
+
+                response = self.session.get(query_url, params=params, timeout=60)
+                response.raise_for_status()
+
+                # Read directly from the response
+                gdf = gpd.read_file(response.text)
+            else:
+                # Need to paginate
+                self.logger.info(f"Pagination required - extracting in batches of {max_record_count}")
+                all_gdfs = []
+
+                for offset in range(0, total_count, max_record_count):
+                    self.logger.info(f"Extracting features {offset} to {offset + max_record_count}")
+
+                    params = {
+                        "where": "1=1",
+                        "outFields": "*",
+                        "f": "geojson",
+                        "returnGeometry": "true",
+                        "resultOffset": str(offset),
+                        "resultRecordCount": str(max_record_count),
+                    }
+
+                    response = self.session.get(query_url, params=params, timeout=60)
+                    response.raise_for_status()
+
+                    batch_gdf = gpd.read_file(response.text)
+                    all_gdfs.append(batch_gdf)
+
+                    if len(batch_gdf) < max_record_count:
+                        break  # Got all features
+
+                # Combine all batches
+                import pandas as pd
+                gdf = pd.concat(all_gdfs, ignore_index=True)
+                gdf = gpd.GeoDataFrame(gdf, geometry='geometry')
 
             self.logger.info(f"Successfully extracted {len(gdf)} features")
 
@@ -209,7 +256,36 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
                     ):
                         gdf = self._read_raster_as_geodataframe(spatial_path)
                     else:
-                        gdf = gpd.read_file(spatial_path)
+                        # Check if multiple layers are requested for multi-layer formats
+                        layer_names = self.dataset_config.get("layer_names")
+                        layer_name = self.dataset_config.get("layer_name")
+
+                        if layer_names:
+                            # Load multiple layers and combine them
+                            self.logger.info(f"Reading multiple layers: {layer_names}")
+                            gdfs = []
+                            for layer in layer_names:
+                                try:
+                                    layer_gdf = gpd.read_file(spatial_path, layer=layer)
+                                    gdfs.append(layer_gdf)
+                                    self.logger.info(f"Loaded layer '{layer}': {len(layer_gdf)} features")
+                                except Exception as e:
+                                    self.logger.warning(f"Failed to load layer '{layer}': {e}")
+
+                            if not gdfs:
+                                raise ValueError(f"No layers could be loaded from {layer_names}")
+
+                            # Combine all layers
+                            import pandas as pd
+                            gdf = pd.concat(gdfs, ignore_index=True)
+                            gdf = gpd.GeoDataFrame(gdf, geometry='geometry', crs=gdfs[0].crs)
+                            self.logger.info(f"Combined {len(gdfs)} layers: {len(gdf)} total features")
+
+                        elif layer_name:
+                            self.logger.info(f"Reading specific layer: {layer_name}")
+                            gdf = gpd.read_file(spatial_path, layer=layer_name)
+                        else:
+                            gdf = gpd.read_file(spatial_path)
 
                     return self._process_extracted_data(gdf)
 

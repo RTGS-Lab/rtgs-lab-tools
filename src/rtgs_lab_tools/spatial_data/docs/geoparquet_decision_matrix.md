@@ -2,7 +2,7 @@
 
 **Why GeoParquet as Standardized Output Format?**
 
-## File Size Comparison (Real Dataset: protected_areas)
+## File Size Comparison (Real Dataset: wildlife_areas)
 
 | Format | File Size | Relative Size |
 |--------|-----------|---------------|

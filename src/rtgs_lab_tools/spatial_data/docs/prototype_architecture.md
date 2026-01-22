@@ -164,7 +164,7 @@ def extract(self) -> "gpd.GeoDataFrame":
 | **Future-proof** | ✅ Apache standard | ❌ Legacy | ⚠️ Web-only | ⚠️ Niche |
 
 **Key Benefits:**
-- **50% smaller files** than Shapefile (2.9 MB vs 12 MB for protected_areas)
+- **50% smaller files** than Shapefile (2.9 MB vs 12 MB for wildlife_areas)
 - **Apache Arrow ecosystem** integration (Polars, DuckDB, Arrow Flight)
 - **Columnar storage** enables fast filtered reads (only load needed columns)
 - **Schema evolution** support for future dataset changes
@@ -326,7 +326,7 @@ extraction_log = SpatialExtraction(
 ```python
 # dataset_registry.py:6-37
 MN_GEOSPATIAL_DATASETS = {
-    "protected_areas": {
+    "wildlife_areas": {
         "description": "DNR Wildlife Management Areas",
         "source_type": "mn_geospatial",
         "url": "https://gisdata.mn.gov/dataset/...",
@@ -403,14 +403,14 @@ ALL_DATASETS = {
 
 2. **Test extraction** - Validation without file I/O
    ```bash
-   rtgs spatial-data test --dataset protected_areas
+   rtgs spatial-data test --dataset wildlife_areas
    ```
    Output: Feature count, duration, success/failure
 
 3. **Extract data** - Full ETL pipeline
    ```bash
    rtgs spatial-data extract \
-     --dataset protected_areas \
+     --dataset wildlife_areas \
      --output-dir ./data \
      --output-format geoparquet \
      --note "Production extraction"
@@ -422,7 +422,7 @@ ALL_DATASETS = {
 from rtgs_lab_tools.spatial_data import extract_spatial_data
 
 result = extract_spatial_data(
-    dataset_name="protected_areas",
+    dataset_name="wildlife_areas",
     output_dir="./data",
     output_format="geoparquet",
     note="Automated extraction"
@@ -519,7 +519,7 @@ from ..core.postgres_logger import PostgresLogger
 
 ```python
 # 1. User runs CLI command
-$ rtgs spatial-data extract --dataset protected_areas --output-format geoparquet
+$ rtgs spatial-data extract --dataset wildlife_areas --output-format geoparquet
 
 # 2. CLI invokes extract_spatial_data() (extractor.py:24-122)
 def extract_spatial_data(dataset_name, output_dir, output_format, create_zip, note):
@@ -552,12 +552,12 @@ def extract_spatial_data(dataset_name, output_dir, output_format, create_zip, no
     # 8. Prepare results dictionary
     results = {
         "success": True,
-        "dataset_name": "protected_areas",
+        "dataset_name": "wildlife_areas",
         "records_extracted": 1731,
         "crs": "EPSG:4326",
         "geometry_type": "MultiPolygon",
         "bounds": [-97.23, 43.50, -89.48, 49.38],
-        "output_file": "./data/protected_areas.parquet",
+        "output_file": "./data/wildlife_areas.parquet",
         "file_size_mb": 2.9,
         "duration_seconds": 0.8
     }
@@ -598,7 +598,7 @@ except Exception as e:
 
 ### Test Results
 
-**Dataset 1: protected_areas (Vector Data)**
+**Dataset 1: wildlife_areas (Vector Data)**
 - **Format:** GeoPackage (MultiPolygon)
 - **Features:** 1,731 polygons
 - **Extraction time:** 0.8 seconds
@@ -625,7 +625,7 @@ except Exception as e:
 
 **File Size Comparison:**
 ```
-protected_areas:
+wildlife_areas:
 - GeoParquet: 2.9 MB (100%)
 - Shapefile:  12.0 MB (414%)
 - GeoJSON:    45.0 MB (1552%)

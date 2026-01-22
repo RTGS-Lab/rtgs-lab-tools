@@ -1,0 +1,29 @@
+Objective:
+Identify suitable locations for wildlife corridors connecting existing protected areas in Hennepin County, Minnesota.
+
+Requirements:
+I need to find areas that could serve as wildlife corridors between DNR Wildlife Management Areas and other protected lands. The ideal corridors should:
+
+Criteria:
+1. Be close to existing protected areas (wildlife_areas dataset)
+   - Prioritize areas within 2km of existing wildlife areas
+   - Use exponential decay for scoring
+
+2. Have suitable habitat (land_use dataset)
+   - Prefer natural land cover types (forest, wetland, grassland)
+   - Avoid urban and industrial areas
+
+3. Be near water resources (watersheds dataset)
+   - Wildlife needs access to water
+   - Proximity to watersheds is important
+
+Weights:
+- Protected area proximity: 40% (most important)
+- Habitat quality: 35%
+- Water access: 25%
+
+Study Area:
+Hennepin County, Minnesota
+
+Output Format:
+GeoParquet file with suitability scores from 0-100
