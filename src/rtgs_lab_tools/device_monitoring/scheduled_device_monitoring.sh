@@ -1,4 +1,5 @@
 #!/bin/bash
+export PYTHONUTF8=1	# ensure proper encoding so that this script can print emojis without error
 
 # Scheduled Device Monitoring Script for CRON
 # Based on .github/workflows/daily-device-monitoring.yml
