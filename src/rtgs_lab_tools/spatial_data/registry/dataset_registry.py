@@ -1,6 +1,7 @@
-"""Dataset registry for MN Geospatial Commons, FGDB, and other spatial data sources."""
+"""Dataset registry for MN Geospatial Commons, FGDB, local files, and other spatial data sources."""
 
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -481,5 +482,168 @@ def format_dataset_list_for_llm() -> str:
     output.append(f"**Total Datasets Available: {len(datasets)}**")
     output.append(f"- FGDB (Hennepin County): {len(fgdb_datasets)}")
     output.append(f"- MN Geospatial Commons: {len(mn_datasets)}")
+
+    return "\n".join(output)
+
+
+# ============================================================================
+# Configuration-based Dataset Discovery
+# ============================================================================
+
+
+def list_datasets_by_mode(mode: str = "built-in", local_directory: Optional[Path] = None,
+                          local_prefix: str = "local") -> Dict[str, Dict[str, Any]]:
+    """
+    List datasets based on operational mode.
+
+    Args:
+        mode: Operational mode - 'built-in', 'local', or 'hybrid'
+        local_directory: Path to directory containing local files (required for local/hybrid)
+        local_prefix: Prefix to add to local dataset names (default: 'local')
+
+    Returns:
+        Dictionary of dataset_name: config
+
+    Raises:
+        ValueError: If mode is invalid or required directory is missing
+    """
+    if mode not in ["built-in", "local", "hybrid"]:
+        raise ValueError(f"Invalid mode: {mode}. Must be 'built-in', 'local', or 'hybrid'")
+
+    datasets = {}
+
+    # Built-in datasets
+    if mode in ["built-in", "hybrid"]:
+        datasets.update(list_available_datasets())
+
+    # Local datasets
+    if mode in ["local", "hybrid"]:
+        if local_directory is None:
+            raise ValueError(f"Mode '{mode}' requires local_directory to be specified")
+
+        from ..sources.local_file import discover_local_datasets
+
+        local_datasets = discover_local_datasets(local_directory)
+
+        # Add prefix to local dataset names in hybrid mode
+        if mode == "hybrid":
+            local_datasets = {
+                f"{local_prefix}:{name}": config
+                for name, config in local_datasets.items()
+            }
+
+        # Add source field
+        for config in local_datasets.values():
+            config["source"] = "local"
+
+        datasets.update(local_datasets)
+
+    return datasets
+
+
+def get_dataset_config_by_mode(dataset_name: str, mode: str = "built-in",
+                              local_directory: Optional[Path] = None,
+                              local_prefix: str = "local") -> Optional[Dict[str, Any]]:
+    """
+    Get configuration for a specific dataset based on mode.
+
+    Args:
+        dataset_name: Name of the dataset
+        mode: Operational mode
+        local_directory: Path to local files directory
+        local_prefix: Prefix for local datasets in hybrid mode
+
+    Returns:
+        Dataset configuration dictionary or None if not found
+    """
+    datasets = list_datasets_by_mode(mode, local_directory, local_prefix)
+    return datasets.get(dataset_name)
+
+
+def get_dataset_source_by_mode(dataset_name: str, mode: str = "built-in",
+                               local_directory: Optional[Path] = None,
+                               local_prefix: str = "local") -> str:
+    """
+    Determine source of a dataset based on mode.
+
+    Args:
+        dataset_name: Name of the dataset
+        mode: Operational mode
+        local_directory: Path to local files directory
+        local_prefix: Prefix for local datasets
+
+    Returns:
+        'mn_geospatial', 'fgdb', 'local', or 'unknown'
+    """
+    # Check if it's a local dataset (has prefix or mode is local)
+    if mode == "local":
+        return "local"
+
+    if mode == "hybrid" and dataset_name.startswith(f"{local_prefix}:"):
+        return "local"
+
+    # Otherwise check built-in sources
+    return get_dataset_source(dataset_name)
+
+
+def format_dataset_list_by_mode(mode: str = "built-in",
+                                local_directory: Optional[Path] = None,
+                                local_prefix: str = "local") -> str:
+    """
+    Format dataset list for display based on mode.
+
+    Args:
+        mode: Operational mode
+        local_directory: Path to local files directory
+        local_prefix: Prefix for local datasets
+
+    Returns:
+        Formatted string describing available datasets
+    """
+    datasets = list_datasets_by_mode(mode, local_directory, local_prefix)
+
+    # Group by source
+    mn_datasets = {k: v for k, v in datasets.items() if v.get("source") == "mn_geospatial"}
+    fgdb_datasets = {k: v for k, v in datasets.items() if v.get("source") == "fgdb"}
+    local_datasets = {k: v for k, v in datasets.items() if v.get("source") == "local"}
+
+    output = []
+    output.append(f"# Available Datasets (Mode: {mode})")
+    output.append("")
+
+    if local_datasets:
+        output.append("## Local Datasets")
+        output.append("")
+        for name, info in sorted(local_datasets.items()):
+            desc = info.get("description", "No description")
+            file_size = info.get("file_size_mb", 0)
+            output.append(f"- **{name}**: {desc}")
+            if file_size:
+                output.append(f"  - Size: {file_size:.2f} MB")
+        output.append("")
+
+    if fgdb_datasets:
+        output.append("## Hennepin County Analysis Datasets (FGDB)")
+        output.append("")
+        for name, info in sorted(fgdb_datasets.items()):
+            desc = info.get("description", "No description")
+            output.append(f"- **{name}**: {desc}")
+        output.append("")
+
+    if mn_datasets:
+        output.append("## Public Minnesota Datasets (MN Geospatial Commons)")
+        output.append("")
+        for name, info in sorted(mn_datasets.items()):
+            desc = info.get("description", "No description")
+            output.append(f"- **{name}**: {desc}")
+        output.append("")
+
+    output.append(f"**Total Datasets Available: {len(datasets)}**")
+    if local_datasets:
+        output.append(f"- Local: {len(local_datasets)}")
+    if fgdb_datasets:
+        output.append(f"- FGDB (Hennepin County): {len(fgdb_datasets)}")
+    if mn_datasets:
+        output.append(f"- MN Geospatial Commons: {len(mn_datasets)}")
 
     return "\n".join(output)

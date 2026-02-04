@@ -353,9 +353,14 @@ class SuitabilityEngine:
             for y in y_coords:
                 cell = box(x, y, x + cell_size, y + cell_size)
 
-                # Only include cells that intersect boundary
-                if boundary_geom is None or cell.intersects(boundary_geom):
+                # Clip cells to boundary or include full cell if no boundary
+                if boundary_geom is None:
                     geometries.append(cell)
+                elif cell.intersects(boundary_geom):
+                    # Clip cell to boundary to ensure cells don't extend outside study area
+                    clipped_cell = cell.intersection(boundary_geom)
+                    if not clipped_cell.is_empty:
+                        geometries.append(clipped_cell)
 
         logger.info(f"  Created {len(geometries)} grid cells")
 
@@ -407,8 +412,12 @@ class SuitabilityEngine:
             # Create union of boundary geometries
             boundary_geom = study_area_boundary.unary_union
 
-            # Clip features to boundary
-            units_gdf = units_gdf[units_gdf.intersects(boundary_geom)]
+            # Clip features to boundary by intersecting geometries
+            units_gdf = units_gdf[units_gdf.intersects(boundary_geom)].copy()
+            units_gdf.geometry = units_gdf.geometry.intersection(boundary_geom)
+
+            # Remove any empty geometries
+            units_gdf = units_gdf[~units_gdf.geometry.is_empty]
 
             logger.info(f"    Clipped {original_count} -> {len(units_gdf)} units")
 
@@ -471,9 +480,22 @@ class SuitabilityEngine:
         max_distance = params.get("max_distance", 2000)
         decay_rate = params.get("decay_rate", 0.001)
 
-        # Calculate distance from each cell to nearest feature
-        distances = study_area.geometry.apply(
-            lambda geom: features.distance(geom).min()
+        # Reproject to projected CRS if needed for accurate distance calculations
+        if study_area.crs and study_area.crs.is_geographic:
+            logger.warning(
+                f"Converting from geographic CRS ({study_area.crs}) to projected CRS for distance calculation"
+            )
+            # Use NAD83 / Conus Albers (EPSG:5070) for US data - good equal-area projection
+            target_crs = "EPSG:5070"
+            study_area_proj = study_area.to_crs(target_crs)
+            features_proj = features.to_crs(target_crs)
+        else:
+            study_area_proj = study_area
+            features_proj = features
+
+        # Calculate distance from each cell to nearest feature (in meters if projected)
+        distances = study_area_proj.geometry.apply(
+            lambda geom: features_proj.distance(geom).min()
         )
 
         # Apply exponential decay
@@ -516,7 +538,8 @@ class SuitabilityEngine:
             )
             scores = np.full(len(study_area), 5.0)
 
-        return scores.values
+        # Handle both pandas Series and numpy array cases
+        return np.asarray(scores)
 
     def _combine_scores(self, criterion_scores: Dict[str, np.ndarray]) -> np.ndarray:
         """Combine criterion scores using weighted sum.

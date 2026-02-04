@@ -1,0 +1,36 @@
+# Configuration for hybrid mode (mix built-in datasets with local files)
+# Place this file as .rtgs-config.yaml in your project directory or home directory
+
+mode: hybrid
+
+data:
+  # Path to directory containing your local spatial data files
+  # Local datasets will be prefixed with "local:" to avoid name conflicts
+  local_directory: ./my_data
+
+  # Cache directory for processed files
+  cache_directory: .rtgs_cache
+
+  # Built-in data sources to include
+  sources:
+    - mn_geospatial
+    - fgdb
+
+  # Prefix added to local dataset names (e.g., my_parcels.shp → local:my_parcels)
+  local_prefix: local
+
+database:
+  # Enable database logging for built-in datasets, optional for local
+  logging_enabled: true
+  # Connection string loaded from RTGS_DB_CONNECTION_STRING environment variable
+
+output:
+  # Default output format for extracted data
+  default_format: geoparquet
+
+  # Default output directory
+  default_directory: ./data
+
+# Example usage in hybrid mode:
+# - Built-in dataset:  rtgs spatial-data extract --dataset wildlife_areas
+# - Local dataset:     rtgs spatial-data extract --dataset local:my_parcels

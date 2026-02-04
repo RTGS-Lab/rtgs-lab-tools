@@ -1,0 +1,28 @@
+# Configuration for built-in mode (web-sourced datasets with database logging)
+# Place this file as .rtgs-config.yaml in your project directory or home directory
+
+mode: built-in
+
+data:
+  # Data sources to use (built-in only)
+  sources:
+    - mn_geospatial
+    - fgdb
+
+  # Cache directory for temporary files
+  cache_directory: .rtgs_cache
+
+  # Local prefix (not used in built-in mode)
+  local_prefix: local
+
+database:
+  # Enable database logging for audit trail
+  logging_enabled: true
+  # Connection string loaded from RTGS_DB_CONNECTION_STRING environment variable
+
+output:
+  # Default output format for extracted data
+  default_format: geoparquet
+
+  # Default output directory
+  default_directory: ./data

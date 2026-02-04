@@ -9,10 +9,12 @@ from typing import Any, Dict, Optional
 
 # Reuse existing rtgs-lab-tools infrastructure
 from ...core.exceptions import RTGSLabToolsError, ValidationError
+from ..config import get_config, SpatialDataConfig
 from ..db_logger import SpatialDataLogger
-from ..registry.dataset_registry import get_dataset_config
+from ..registry.dataset_registry import get_dataset_config, get_dataset_config_by_mode
 from ..sources.mn_geospatial import MNGeospatialExtractor
 from ..sources.fgdb import FGDBExtractor
+from ..sources.local_file import LocalFileExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,7 @@ logger = logging.getLogger(__name__)
 EXTRACTOR_CLASSES = {
     "mn_geospatial": MNGeospatialExtractor,
     "fgdb": FGDBExtractor,
+    "local": LocalFileExtractor,
 }
 
 
@@ -29,6 +32,7 @@ def extract_spatial_data(
     output_format: str = "geoparquet",
     create_zip: bool = False,
     note: Optional[str] = None,
+    config: Optional[SpatialDataConfig] = None,
 ) -> Dict[str, Any]:
     """Extract spatial dataset - mirrors sensing_data.extract_data() signature.
 
@@ -38,6 +42,7 @@ def extract_spatial_data(
         output_format: Output format - geoparquet, shapefile, or csv
         create_zip: Whether to create zip archive
         note: Optional note for logging
+        config: Optional configuration (if None, loads from file/defaults)
 
     Returns:
         Dictionary with extraction results
@@ -45,10 +50,21 @@ def extract_spatial_data(
     start_time = datetime.now()
 
     try:
-        # 1. Look up dataset configuration
-        dataset_config = get_dataset_config(dataset_name)
+        # 0. Load configuration if not provided
+        if config is None:
+            config = get_config()
+
+        # 1. Look up dataset configuration based on mode
+        dataset_config = get_dataset_config_by_mode(
+            dataset_name,
+            mode=config.mode,
+            local_directory=config.data.get_local_directory(),
+            local_prefix=config.data.local_prefix
+        )
         if not dataset_config:
-            raise ValueError(f"Unknown dataset: {dataset_name}")
+            raise ValueError(
+                f"Unknown dataset: {dataset_name} (mode: {config.mode})"
+            )
 
         logger.info(f"Starting extraction of dataset: {dataset_name}")
 
@@ -129,12 +145,15 @@ def extract_spatial_data(
             "note": note,
         }
 
-        # 6. Log extraction to database
-        try:
-            with SpatialDataLogger() as db_logger:
-                db_logger.log_extraction(results)
-        except Exception as e:
-            logger.warning(f"Failed to log extraction to database: {e}")
+        # 6. Log extraction to database (if enabled in config)
+        if config.database.logging_enabled:
+            try:
+                with SpatialDataLogger() as db_logger:
+                    db_logger.log_extraction(results)
+            except Exception as e:
+                logger.warning(f"Failed to log extraction to database: {e}")
+        else:
+            logger.debug("Database logging disabled in configuration")
 
         logger.info(f"Successfully extracted {len(gdf)} features from {dataset_name}")
         return results

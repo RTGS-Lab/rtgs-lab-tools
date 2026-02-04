@@ -1,0 +1,31 @@
+# Configuration for local mode (user's flat files, no database, no web downloads)
+# Place this file as .rtgs-config.yaml in your project directory or home directory
+
+mode: local
+
+data:
+  # Path to directory containing your spatial data files
+  # Supports: .shp, .gpkg, .geoparquet, .parquet, .geojson, .json, .zip
+  local_directory: ./data
+
+  # Cache directory for processed files (improves performance on reuse)
+  cache_directory: .rtgs_cache
+
+  # Built-in data sources (not used in local mode)
+  sources:
+    - mn_geospatial
+    - fgdb
+
+  # Prefix for local datasets (not used in local mode, all datasets are local)
+  local_prefix: local
+
+database:
+  # Disable database logging in local mode (files stay as flat files)
+  logging_enabled: false
+
+output:
+  # Default output format for extracted data
+  default_format: geoparquet
+
+  # Default output directory
+  default_directory: ./results

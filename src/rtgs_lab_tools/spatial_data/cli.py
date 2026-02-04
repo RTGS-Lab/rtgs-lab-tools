@@ -19,29 +19,27 @@ def spatial_data_cli(ctx):
 
 
 @spatial_data_cli.command()
-def list_datasets():
-    """List all available spatial datasets."""
-    from .registry.dataset_registry import list_available_datasets
+@click.option(
+    "--config-file",
+    type=click.Path(exists=True),
+    help="Path to configuration file (optional)",
+)
+def list_datasets(config_file: Optional[str]):
+    """List all available spatial datasets based on configuration mode."""
+    from .config import load_config
+    from .registry.dataset_registry import format_dataset_list_by_mode
 
-    datasets = list_available_datasets()
+    # Load configuration
+    config = load_config(config_file if config_file else None)
 
-    if not datasets:
-        click.echo("No datasets available.")
-        return
+    # Get formatted dataset list
+    output = format_dataset_list_by_mode(
+        mode=config.mode,
+        local_directory=config.data.get_local_directory(),
+        local_prefix=config.data.local_prefix
+    )
 
-    click.echo("Available spatial datasets:")
-    click.echo()
-
-    for dataset_name, info in datasets.items():
-        description = info.get("description", "No description")
-        source_type = info.get("source_type", "unknown")
-        spatial_type = info.get("spatial_type", "unknown")
-
-        click.echo(f"  {dataset_name}")
-        click.echo(f"    Description: {description}")
-        click.echo(f"    Source: {source_type}")
-        click.echo(f"    Type: {spatial_type}")
-        click.echo()
+    click.echo(output)
 
 
 @spatial_data_cli.command()
@@ -59,6 +57,11 @@ def list_datasets():
 )
 @click.option("--create-zip", is_flag=True, help="Create zip archive")
 @click.option("--note", help="Note for logging")
+@click.option(
+    "--config-file",
+    type=click.Path(exists=True),
+    help="Path to configuration file (optional)",
+)
 @click.pass_context
 def extract(
     ctx,
@@ -67,12 +70,18 @@ def extract(
     output_format: str,
     create_zip: bool,
     note: Optional[str],
+    config_file: Optional[str],
 ):
     """Extract spatial dataset - optionally save to file and/or log to database."""
     from .core.extractor import extract_spatial_data
+    from .config import load_config
 
     try:
+        # Load configuration
+        config = load_config(config_file if config_file else None)
+
         click.echo(f"Starting extraction of dataset: {dataset}")
+        click.echo(f"Mode: {config.mode}")
         if output_dir:
             click.echo(f"Output directory: {output_dir}")
             click.echo(f"Output format: {output_format}")
@@ -86,6 +95,7 @@ def extract(
             output_format=output_format,
             create_zip=create_zip,
             note=note,
+            config=config,
         )
 
         if result["success"]:
@@ -246,3 +256,84 @@ def extract_all(
             if error or (result and not result.get("success")):
                 click.echo(f"  [FAIL] {dataset_name}: {error or result.get('error', 'Unknown')}")
         ctx.exit(1)
+
+
+@spatial_data_cli.command()
+@click.option(
+    "--mode",
+    type=click.Choice(["built-in", "local", "hybrid"]),
+    required=True,
+    help="Operational mode",
+)
+@click.option(
+    "--local-data-dir",
+    type=click.Path(),
+    help="Path to local data directory (required for local/hybrid modes)",
+)
+@click.option(
+    "--output",
+    default=".rtgs-config.yaml",
+    help="Output configuration file path (default: .rtgs-config.yaml)",
+)
+@click.option(
+    "--database-logging/--no-database-logging",
+    default=True,
+    help="Enable or disable database logging (default: enabled)",
+)
+def create_config(
+    mode: str,
+    local_data_dir: Optional[str],
+    output: str,
+    database_logging: bool,
+):
+    """Create a configuration file for spatial_data module."""
+    from pathlib import Path
+    from .config import SpatialDataConfig, DataConfig, DatabaseConfig, OutputConfig
+
+    # Validate inputs
+    if mode in ["local", "hybrid"] and not local_data_dir:
+        click.echo(f"ERROR: Mode '{mode}' requires --local-data-dir", err=True)
+        raise click.Abort()
+
+    if local_data_dir and not Path(local_data_dir).exists():
+        click.echo(
+            f"WARNING: Local data directory does not exist: {local_data_dir}",
+            err=True
+        )
+        if not click.confirm("Continue anyway?"):
+            raise click.Abort()
+
+    # Create configuration
+    config = SpatialDataConfig(
+        mode=mode,
+        data=DataConfig(
+            local_directory=local_data_dir,
+            cache_directory=".rtgs_cache",
+            sources=["mn_geospatial", "fgdb"],
+            local_prefix="local",
+        ),
+        database=DatabaseConfig(
+            logging_enabled=database_logging,
+        ),
+        output=OutputConfig(
+            default_format="geoparquet",
+            default_directory="./data",
+        )
+    )
+
+    # Save to file
+    output_path = Path(output)
+    config.to_yaml(output_path)
+
+    click.echo(f"Configuration file created: {output_path}")
+    click.echo()
+    click.echo("Configuration summary:")
+    click.echo(f"  Mode: {mode}")
+    if local_data_dir:
+        click.echo(f"  Local data directory: {local_data_dir}")
+    click.echo(f"  Database logging: {'enabled' if database_logging else 'disabled'}")
+    click.echo()
+    click.echo("You can now use this configuration by placing it in:")
+    click.echo("  - Current directory: .rtgs-config.yaml")
+    click.echo("  - Home directory: ~/.rtgs-config.yaml")
+    click.echo("  - Or specify with --config-file option")
