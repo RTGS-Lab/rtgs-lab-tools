@@ -1,202 +1,167 @@
 # Spatial Data Module
 
-**Status:** ETL Pipeline Complete - Prototype Complete  
-**Branch:** `ben/etl-pipeline-v0`  
-**Output Format:** GeoParquet + PostGIS Database Logging
+**Status:** Production Ready
+**Version:** 1.0.0
+**Output Format:** GeoParquet (primary), Shapefile, CSV
 
 ## Overview
 
-The `spatial_data` module provides extraction and processing capabilities for geospatial datasets required by the Hennepin County Parcel Prioritization Model. This module operates as a parallel system to the existing `sensing_data` module, designed specifically for spatial data sources.
+The `spatial_data` module provides unified extraction and processing capabilities for geospatial datasets. It serves as the **single data management layer** for all spatial data in rtgs-lab-tools, supporting:
 
-## Architecture
+- **FGDB (File Geodatabase)** - Hennepin County analysis datasets (16 layers)
+- **MN Geospatial Commons** - Public Minnesota datasets (10+ sources)
 
-This module implements the **Parallel Module Architecture** following software engineering best practices:
-
-- **Clean Separation**: Spatial data processing separate from time-series sensor data
-- **Infrastructure Reuse**: Leverages 85% of existing rtgs-lab-tools infrastructure
-- **Native Spatial Operations**: Uses GeoPandas GeoDataFrames (not forced measurement schemas)
-- **Extractors Pattern**: Purpose-built extractors for each data source type (not parsers)
-
-## Implementation Status
-
-### ✅ COMPLETED - Full ETL Pipeline Prototype
-- [x] **Core Infrastructure** - Extractor classes, registry, CLI integration
-- [x] **Data Sources** - MN Geospatial Commons (vector & raster support)
-- [x] **File Export** - GeoParquet (primary), Shapefile, CSV formats
-- [x] **Database Integration** - PostGIS logging and metadata catalog
-- [x] **CLI Commands** - Complete extraction workflow
-- [x] **Production Testing** - End-to-end validation with real datasets
-
-### 📊 Verified Pipeline Results
-**Vector Dataset (wildlife_areas):**
-- 1,731 MultiPolygon features extracted in 0.8 seconds
-- Output: 2.9 MB GeoParquet file
-- CRS transformation: EPSG:26915 → EPSG:4326
-
-**Raster Dataset (groundwater_recharge):** 
-- 201,264 polygon features (raster-to-vector) in 14.5 seconds
-- Output: 5.6 MB GeoParquet file
-- Spatial processing: AAIGRID → polygon conversion
-
-### 🎯 Next Phase - Scale & Expand
-- [ ] Add remaining 18+ MN Geospatial datasets to registry
-- [ ] Implement additional data sources (Google Earth Engine, etc.)
-- [ ] Add automated update detection and scheduling
+This module is used by the `suitability_modeling` module for AI-powered spatial analysis.
 
 ## Quick Start
 
 ### Prerequisites
+
 ```bash
-# Spatial dependencies
-pip install geopandas rasterio requests sqlalchemy
+# Install spatial dependencies
+pip install geopandas fiona rasterio requests
+
+# For FGDB support (Hennepin County datasets)
+export RTGS_FGDB_PATH="/path/to/HC_EasementAnalysis_Model_Inputs_2020.gdb"
 ```
 
-### CLI Commands Reference
+### Basic Usage
 
-#### 1. `list-datasets` - Dataset Discovery
-**Purpose:** Display all available datasets with their descriptions, source types, and spatial types.
+```bash
+# List all available datasets
+rtgs spatial-data list-datasets
+
+# Extract a single dataset
+rtgs spatial-data extract --dataset wildlife_areas --output-dir ./data
+
+# Extract all datasets
+rtgs spatial-data extract-all --output-dir ./data
+```
+
+## Data Sources
+
+### FGDB Datasets (Hennepin County)
+
+Requires `RTGS_FGDB_PATH` environment variable pointing to the File Geodatabase.
+
+| Dataset | Description | Features |
+|---------|-------------|----------|
+| `bee_habitat` | Pollinator habitat suitability | 2 |
+| `floodplains` | Floodplain scoring | 2 |
+| `hennepin_wetland_inventory` | Comprehensive wetland mapping | 56,018 |
+| `habitat_diversity` | Ecosystem diversity scoring | 51 |
+| `headwaters` | Stream headwater catchments | 1,447 |
+| `important_bird_areas` | Audubon designated bird areas | 6 |
+| `mbs_sites` | MN Biological Survey sites | 318 |
+| `land_cover` | MLCCS land cover classification | 46,745 |
+| `groundwater_recharge_hc` | Groundwater recharge rates | 2,884 |
+| `natural_spaces` | Protected natural areas | 1 |
+| `protected_areas_hc` | Protected lands composite | 1 |
+| `quality_community` | Community quality metrics | 1 |
+| `risk_of_development` | Development pressure scoring | 3 |
+| `shoreland_buffers` | Lake and stream buffer zones | 1 |
+| `groundwater_susceptibility` | Aquifer vulnerability | 976 |
+| `wildlife_action_network` | Wildlife corridor ranking | 1,564 |
+
+### MN Geospatial Commons (Public)
+
+Always available without configuration.
+
+| Dataset | Description | Features |
+|---------|-------------|----------|
+| `wildlife_areas` | DNR Wildlife Management Areas | 1,731 |
+| `scientific_and_natural_areas` | DNR Scientific and Natural Areas | 237 |
+| `aquatic_areas` | DNR Aquatic Management Areas | 1,571 |
+| `MBS_sites` | Sites of Biodiversity Significance | 12,591 |
+| `WAN` | Wildlife Action Network | 133,283 |
+| `land_use` | Generalized Land Use 2020 | 22 |
+| `watersheds` | DNR Level 9 Watersheds | 131,411 |
+| `groundwater_recharge` | Groundwater recharge rates | 201,264 |
+| `TNC_lands` | The Nature Conservancy lands | 383 |
+| `cemeteries` | Regional cemeteries | 108 |
+
+## CLI Commands
+
+### `list-datasets` - Dataset Discovery
+
+Display all available datasets with descriptions.
 
 ```bash
 rtgs spatial-data list-datasets
 ```
 
-**Options:** None
+### `test` - Validation Testing
 
-**Use Case:** Discover what datasets are available before extraction.
-
----
-
-#### 2. `test` - Validation Testing
-**Purpose:** Test dataset extraction without saving files (database-only mode). Useful for validating accessibility and checking feature counts before full extraction.
+Test dataset extraction without saving files.
 
 ```bash
-rtgs spatial-data test --dataset <dataset_name>
+rtgs spatial-data test --dataset wildlife_areas
 ```
 
-**Options:**
-- `--dataset` (required) - Name of dataset to test
+### `extract` - Single Dataset Extraction
 
-**Example:**
-```bash
-rtgs spatial-data test --dataset aquatic_areas
-# Output: SUCCESS: Test successful! Features: 1571, Duration: 1.2s
-```
-
----
-
-#### 3. `extract` - Single Dataset Extraction
-**Purpose:** Extract a single spatial dataset with full control over output format and location.
+Extract a single dataset with full control over output.
 
 ```bash
-rtgs spatial-data extract --dataset <dataset_name> [OPTIONS]
-```
-
-**Options:**
-- `--dataset` (required) - Dataset name to extract
-- `--output-dir` (optional) - Output directory (if omitted, database-only mode)
-- `--output-format` (optional) - Choose format: `geoparquet` | `shapefile` | `csv` (default: geoparquet)
-- `--create-zip` (optional flag) - Create zip archive of output files
-- `--note` (optional) - Add note for logging/documentation
-
-**Operational Modes:**
-
-**Mode 1: Database-only (no files saved locally)**
-```bash
-rtgs spatial-data extract --dataset wildlife_areas
-```
-
-**Mode 2: Database + File Output**
-```bash
-# Extract as GeoParquet (default, recommended)
+# Extract as GeoParquet (default)
 rtgs spatial-data extract --dataset wildlife_areas --output-dir ./data
 
-# Extract as Shapefile for GIS compatibility
+# Extract as Shapefile
 rtgs spatial-data extract --dataset wildlife_areas --output-dir ./data --output-format shapefile
 
-# Extract with documentation note
-rtgs spatial-data extract --dataset wildlife_areas --output-dir ./data --note "Q4 2025 parcel analysis"
-
-# Extract and create zip archive
-rtgs spatial-data extract --dataset wildlife_areas --output-dir ./data --create-zip
-```
-
----
-
-#### 4. `extract-all` - Batch Extraction
-**Purpose:** Extract ALL available datasets in one command with progress tracking and summary reporting.
-
-```bash
-rtgs spatial-data extract-all [OPTIONS]
+# Extract FGDB dataset
+rtgs spatial-data extract --dataset habitat_diversity --output-dir ./data
 ```
 
 **Options:**
-- `--output-dir` (optional) - Output directory (if omitted, database-only mode)
-- `--output-format` (optional) - Choose format: `geoparquet` | `shapefile` | `csv` (default: geoparquet)
-- `--create-zip` (optional flag) - Create zip archives for all outputs
-- `--note` (optional) - Add note for logging/documentation
-- `--continue-on-error` (optional flag) - Continue processing remaining datasets if one fails
+- `--dataset` (required) - Dataset name
+- `--output-dir` - Output directory (omit for database-only mode)
+- `--output-format` - `geoparquet` | `shapefile` | `csv` (default: geoparquet)
+- `--create-zip` - Create zip archive
+- `--note` - Add documentation note
 
-**Examples:**
+### `extract-all` - Batch Extraction
+
+Extract all available datasets at once.
+
 ```bash
-# Extract all to database only (no files)
-rtgs spatial-data extract-all
-
-# Extract all datasets as Shapefiles
-rtgs spatial-data extract-all --output-dir ./data --output-format shapefile
-
-# Extract all with resilience (don't stop on errors)
 rtgs spatial-data extract-all --output-dir ./data --continue-on-error
-
-# Extract all with documentation
-rtgs spatial-data extract-all --output-dir ./data --note "Complete dataset refresh for Q4 analysis"
 ```
 
-**Example Output:**
+**Options:**
+- `--output-dir` - Output directory
+- `--output-format` - Output format (default: geoparquet)
+- `--continue-on-error` - Continue if one dataset fails
+
+## Python API
+
+```python
+from rtgs_lab_tools.spatial_data import (
+    extract_spatial_data,
+    list_available_datasets,
+    get_dataset_source,
+    is_fgdb_available
+)
+
+# Check what's available
+datasets = list_available_datasets()
+print(f"Available: {len(datasets)} datasets")
+print(f"FGDB configured: {is_fgdb_available()}")
+
+# Extract a dataset
+result = extract_spatial_data(
+    dataset_name="wildlife_areas",
+    output_dir="./data",
+    output_format="geoparquet"
+)
+
+print(f"Extracted {result['records_extracted']} features")
+print(f"Output: {result['output_file']}")
+
+# Check data source
+source = get_dataset_source("habitat_diversity")
+print(f"Source: {source}")  # 'fgdb' or 'mn_geospatial'
 ```
-Extracting all 10 available datasets
-[1/10] Extracting: wildlife_areas
-  [SUCCESS] 1731 features in 0.9s
-    File: ./data/wildlife_areas.parquet (2.90 MB)
-[2/10] Extracting: groundwater_recharge
-  [SUCCESS] 201264 features in 13.5s
-...
-============================================================
-EXTRACTION SUMMARY
-============================================================
-Total datasets: 10
-Succeeded: 10
-Failed: 0
-```
-
----
-
-### Quick Command Reference
-
-| Command | Purpose | Required Options | Common Use |
-|---------|---------|-----------------|------------|
-| `list-datasets` | Show all available datasets | None | Discovery |
-| `test` | Validate dataset access | `--dataset` | Pre-extraction check |
-| `extract` | Extract single dataset | `--dataset` | Targeted extraction |
-| `extract-all` | Extract all datasets | None | Batch processing |
-
-## Dataset Registry
-
-**Available Datasets:**
-- `wildlife_areas` - DNR Wildlife Management Areas (1,731 polygons)
-- `groundwater_recharge` - Mean annual groundwater recharge 1996-2010 (201k grid cells)
-- `scientific_and_natural_areas` - DNR Scientific and Natural Areas (237 polygons)
-- `TNC_lands` - The Nature Conservancy lands in MN, ND, & SD (383 polygons)
-- `aquatic_areas` - DNR Fisheries Acquisition - Aquatic Management Areas (1,571 polygons)
-- `MBS_sites` - Minnesota County Biological Survey - Sites of Biodiversity Significance (12,591 polygons)
-- `WAN` - Wildlife Action Network - Minnesota Wildlife Action Plan Network (133,283 polygons)
-- `land_use` - Generalized Land Use 2020 - Metropolitan Council Regional Land Use (22 polygons)
-- `cemeteries` - Cemeteries from Regional Parcels (filtered to cemetery parcels only) (108 polygons)
-- `watersheds` - DNR Level 9 Watersheds - Hydrologic Unit Boundaries (131,411 polygons)
-
-**Supported Formats:**
-- **GeoParquet** (recommended) - Optimal performance and compression
-- **Shapefile** - Maximum GIS compatibility 
-- **CSV+WKT** - Simple text format for basic sharing
 
 ## Module Structure
 
@@ -205,7 +170,6 @@ spatial_data/
 ├── __init__.py                    # Lazy loading interface
 ├── README.md                      # This file
 ├── cli.py                         # CLI commands
-├── db_schema.sql                  # PostGIS database schema
 ├── db_logger.py                   # Database integration
 ├── core/
 │   ├── __init__.py
@@ -213,138 +177,120 @@ spatial_data/
 ├── sources/
 │   ├── __init__.py
 │   ├── base.py                   # SpatialSourceExtractor base class
-│   └── mn_geospatial.py         # MN Geospatial Commons extractor
-└── registry/
-    ├── __init__.py
-    └── dataset_registry.py       # Dataset configuration
+│   ├── mn_geospatial.py          # MN Geospatial Commons extractor
+│   └── fgdb.py                   # ESRI File Geodatabase extractor
+├── registry/
+│   ├── __init__.py
+│   └── dataset_registry.py       # Dataset configuration (FGDB + MN)
+└── docs/
+    └── *.md                      # Additional documentation
 ```
 
-## Design Principles
+## Configuration
 
-### 1. Extractors vs Parsers
-- **Extractors**: Acquire data from external sources + process it
-- **Parsers**: Transform already-retrieved data
-- Spatial data needs **extractors** because data lives in external systems
+### FGDB Path
 
-### 2. Infrastructure Reuse
+Set the `RTGS_FGDB_PATH` environment variable:
+
+**Linux/macOS:**
+```bash
+export RTGS_FGDB_PATH="/path/to/HC_EasementAnalysis_Model_Inputs_2020.gdb"
+```
+
+**Windows PowerShell:**
+```powershell
+$env:RTGS_FGDB_PATH="C:\path\to\HC_EasementAnalysis_Model_Inputs_2020.gdb"
+```
+
+**Windows (persistent):**
+1. Open Environment Variables settings
+2. Add `RTGS_FGDB_PATH` as user variable
+3. Restart terminal
+
+## Output Formats
+
+| Format | Extension | Best For |
+|--------|-----------|----------|
+| **GeoParquet** | `.parquet` | Performance, compression, cloud workflows |
+| **Shapefile** | `.shp` | GIS software compatibility |
+| **CSV** | `.csv` | Simple sharing, spreadsheets |
+
+GeoParquet is recommended for most use cases (50% smaller than Shapefile).
+
+## Architecture
+
+### Extractor Pattern
+
+Each data source has a dedicated extractor class:
+
 ```python
-# Reuses existing rtgs-lab-tools components:
-from ...core import Config, PostgresLogger, GitLogger
-from ...core.exceptions import ValidationError, RTGSLabToolsError
+class FGDBExtractor(SpatialSourceExtractor):
+    """Extracts from ESRI File Geodatabase."""
+    def extract(self) -> gpd.GeoDataFrame:
+        ...
+
+class MNGeospatialExtractor(SpatialSourceExtractor):
+    """Extracts from MN Geospatial Commons."""
+    def extract(self) -> gpd.GeoDataFrame:
+        ...
 ```
 
-### 3. Native Spatial Data Structures
+### Unified Registry
+
+The dataset registry provides a single interface to all data sources:
+
 ```python
-# Returns GeoDataFrames, not measurement records
-def extract(self) -> gpd.GeoDataFrame:
-    # Natural spatial operations: coordinate transforms, spatial validation
+from rtgs_lab_tools.spatial_data import list_available_datasets
+
+datasets = list_available_datasets()
+# Returns both FGDB and MN Geospatial datasets with 'source' field
 ```
 
-## Python API
+## Integration with Suitability Modeling
+
+The `suitability_modeling` module uses `spatial_data` as its data layer:
 
 ```python
-from rtgs_lab_tools.spatial_data import extract_spatial_data
+# suitability_modeling uses spatial_data internally
+from rtgs_lab_tools.suitability_modeling import design_model, execute_model
 
-# Extract to database only (no file output)
-result = extract_spatial_data(
-    dataset_name="wildlife_areas",
-    note="Database catalog only"
-)
-
-# Extract and save to GeoParquet file
-result = extract_spatial_data(
-    dataset_name="wildlife_areas",
-    output_dir="./data",
-    output_format="geoparquet",
-    note="Production data extraction"
-)
-
-print(f"Extracted {result['records_extracted']} features")
-if result.get('output_file'):
-    print(f"Output file: {result['output_file']}")
-    print(f"File size: {result['file_size_mb']:.2f} MB")
-else:
-    print("Data logged to database only")
+# Datasets are loaded automatically via spatial_data
+model = design_model("requirements.txt")
+results = execute_model(model)
 ```
 
-## Pipeline Architecture
+## Troubleshooting
 
-**Data Flow:** Extract → Transform → Export (Optional) → Log
-- **Extract**: Download from MN Geospatial Commons APIs
-- **Transform**: CRS standardization, raster-to-vector conversion
-- **Export**: Optionally save as GeoParquet (or Shapefile/CSV) to local storage
-- **Log**: Record extraction metadata in PostGIS database
+### FGDB Not Available
 
-### Flexible Output Options
-
-The module supports two operational modes:
-
-1. **Database Catalog Only** - Extract and log metadata without saving files locally
-   - Useful for cataloging available data
-   - Minimal disk space usage
-   - Quick validation of datasets
-
-2. **Database + File Output** - Extract, save to file, and log metadata
-   - Full spatial data available for analysis
-   - Choose output format (GeoParquet, Shapefile, CSV)
-   - Custom output directory
-
-This flexibility allows you to catalog datasets in the database and only save files to local storage when needed for specific analysis tasks.
-
-### Batch Extraction
-
-The `extract-all` command allows you to extract all available datasets at once:
-
-**Features:**
-- Extract all 10 datasets in a single command
-- Progress tracking with [n/total] counter
-- Detailed summary report at completion
-- Optional `--continue-on-error` flag to continue if one dataset fails
-- Same output options as single extraction (database-only or with files)
-
-**Example output:**
 ```
-Extracting all 10 available datasets
-[1/10] Extracting: wildlife_areas
-  [SUCCESS] 1731 features in 0.9s
-[2/10] Extracting: groundwater_recharge
-  [SUCCESS] 201264 features in 13.5s
-[3/10] Extracting: aquatic_areas
-  [SUCCESS] 1571 features in 1.2s
-...
-EXTRACTION SUMMARY
-Total datasets: 10
-Succeeded: 10
-Failed: 0
+FGDB Status: Not configured
 ```
 
-**Database Schema:**
-- `spatial_datasets` - Dataset catalog and metadata
-- `spatial_extractions` - Extraction logs with performance metrics
-- `spatial_data_quality` - Quality validation results
+**Solution:** Set `RTGS_FGDB_PATH` environment variable.
 
-## Technical Decisions
+### Dataset Not Found
 
-**Architecture:** Parallel module design (separate from sensor data processing)
+```
+Dataset 'xyz' not found
+```
 
-**Output Format:** GeoParquet selected for optimal performance and future-proofing
+**Solution:** Check available datasets with `rtgs spatial-data list-datasets`.
 
-**Database:** PostGIS integration for metadata catalog and extraction logging
+### Import Errors
 
-**Performance:** Sub-second to 15-second extractions with efficient compression
+```
+No module named 'fiona'
+```
+
+**Solution:** Install dependencies: `pip install geopandas fiona rasterio`
 
 ## Contributing
 
-**Current Status:** Production-ready ETL pipeline for spatial data extraction
+**Current Status:** Production-ready with FGDB and MN Geospatial Commons support.
 
-**Next Development Priorities:**
-1. **Dataset Expansion** - Add remaining MN Geospatial Commons datasets (18+ remaining)
-2. **Source Integration** - Google Earth Engine, Planet Labs, additional APIs
-3. **Automation** - Scheduled updates and change detection
-4. **Quality Assurance** - Enhanced validation and error handling
-
-## Related Files
-
-- `spatial_data_format_comparison.md` - Format analysis and decision matrix
-- `db_schema.sql` - Complete PostGIS database schema
-- `etl_pipeline_plan_v3.md` - Implementation planning document
+**Future Enhancements:**
+- Google Earth Engine integration
+- Planet Labs integration
+- Automated update scheduling
+- Additional MN datasets

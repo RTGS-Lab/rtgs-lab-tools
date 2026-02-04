@@ -1,6 +1,9 @@
-"""Dataset registry for MN Geospatial Commons and other spatial data sources."""
+"""Dataset registry for MN Geospatial Commons, FGDB, and other spatial data sources."""
 
-from typing import Any, Dict, Optional
+import logging
+from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 # Start with just MN Geospatial Commons datasets for MVP
 MN_GEOSPATIAL_DATASETS = {
@@ -151,17 +154,332 @@ MN_GEOSPATIAL_DATASETS = {
     },
 }
 
+# Hennepin County File Geodatabase (FGDB) datasets
+# These are private datasets from HC_EasementAnalysis_Model_Inputs_2020.gdb
+# Path configured via RTGS_FGDB_PATH environment variable
+FGDB_DATASETS = {
+    "bee_habitat": {
+        "description": "Bee Habitat Analysis - Hennepin County pollinator habitat suitability scores",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Bee_Habitat_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 2,
+        "score_column": "Bee_Habitat_SCORE",
+        "model_critical": True,
+    },
+    "floodplains": {
+        "description": "Floodplain Analysis - Hennepin County floodplain scoring",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Floodplains_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 2,
+        "score_column": "Floodplain_Score",
+        "model_critical": True,
+    },
+    "hennepin_wetland_inventory": {
+        "description": "Hennepin County Wetland Inventory (HCWI) - Comprehensive wetland mapping",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "HCWI_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 56018,
+        "model_critical": True,
+    },
+    "habitat_diversity": {
+        "description": "Habitat Diversity Level 3 Analysis - Ecosystem diversity scoring",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "HabitatDiversity_Lvl3_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 51,
+        "model_critical": True,
+    },
+    "headwaters": {
+        "description": "Headwaters Analysis - Stream headwater catchment areas",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Headwaters_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1447,
+        "model_critical": True,
+    },
+    "important_bird_areas": {
+        "description": "Important Bird Areas - Audubon designated bird conservation areas",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Important_Bird_Areas_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 6,
+        "model_critical": True,
+    },
+    "mbs_sites": {
+        "description": "Minnesota Biological Survey Sites - Sites of biodiversity significance",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "MBS_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 318,
+        "score_column": "Bio_Sig_Score",
+        "model_critical": True,
+    },
+    "land_cover": {
+        "description": "Minnesota Land Cover Classification System (MLCCS) - Detailed land cover",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "MLCCS_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 46745,
+        "model_critical": True,
+    },
+    "groundwater_recharge_hc": {
+        "description": "Mean Groundwater Recharge 1996-2010 - Hennepin County recharge rates",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Mean_GW_Recharge_1996_2010_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 2884,
+        "score_column": "Recharge_Score",
+        "model_critical": True,
+    },
+    "natural_spaces": {
+        "description": "Natural Spaces Analysis - Protected natural areas composite",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Natural_Spaces_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1,
+        "model_critical": True,
+    },
+    "protected_areas_hc": {
+        "description": "Protected Areas Analysis - Hennepin County protected lands composite",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Protected_Areas_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1,
+        "model_critical": True,
+    },
+    "quality_community": {
+        "description": "Quality Community Analysis - Community quality metrics composite",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Quality_Community_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1,
+        "model_critical": True,
+    },
+    "risk_of_development": {
+        "description": "Risk of Development Analysis - Development pressure scoring",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Risk_of_Development_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 3,
+        "score_column": "Risk_of_Development_Score",
+        "model_critical": True,
+    },
+    "shoreland_buffers": {
+        "description": "Shoreland Buffer Areas - Lake and stream buffer zones",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Shoreland_BufferAreas_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1,
+        "model_critical": True,
+    },
+    "groundwater_susceptibility": {
+        "description": "Groundwater Contamination Susceptibility - Aquifer vulnerability zones",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Susceptibility_Contamination_Groundwater_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 976,
+        "score_column": "Code_Score",
+        "model_critical": True,
+    },
+    "wildlife_action_network": {
+        "description": "Wildlife Action Network Analysis - Wildlife corridor ranking",
+        "source_type": "fgdb",
+        "extractor_class": "FGDBExtractor",
+        "layer_name": "Wildlife_Action_Network_ANALYSIS",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1564,
+        "score_column": "RankNum_Model",
+        "model_critical": True,
+    },
+}
+
 
 def get_dataset_config(dataset_name: str) -> Optional[Dict[str, Any]]:
-    """Get configuration for a specific dataset."""
-    return MN_GEOSPATIAL_DATASETS.get(dataset_name)
+    """Get configuration for a specific dataset.
+
+    Searches both MN Geospatial Commons and FGDB datasets.
+
+    Args:
+        dataset_name: Name of the dataset
+
+    Returns:
+        Dataset configuration dict, or None if not found
+    """
+    # Check MN Geospatial first
+    if dataset_name in MN_GEOSPATIAL_DATASETS:
+        config = MN_GEOSPATIAL_DATASETS[dataset_name].copy()
+        config["source"] = "mn_geospatial"
+        return config
+
+    # Check FGDB datasets
+    if dataset_name in FGDB_DATASETS:
+        # Only return FGDB config if FGDB is available
+        from ..sources.fgdb import is_fgdb_available
+
+        if is_fgdb_available():
+            config = FGDB_DATASETS[dataset_name].copy()
+            config["source"] = "fgdb"
+            return config
+        else:
+            logger.warning(
+                f"Dataset '{dataset_name}' is from FGDB but FGDB is not configured. "
+                f"Set RTGS_FGDB_PATH environment variable."
+            )
+            return None
+
+    return None
 
 
-def list_available_datasets() -> Dict[str, Dict[str, Any]]:
-    """List all available spatial datasets."""
-    return MN_GEOSPATIAL_DATASETS
+def list_available_datasets(include_fgdb: bool = True) -> Dict[str, Dict[str, Any]]:
+    """List all available spatial datasets.
+
+    Args:
+        include_fgdb: Whether to include FGDB datasets (if available)
+
+    Returns:
+        Dictionary of dataset_name: config, with 'source' field added
+    """
+    datasets = {}
+
+    # Add MN Geospatial datasets
+    for name, config in MN_GEOSPATIAL_DATASETS.items():
+        cfg = config.copy()
+        cfg["source"] = "mn_geospatial"
+        datasets[name] = cfg
+
+    # Add FGDB datasets if available
+    if include_fgdb:
+        from ..sources.fgdb import is_fgdb_available
+
+        if is_fgdb_available():
+            for name, config in FGDB_DATASETS.items():
+                cfg = config.copy()
+                cfg["source"] = "fgdb"
+                datasets[name] = cfg
+            logger.debug(f"Loaded {len(FGDB_DATASETS)} FGDB datasets")
+        else:
+            logger.debug("FGDB not available, skipping FGDB datasets")
+
+    return datasets
 
 
 def get_mn_geospatial_datasets() -> Dict[str, Dict[str, Any]]:
     """Get only MN Geospatial Commons datasets."""
     return MN_GEOSPATIAL_DATASETS
+
+
+def get_fgdb_datasets() -> Dict[str, Dict[str, Any]]:
+    """Get only FGDB datasets (if FGDB is available).
+
+    Returns:
+        FGDB datasets dict if available, empty dict otherwise
+    """
+    from ..sources.fgdb import is_fgdb_available
+
+    if is_fgdb_available():
+        return FGDB_DATASETS
+    return {}
+
+
+def get_dataset_source(dataset_name: str) -> str:
+    """Determine which source a dataset comes from.
+
+    Args:
+        dataset_name: Name of the dataset
+
+    Returns:
+        'mn_geospatial', 'fgdb', or 'unknown'
+    """
+    if dataset_name in MN_GEOSPATIAL_DATASETS:
+        return "mn_geospatial"
+
+    if dataset_name in FGDB_DATASETS:
+        from ..sources.fgdb import is_fgdb_available
+
+        if is_fgdb_available():
+            return "fgdb"
+        else:
+            logger.warning(
+                f"Dataset '{dataset_name}' is in FGDB registry but FGDB not configured"
+            )
+            return "unknown"
+
+    return "unknown"
+
+
+def format_dataset_list_for_llm() -> str:
+    """Format dataset list for Claude AI to understand.
+
+    Creates a human-readable list of datasets with descriptions,
+    organized by source.
+
+    Returns:
+        Formatted string describing available datasets
+    """
+    datasets = list_available_datasets()
+
+    # Group by source
+    mn_datasets = {k: v for k, v in datasets.items() if v.get("source") == "mn_geospatial"}
+    fgdb_datasets = {k: v for k, v in datasets.items() if v.get("source") == "fgdb"}
+
+    output = []
+
+    if fgdb_datasets:
+        output.append("## Hennepin County Analysis Datasets (FGDB)")
+        output.append("")
+        for name, info in sorted(fgdb_datasets.items()):
+            desc = info.get("description", "No description")
+            feature_count = info.get("expected_features", "Unknown")
+            output.append(f"- **{name}**: {desc}")
+            output.append(f"  - Features: {feature_count}")
+            if info.get("score_column"):
+                output.append(f"  - Score column: {info['score_column']}")
+        output.append("")
+
+    if mn_datasets:
+        output.append("## Public Minnesota Datasets (MN Geospatial Commons)")
+        output.append("")
+        for name, info in sorted(mn_datasets.items()):
+            desc = info.get("description", "No description")
+            output.append(f"- **{name}**: {desc}")
+        output.append("")
+
+    output.append(f"**Total Datasets Available: {len(datasets)}**")
+    output.append(f"- FGDB (Hennepin County): {len(fgdb_datasets)}")
+    output.append(f"- MN Geospatial Commons: {len(mn_datasets)}")
+
+    return "\n".join(output)

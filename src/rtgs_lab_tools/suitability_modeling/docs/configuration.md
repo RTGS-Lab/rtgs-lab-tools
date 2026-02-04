@@ -1,85 +1,104 @@
 # Suitability Modeling - Configuration Guide
 
-## Database Configuration
+## Data Source Configuration
 
-The suitability modeling module can use datasets from two sources:
+The suitability modeling module uses datasets from two sources:
 
-1. **PostGIS Database** - Private Hennepin County datasets (~110,000 features)
-2. **spatial_data Module** - Public Minnesota datasets
+1. **FGDB (File Geodatabase)** - Hennepin County analysis datasets (16 layers)
+2. **MN Geospatial Commons** - Public Minnesota datasets via spatial_data module
 
-### PostGIS Database Setup
+### FGDB Setup (Required for Hennepin County Data)
 
-#### Environment Variables
+To use Hennepin County datasets, you need access to the File Geodatabase:
+- `HC_EasementAnalysis_Model_Inputs_2020.gdb`
 
-The easiest way to configure database access is through environment variables:
+#### Environment Variable Configuration
 
+Set the `RTGS_FGDB_PATH` environment variable to point to your FGDB:
+
+**Linux/macOS:**
 ```bash
-# Option 1: Full connection URL
-export SUITABILITY_DB_URL="postgresql://postgres:yourpassword@localhost:5432/rtgs_suitability_data"
-
-# Option 2: Individual components (will be combined automatically)
-export SUITABILITY_DB_HOST="localhost"
-export SUITABILITY_DB_PORT="5432"
-export SUITABILITY_DB_NAME="rtgs_suitability_data"
-export SUITABILITY_DB_USER="postgres"
-export SUITABILITY_DB_PASSWORD="yourpassword"
+export RTGS_FGDB_PATH="/path/to/HC_EasementAnalysis_Model_Inputs_2020.gdb"
 ```
 
-**For Windows PowerShell:**
-
+**Windows PowerShell:**
 ```powershell
-$env:SUITABILITY_DB_URL="postgresql://postgres:yourpassword@localhost:5432/rtgs_suitability_data"
+$env:RTGS_FGDB_PATH="C:\path\to\HC_EasementAnalysis_Model_Inputs_2020.gdb"
+```
+
+**Windows CMD:**
+```cmd
+set RTGS_FGDB_PATH=C:\path\to\HC_EasementAnalysis_Model_Inputs_2020.gdb
 ```
 
 **For persistent configuration (Windows):**
-
-1. Open Environment Variables settings
-2. Add `SUITABILITY_DB_URL` as a user or system variable
+1. Open Environment Variables settings (search "environment variables" in Start)
+2. Add `RTGS_FGDB_PATH` as a user or system variable
 3. Restart terminal/IDE
 
-#### Command Line Option
+#### Verify Configuration
 
-You can also pass the database URL directly when running commands:
+Check that the FGDB is configured correctly:
 
 ```bash
-rtgs suitability design \
-  --input requirements.txt \
-  --db-url "postgresql://postgres:password@localhost:5432/rtgs_suitability_data"
+rtgs suitability list-datasets
+```
+
+You should see output like:
+```
+FGDB Status: Configured and available
+
+Hennepin County Datasets (FGDB)
+----------------------------------------
+  bee_habitat
+    Bee Habitat Analysis - Hennepin County pollinator habitat suitability scores
+    Features: 2
+  ...
 ```
 
 ### Available Datasets
 
-Once configured, you can list available datasets from both sources:
+#### FGDB Datasets (16 datasets from Hennepin County)
 
-#### PostGIS Datasets (16 datasets, ~110,000 features)
+| Dataset Name | Description | Features |
+|--------------|-------------|----------|
+| `bee_habitat` | Pollinator habitat suitability scores | 2 |
+| `floodplains` | Floodplain scoring | 2 |
+| `hennepin_wetland_inventory` | Comprehensive wetland mapping | 56,018 |
+| `habitat_diversity` | Ecosystem diversity scoring | 51 |
+| `headwaters` | Stream headwater catchment areas | 1,447 |
+| `important_bird_areas` | Audubon designated bird areas | 6 |
+| `mbs_sites` | MN Biological Survey sites | 318 |
+| `land_cover` | MLCCS land cover classification | 46,745 |
+| `groundwater_recharge_hc` | Groundwater recharge rates | 2,884 |
+| `natural_spaces` | Protected natural areas | 1 |
+| `protected_areas_hc` | Protected lands composite | 1 |
+| `quality_community` | Community quality metrics | 1 |
+| `risk_of_development` | Development pressure scoring | 3 |
+| `shoreland_buffers` | Lake and stream buffer zones | 1 |
+| `groundwater_susceptibility` | Aquifer vulnerability zones | 976 |
+| `wildlife_action_network` | Wildlife corridor ranking | 1,564 |
 
-- `mn_bee_habitat_analysis` - Bee Habitat Analysis (Hennepin County)
-- `mn_floodplains_analysis` - Floodplains Analysis
-- `mn_habitatdiversity_lvl3_analysis` - Habitat Diversity Level 3
-- `mn_hcwi_analysis` - Hennepin County Watershed Index (56,018 features)
-- `mn_headwaters_analysis` - Headwaters Analysis (1,447 features)
-- `mn_important_bird_areas_analysis` - Important Bird Areas
-- `mn_mbs_analysis` - MBS Analysis (318 features)
-- `mn_mean_gw_recharge_1996_2010_analysis` - Mean Groundwater Recharge (2,884 features)
-- `mn_mlccs_analysis` - MLCCS Land Cover (46,745 features)
-- `mn_natural_spaces_analysis` - Natural Spaces
-- `mn_protected_areas_analysis` - Protected Areas
-- `mn_quality_community_analysis` - Quality Community
-- `mn_risk_of_development_analysis` - Risk of Development
-- `mn_shoreland_bufferareas_analysis` - Shoreland Buffer Areas
-- `mn_susceptibility_contamination_groundwater_analysis` - Groundwater Contamination Susceptibility (976 features)
-- `mn_wildlife_action_network_analysis` - Wildlife Action Network (1,564 features)
+#### MN Geospatial Commons Datasets (Public)
 
-#### spatial_data Datasets
+These are always available without configuration:
 
-- `wildlife_areas` - DNR Wildlife Management Areas (public data)
-- `land_use` - Generalized Land Use (public data)
-- `watersheds` - DNR Watersheds (public data)
-- ... and more
+| Dataset Name | Description |
+|--------------|-------------|
+| `wildlife_areas` | DNR Wildlife Management Areas |
+| `scientific_and_natural_areas` | DNR Scientific and Natural Areas |
+| `aquatic_areas` | DNR Aquatic Management Areas |
+| `MBS_sites` | MN Biological Survey Sites |
+| `WAN` | Wildlife Action Network |
+| `land_use` | Generalized Land Use 2020 |
+| `watersheds` | DNR Level 9 Watersheds |
+| `groundwater_recharge` | Groundwater recharge rates |
+| `TNC_lands` | The Nature Conservancy lands |
+| `cemeteries` | Regional cemeteries |
 
 ### Using Mixed Data Sources
 
-You can design models that use datasets from **both** sources:
+You can design models that use datasets from **both** sources. The system automatically determines where each dataset comes from.
 
 **Example requirements.txt:**
 
@@ -88,11 +107,11 @@ Objective:
 Identify suitable conservation easement locations in Hennepin County.
 
 Criteria:
-1. Proximity to protected areas (mn_protected_areas_analysis from PostGIS)
-2. Habitat diversity (mn_habitatdiversity_lvl3_analysis from PostGIS)
-3. Groundwater recharge importance (mn_mean_gw_recharge_1996_2010_analysis from PostGIS)
-4. Avoid high development risk (mn_risk_of_development_analysis from PostGIS)
-5. Connection to wildlife corridors (wildlife_areas from spatial_data module)
+1. Proximity to protected areas (protected_areas_hc from FGDB)
+2. Habitat diversity (habitat_diversity from FGDB)
+3. Groundwater recharge importance (groundwater_recharge_hc from FGDB)
+4. Avoid high development risk (risk_of_development from FGDB)
+5. Connection to wildlife corridors (wildlife_areas from MN Geospatial)
 
 Weights:
 - Protected area proximity: 25%
@@ -102,11 +121,6 @@ Weights:
 - Wildlife corridor connection: 15%
 ```
 
-The system will automatically:
-1. Query PostGIS for Hennepin County datasets
-2. Query spatial_data for public Minnesota datasets
-3. Load each dataset from the appropriate source during execution
-
 ## Claude AI Configuration
 
 ### API Key Setup
@@ -114,7 +128,7 @@ The system will automatically:
 The model designer uses Claude AI to interpret requirements. Configure your API key:
 
 ```bash
-# Environment variable
+# Environment variable (recommended)
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # Or pass via command line
@@ -125,61 +139,58 @@ rtgs suitability design --input requirements.txt --api-key "sk-ant-..."
 
 ## Troubleshooting
 
-### Database Connection Issues
+### FGDB Not Found
 
-**Error:** `Database URL not configured`
+**Error:** `FGDB path not configured`
 
-**Solution:** Set the `SUITABILITY_DB_URL` environment variable or pass `--db-url` option.
+**Solution:** Set the `RTGS_FGDB_PATH` environment variable:
+```bash
+export RTGS_FGDB_PATH="/path/to/HC_EasementAnalysis_Model_Inputs_2020.gdb"
+```
 
 ---
 
-**Error:** `Failed to connect to PostGIS database`
+**Error:** `FGDB not found at: /path/to/file.gdb`
 
 **Solution:**
-1. Check that PostgreSQL is running: `pg_isready -h localhost -p 5432`
-2. Verify database exists: `psql -U postgres -l | grep rtgs_suitability_data`
-3. Test connection: `psql -U postgres -d rtgs_suitability_data -c "SELECT PostGIS_Version()"`
+1. Verify the path is correct
+2. Check that the .gdb folder exists and is accessible
+3. On Windows, ensure no lock files are blocking access
 
 ---
 
-**Error:** `Dataset not found in PostGIS or spatial_data`
+### Dataset Not Found
 
-**Solution:** The dataset name in your requirements doesn't match any available dataset. Check available datasets:
+**Error:** `Dataset 'dataset_name' not found`
 
+**Solution:** The dataset name doesn't match any available dataset. Check available datasets:
+
+```bash
+rtgs suitability list-datasets
+```
+
+Or in Python:
 ```python
-from rtgs_lab_tools.suitability_modeling.core.dataset_registry import get_all_available_datasets
+from rtgs_lab_tools.spatial_data import list_available_datasets
 
-datasets = get_all_available_datasets()
+datasets = list_available_datasets()
 for name in sorted(datasets.keys()):
     print(f"- {name}: {datasets[name]['description']}")
 ```
 
-### Performance Optimization
+### Performance Tips
 
 For large areas or many datasets:
 
-1. **Use PostGIS for large datasets** - Database queries are faster than file loading
-2. **Filter by bounding box** - The execution engine can filter PostGIS data spatially
-3. **Limit grid resolution** - Reduce cell size or use sampling for initial testing
+1. **Start with smaller study areas** - Test with a subset before running full county
+2. **Limit grid resolution** - Use larger cell sizes (e.g., 500m instead of 100m) for testing
+3. **Use sampling** - The engine automatically samples if grid exceeds max_cells limit
 
 ## Security Notes
 
-**Never commit database passwords to git!**
+The FGDB file contains local data and doesn't require password configuration.
 
-Use environment variables or secure credential management:
-
-```bash
-# Good - environment variable
-export SUITABILITY_DB_PASSWORD="secret"
-
-# Good - credential manager
-# (Windows Credential Manager, macOS Keychain, etc.)
-
-# Bad - hardcoded in scripts
-db_url = "postgresql://postgres:mysecretpassword@..."  # DON'T DO THIS
-```
-
-For production deployments, consider:
-- Using PostgreSQL `.pgpass` file for passwordless authentication
-- Setting up role-based access control (RBAC)
-- Using connection pooling for better performance
+For the Anthropic API key:
+- **Never commit API keys to git!**
+- Use environment variables
+- Consider using a secrets manager for production deployments

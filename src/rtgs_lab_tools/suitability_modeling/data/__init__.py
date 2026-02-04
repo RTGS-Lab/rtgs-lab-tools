@@ -1,8 +1,8 @@
 """
 Spatial data management for suitability modeling.
 
-This module provides PostGIS-based data access for suitability analysis.
+Data access is handled by the spatial_data module.
+See docs/archive/ for archived PostGIS migration scripts.
 """
 
-# Future home of SpatialDataManager class
 __all__ = []

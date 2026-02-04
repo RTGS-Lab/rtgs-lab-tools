@@ -14,13 +14,12 @@ def design_model(
     requirements_file: str,
     output_file: Optional[str] = None,
     api_key: Optional[str] = None,
-    db_url: Optional[str] = None
 ) -> ModelSpecification:
     """Design a suitability model from requirements text file.
 
     This function:
     1. Reads user requirements from text file
-    2. Gets available datasets from BOTH PostGIS and spatial_data sources
+    2. Gets available datasets from spatial_data module (FGDB + MN Geospatial)
     3. Uses Claude AI to design a model
     4. Validates the model specification
     5. Optionally saves to YAML file
@@ -29,7 +28,6 @@ def design_model(
         requirements_file: Path to text file with requirements
         output_file: Optional path to save model YAML (default: {model_id}.yaml)
         api_key: Optional Anthropic API key
-        db_url: Optional PostGIS database URL (uses env config if None)
 
     Returns:
         ModelSpecification object
@@ -49,13 +47,24 @@ def design_model(
         raise FileNotFoundError(f"Requirements file not found: {requirements_file}")
 
     logger.info(f"Reading requirements from: {requirements_file}")
-    with open(requirements_path, 'r') as f:
+    with open(requirements_path, "r") as f:
         requirements_text = f.read()
 
-    # Get available datasets from ALL sources (PostGIS + spatial_data)
-    logger.info("Loading available datasets from all sources...")
-    available_datasets = _get_available_datasets(db_url=db_url)
+    # Get available datasets from spatial_data module
+    logger.info("Loading available datasets from spatial_data module...")
+    available_datasets = _get_available_datasets()
     logger.info(f"Found {len(available_datasets)} available datasets")
+
+    # Check for FGDB availability
+    from .dataset_registry import is_fgdb_available
+
+    if is_fgdb_available():
+        logger.info("FGDB is configured and available")
+    else:
+        logger.warning(
+            "FGDB not configured. Set RTGS_FGDB_PATH environment variable "
+            "to use Hennepin County datasets."
+        )
 
     # Design model using Claude
     logger.info("Designing model with Claude AI...")
@@ -68,7 +77,7 @@ def design_model(
     # Validate
     logger.info("Validating model specification...")
     model_spec.validate()
-    logger.info(f"✓ Model validated: {model_spec.model_id}")
+    logger.info(f"Model validated: {model_spec.model_id}")
 
     # Save to file if requested
     if output_file:
@@ -86,34 +95,32 @@ def design_model(
     return model_spec
 
 
-def _get_available_datasets(db_url: Optional[str] = None) -> dict:
-    """Get available datasets from ALL sources (PostGIS + spatial_data).
-
-    Args:
-        db_url: Optional PostGIS database URL
+def _get_available_datasets() -> dict:
+    """Get available datasets from spatial_data module.
 
     Returns:
         Dict of dataset_name: dataset_info (includes 'source' field)
     """
     try:
         from .dataset_registry import get_all_available_datasets
-        return get_all_available_datasets(db_url=db_url)
+
+        return get_all_available_datasets()
     except Exception as e:
-        logger.warning(f"Failed to load datasets from unified registry: {e}")
+        logger.warning(f"Failed to load datasets from registry: {e}")
         # FALLBACK FOR TESTING PURPOSES
         return {
             "wildlife_areas": {
                 "description": "DNR Wildlife Management Areas",
-                "source": "fallback"
+                "source": "fallback",
             },
             "watersheds": {
                 "description": "DNR Level 9 Watersheds",
-                "source": "fallback"
+                "source": "fallback",
             },
             "land_use": {
                 "description": "Generalized Land Use 2020",
-                "source": "fallback"
-            }
+                "source": "fallback",
+            },
         }
 
 

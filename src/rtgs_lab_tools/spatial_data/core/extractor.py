@@ -12,12 +12,14 @@ from ...core.exceptions import RTGSLabToolsError, ValidationError
 from ..db_logger import SpatialDataLogger
 from ..registry.dataset_registry import get_dataset_config
 from ..sources.mn_geospatial import MNGeospatialExtractor
+from ..sources.fgdb import FGDBExtractor
 
 logger = logging.getLogger(__name__)
 
 # Map source types to extractor classes
 EXTRACTOR_CLASSES = {
     "mn_geospatial": MNGeospatialExtractor,
+    "fgdb": FGDBExtractor,
 }
 
 
