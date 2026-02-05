@@ -1208,10 +1208,3 @@ Validate model specification.
 - CLI commands
 
 ---
-
-## Support
-
-For issues, questions, or contributions:
-- GitHub Issues: https://github.com/your-org/rtgs-lab-tools/issues
-- Documentation: See README.md and docs/
-- Contact: RTGS Lab, University of Minnesota

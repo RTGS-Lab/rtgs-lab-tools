@@ -906,10 +906,3 @@ Load configuration from YAML file.
 - **example-config-*.yaml**: Configuration examples
 
 ---
-
-## Support
-
-For issues, questions, or contributions:
-- GitHub Issues: https://github.com/your-org/rtgs-lab-tools/issues
-- Documentation: See README.md and docs/
-- Contact: RTGS Lab, University of Minnesota
