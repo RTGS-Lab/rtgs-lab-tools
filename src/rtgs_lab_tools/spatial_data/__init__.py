@@ -10,6 +10,10 @@ def __getattr__(name):
         from .core.extractor import extract_spatial_data
 
         return extract_spatial_data
+    elif name == "extract_from_path":
+        from .core.extractor import extract_from_path
+
+        return extract_from_path
     elif name == "list_available_datasets":
         from .registry.dataset_registry import list_available_datasets
 
@@ -34,6 +38,26 @@ def __getattr__(name):
         from .sources.fgdb import get_fgdb_path
 
         return get_fgdb_path
+    elif name == "extract_all_fgdb_layers":
+        from .sources.fgdb import extract_all_fgdb_layers
+
+        return extract_all_fgdb_layers
+    elif name == "extract_all_from_directory":
+        from .sources.local_file import extract_all_from_directory
+
+        return extract_all_from_directory
+    elif name == "generate_grid":
+        from .core.grid import generate_grid
+
+        return generate_grid
+    elif name == "get_dataset_schema":
+        from .core.schema import get_dataset_schema
+
+        return get_dataset_schema
+    elif name == "format_schemas_for_llm":
+        from .core.schema import format_schemas_for_llm
+
+        return format_schemas_for_llm
     elif name == "get_config":
         from .config import get_config
 
@@ -68,6 +92,12 @@ def __getattr__(name):
 
 __all__ = [
     "extract_spatial_data",
+    "extract_from_path",
+    "extract_all_fgdb_layers",
+    "extract_all_from_directory",
+    "generate_grid",
+    "get_dataset_schema",
+    "format_schemas_for_llm",
     "list_available_datasets",
     "get_dataset_config",
     "get_dataset_source",

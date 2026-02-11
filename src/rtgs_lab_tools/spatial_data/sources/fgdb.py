@@ -2,9 +2,12 @@
 
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from .base import SpatialSourceExtractor
+
+if TYPE_CHECKING:
+    import geopandas as gpd
 
 try:
     import geopandas as gpd
@@ -67,11 +70,12 @@ def list_fgdb_layers() -> List[str]:
 class FGDBExtractor(SpatialSourceExtractor):
     """Extracts spatial data from ESRI File Geodatabase (FGDB)."""
 
-    def __init__(self, dataset_config: Dict[str, Any], **kwargs):
+    def __init__(self, dataset_config: Dict[str, Any], fgdb_path: Optional[str] = None, **kwargs):
         """Initialize FGDB extractor.
 
         Args:
             dataset_config: Configuration dictionary for the dataset
+            fgdb_path: Optional direct path to FGDB (overrides env var lookup)
             **kwargs: Additional configuration options
 
         Raises:
@@ -86,11 +90,12 @@ class FGDBExtractor(SpatialSourceExtractor):
                 "Install with: pip install fiona"
             )
 
-        self.fgdb_path = get_fgdb_path()
+        self.fgdb_path = fgdb_path or get_fgdb_path()
         if not self.fgdb_path:
             raise ValueError(
                 f"FGDB path not configured. "
-                f"Set the {FGDB_PATH_ENV_VAR} environment variable."
+                f"Set the {FGDB_PATH_ENV_VAR} environment variable "
+                f"or pass fgdb_path parameter."
             )
 
         if not os.path.exists(self.fgdb_path):
@@ -147,3 +152,52 @@ class FGDBExtractor(SpatialSourceExtractor):
         except Exception as e:
             self.logger.error(f"Failed to get layer info: {e}")
             return {}
+
+
+def extract_all_fgdb_layers(
+    fgdb_path: str, target_crs: str = "EPSG:4326"
+) -> Dict[str, "gpd.GeoDataFrame"]:
+    """Extract all layers from a File Geodatabase.
+
+    Args:
+        fgdb_path: Path to the .gdb directory
+        target_crs: Target CRS for standardization (default: EPSG:4326)
+
+    Returns:
+        Dictionary mapping layer names to GeoDataFrames
+
+    Raises:
+        ImportError: If fiona is not installed
+        FileNotFoundError: If FGDB path does not exist
+    """
+    if fiona is None:
+        raise ImportError(
+            "fiona is required for FGDB extraction. Install with: pip install fiona"
+        )
+
+    if not os.path.exists(fgdb_path):
+        raise FileNotFoundError(f"FGDB not found at: {fgdb_path}")
+
+    layers = fiona.listlayers(fgdb_path)
+    logger.info(f"Found {len(layers)} layers in FGDB: {fgdb_path}")
+
+    results = {}
+    for layer_name in layers:
+        try:
+            config = {"source_type": "fgdb", "layer_name": layer_name}
+            extractor = FGDBExtractor(config, fgdb_path=fgdb_path)
+            gdf = extractor.extract()
+
+            # Standardize CRS
+            if gdf.crs is not None and str(gdf.crs) != target_crs:
+                gdf = gdf.to_crs(target_crs)
+            elif gdf.crs is None:
+                gdf = gdf.set_crs(target_crs)
+
+            results[layer_name] = gdf
+            logger.info(f"  Extracted {layer_name}: {len(gdf)} features")
+        except Exception as e:
+            logger.warning(f"  Failed to extract layer {layer_name}: {e}")
+
+    logger.info(f"Successfully extracted {len(results)}/{len(layers)} layers")
+    return results

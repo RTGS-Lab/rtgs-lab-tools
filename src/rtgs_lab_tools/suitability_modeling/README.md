@@ -1,193 +1,156 @@
 # Suitability Modeling Module
 
-**Status:** MVP - Minimum Viable Product
-**Version:** 0.1.0
+**Status:** Active Development
+
+**Version:** 0.2.0
+
 **Model Type:** Weighted Overlay
 
 ## Overview
 
-The suitability modeling module is an AI-powered spatial analysis framework that enables users to design and execute suitability analyses using natural language requirements and Claude AI.
+The suitability modeling module is an AI-powered spatial analysis framework that enables users to design and execute suitability analyses using natural language requirements and Claude AI (or any other LLM with API access) with structured outputs.
 
 ### Key Features
 
 - **Natural Language Input** - Describe your analysis in plain text
-- **AI-Powered Design** - Claude interprets requirements and designs models
-- **Unified Data Access** - Uses `spatial_data` module for all datasets
+- **AI-Powered Design** - Claude designs models constrained to a Pydantic JSON schema (structured outputs)
+- **Bring Your Own Data** - Point the CLI at any spatial files, directories, or FGDBs
 - **Weighted Overlay** - Classic suitability modeling method
 - **Multiple Export Formats** - GeoParquet, Shapefile, GeoJSON, CSV
 - **Transparent & Editable** - Models saved as human-readable YAML
+- **Reproducible** - `run-config` command replays analysis from a YAML config
 
 ## Quick Start
 
 ### Prerequisites
 
 ```bash
-# Install required packages
-pip install anthropic geopandas fiona pyyaml
+# Install required packages (included in pyproject.toml)
+pip install anthropic pydantic geopandas fiona pyyaml
 
 # Set your Anthropic API key
 export ANTHROPIC_API_KEY="your-key-here"
-
-# Set path to Hennepin County FGDB (for HC datasets)
-export RTGS_FGDB_PATH="/path/to/HC_EasementAnalysis_Model_Inputs_2020.gdb"
 ```
 
 ### Basic Workflow
 
 ```bash
-# 1. Check available datasets
-rtgs suitability list-datasets
+# Interactive pipeline — prompts for study area, datasets, and requirements
+rtgs suitability run
 
-# 2. Write requirements (see examples/wildlife_corridor_requirements.txt)
+# Non-interactive — all paths and parameters in a YAML config
+rtgs suitability run-config --config pipeline_config.yaml
 
-# 3. Design model with Claude AI
-rtgs suitability design --input requirements.txt
-
-# 4. Review and edit the generated YAML file
-
-# 5. Execute the model
-rtgs suitability execute --model model.yaml
+# Validate a model YAML without executing
+rtgs suitability validate model.yaml
 ```
 
 ## CLI Commands
 
-### `list-datasets` - Dataset Discovery
+### `run` - Interactive Pipeline
 
-List all available datasets from both FGDB and MN Geospatial Commons.
-
-```bash
-rtgs suitability list-datasets
-```
-
-**Output:**
-```
-Available Spatial Datasets
-============================================================
-
-FGDB Status: Configured and available
-
-Hennepin County Datasets (FGDB)
-----------------------------------------
-  bee_habitat
-    Bee Habitat Analysis - pollinator habitat suitability scores
-    Features: 2
-  habitat_diversity
-    Habitat Diversity Level 3 Analysis
-    Features: 51
-  ...
-
-MN Geospatial Commons (Public)
-----------------------------------------
-  wildlife_areas
-    DNR Wildlife Management Areas
-  ...
-
-Total: 26 datasets
-  - FGDB: 16
-  - MN Geospatial: 10
-```
-
-### `design` - Create Model with AI
-
-Design a suitability model from natural language requirements.
+Walks through a 7-step pipeline: study area, analysis units, datasets, requirements, AI model design, review, and execution.
 
 ```bash
-rtgs suitability design --input requirements.txt --output model.yaml
+rtgs suitability run
+rtgs suitability run --output-dir ./my_results --output-format shapefile
 ```
 
 **Options:**
-- `--input, -i` (required) - Requirements text file
-- `--output, -o` - Output YAML file (default: `{model_id}.yaml`)
 - `--api-key` - Anthropic API key (or set `ANTHROPIC_API_KEY` env var)
-
-**What happens:**
-1. Reads your requirements
-2. Loads available datasets from spatial_data
-3. Sends to Claude AI for interpretation
-4. Generates validated model specification
-5. Saves as human-readable YAML
-
-### `execute` - Run the Model
-
-Execute a suitability model and generate results.
-
-```bash
-rtgs suitability execute --model model.yaml --output-format geoparquet
-```
-
-**Options:**
-- `--model, -m` (required) - Model specification YAML file
 - `--output-dir, -o` - Output directory (default: `./results`)
 - `--output-format, -f` - `geoparquet` | `shapefile` | `geojson` | `csv`
 
-**Output:**
-- Suitability scores (0-100) for each grid cell
-- Individual criterion scores for transparency
-- Spatial metadata (CRS, bounds, geometry)
+**Pipeline flow:**
+
+```
+=== Step 1: Study Area ===
+Path to study area boundary file: path/to/boundary.shp
+  Loaded 1 features, CRS: EPSG:4326
+
+=== Step 2: Analysis Units ===
+Generate a regular grid? [Y/n]: y
+Grid cell size in meters [100]: 200
+
+=== Step 3: Variable Datasets ===
+Path to datasets (directory, .gdb, or file): path/to/data/
+  Loaded 5 datasets:
+    - wetlands: 230 features
+    - land_cover: 15,400 features
+    ...
+
+=== Step 4: Requirements ===
+Type objective OR path to .txt file: Find suitable areas for wildlife corridors...
+
+=== Step 5: AI Model Design ===
+Calling Claude AI...
+  Model designed in 3.2 seconds
+
+=== Step 6: Review ===
+Accept this model? [Y/n]: y
+
+=== Step 7: Executing ===
+  Done in 12.3 seconds
+
+=== Results ===
+Output: ./results/wildlife_corridor_model_results.parquet
+Model:  ./results/wildlife_corridor_model.yaml
+```
+
+If you reject the model at Step 6, the YAML is saved so you can edit it and re-run via `run-config`.
+
+### `run-config` - Non-interactive Pipeline
+
+Run a suitability analysis from a YAML configuration file. This is the reproducible mode — all file paths and parameters are specified in the config.
+
+```bash
+rtgs suitability run-config --config pipeline_config.yaml
+rtgs suitability run-config --config pipeline_config.yaml --output-format shapefile
+```
+
+**Options:**
+- `--config, -c` (required) - YAML configuration file
+- `--output-dir, -o` - Override output directory from config
+- `--output-format, -f` - Override output format from config
+
+**Config file format:**
+
+```yaml
+study_area_path: path/to/boundary.shp
+datasets_path: path/to/datasets_dir
+model_spec_path: path/to/model.yaml
+output_dir: ./results
+output_format: geoparquet
+
+# Grid-based analysis units (optional)
+grid:
+  cell_size: 100
+  max_cells: 50000
+
+# Or use a file for analysis units instead of grid
+# analysis_units_path: path/to/parcels.shp
+```
 
 ### `validate` - Check Model Specification
 
-Validate a model before execution.
+Validate a model YAML file without executing it. Checks Pydantic types, weights sum to 100, and scoring function configuration.
 
 ```bash
 rtgs suitability validate model.yaml
 ```
 
-Checks:
-- Weights sum to 100%
-- All datasets are available
-- Scoring functions are valid
-
-## Available Datasets
-
-### Hennepin County FGDB (requires RTGS_FGDB_PATH)
-
-| Dataset | Description | Features |
-|---------|-------------|----------|
-| `bee_habitat` | Pollinator habitat suitability | 2 |
-| `floodplains` | Floodplain scoring | 2 |
-| `hennepin_wetland_inventory` | Comprehensive wetland mapping | 56,018 |
-| `habitat_diversity` | Ecosystem diversity scoring | 51 |
-| `headwaters` | Stream headwater catchments | 1,447 |
-| `important_bird_areas` | Audubon designated bird areas | 6 |
-| `mbs_sites` | MN Biological Survey sites | 318 |
-| `land_cover` | MLCCS land cover classification | 46,745 |
-| `groundwater_recharge_hc` | Groundwater recharge rates | 2,884 |
-| `natural_spaces` | Protected natural areas | 1 |
-| `protected_areas_hc` | Protected lands composite | 1 |
-| `quality_community` | Community quality metrics | 1 |
-| `risk_of_development` | Development pressure scoring | 3 |
-| `shoreland_buffers` | Lake and stream buffer zones | 1 |
-| `groundwater_susceptibility` | Aquifer vulnerability | 976 |
-| `wildlife_action_network` | Wildlife corridor ranking | 1,564 |
-
-### MN Geospatial Commons (always available)
-
-| Dataset | Description |
-|---------|-------------|
-| `wildlife_areas` | DNR Wildlife Management Areas |
-| `scientific_and_natural_areas` | DNR SNAs |
-| `aquatic_areas` | DNR Aquatic Management Areas |
-| `MBS_sites` | Sites of Biodiversity Significance |
-| `WAN` | Wildlife Action Network |
-| `land_use` | Generalized Land Use 2020 |
-| `watersheds` | DNR Level 9 Watersheds |
-| `groundwater_recharge` | Groundwater recharge rates |
-| `TNC_lands` | The Nature Conservancy lands |
-| `cemeteries` | Regional cemeteries |
-
-## Model Specification (YAML)
+## Model Specification (YAML) Example
 
 Models are saved as human-readable YAML files:
 
 ```yaml
-model_id: wildlife_corridor_hennepin
+model_id: wildlife_corridor_model
 model_type: weighted_overlay
-objective: "Identify wildlife corridor locations"
-study_area: Hennepin County
+objective: "Identify suitable areas for wildlife corridors"
+study_area: "Study Area"
 
 criteria:
-  - dataset_name: protected_areas_hc
+  - dataset_name: protected_areas
     criterion_name: "Protected Area Proximity"
     weight: 40
     scoring_function:
@@ -197,7 +160,7 @@ criteria:
         decay_rate: 0.001
       output_range: [0, 10]
 
-  - dataset_name: habitat_diversity
+  - dataset_name: land_cover
     criterion_name: "Habitat Quality"
     weight: 35
     scoring_function:
@@ -205,15 +168,15 @@ criteria:
       params:
         column: LEVEL_3
         mapping:
-          1: 10
-          2: 8
-          3: 6
-          4: 4
-          5: 2
+          Forest: 10
+          Wetland: 9
+          Grassland: 7
+          Agriculture: 4
+          Urban: 0
       output_range: [0, 10]
 
   - dataset_name: wildlife_areas
-    criterion_name: "Wildlife Corridor Connection"
+    criterion_name: "Wildlife Area Connection"
     weight: 25
     scoring_function:
       type: distance_decay
@@ -225,7 +188,7 @@ criteria:
 output_range: [0, 100]
 ```
 
-**You can edit this file!** Adjust weights, add criteria, change parameters.
+**You can edit this file!** Adjust weights, add criteria, change parameters, then run with `run-config`.
 
 ## Scoring Functions
 
@@ -257,7 +220,7 @@ Scores based on categorical attributes.
 
 **Parameters:**
 - `column` - Attribute column name
-- `mapping` - Dictionary of category → score (0-10)
+- `mapping` - Dictionary of category to score (0-10)
 
 ```yaml
 scoring_function:
@@ -274,24 +237,86 @@ scoring_function:
 
 ## Python API
 
+### Design and Execute a Model
+
 ```python
 from rtgs_lab_tools.suitability_modeling import design_model, execute_model
+from rtgs_lab_tools.spatial_data import (
+    extract_from_path,
+    extract_all_from_directory,
+    generate_grid,
+    get_dataset_schema,
+)
 
-# Design a model
+# Load data
+boundary = extract_from_path("boundary.shp")
+datasets = extract_all_from_directory("./data/")
+grid = generate_grid(boundary, cell_size=200)
+
+# Build schemas for AI
+schemas = [get_dataset_schema(name, gdf) for name, gdf in datasets.items()]
+
+# Design model with Claude AI
 model_spec = design_model(
-    requirements_file="requirements.txt",
-    output_file="model.yaml"
+    requirements="Find suitable areas for wildlife corridors",
+    dataset_schemas=schemas,
 )
 
-# Execute the model
+# Execute
 results = execute_model(
-    model_spec="model.yaml",
+    model_spec=model_spec,
+    datasets=datasets,
+    study_area_boundary=boundary,
+    analysis_units=grid,
     output_dir="./results",
-    output_format="geoparquet"
+    output_format="geoparquet",
 )
 
-print(f"Results: {results['output_file']}")
+print(f"Output: {results['output_file']}")
 print(f"Features: {results['num_features']}")
+```
+
+### Work with Model Specifications Directly
+
+```python
+from rtgs_lab_tools.suitability_modeling import (
+    ModelSpecification,
+    ModelCriterion,
+    ScoringFunction,
+    print_model_summary,
+)
+
+# Load from YAML
+spec = ModelSpecification.from_yaml("model.yaml")
+
+# Inspect
+print(print_model_summary(spec))
+
+# Validate
+spec.validate()
+
+# Modify and save
+spec.to_yaml("modified_model.yaml")
+
+# Create programmatically
+spec = ModelSpecification(
+    model_id="my_model",
+    objective="Test analysis",
+    criteria=[
+        ModelCriterion(
+            dataset_name="wetlands",
+            criterion_name="Wetland Proximity",
+            weight=100,
+            scoring_function=ScoringFunction(
+                type="distance_decay",
+                params={"max_distance": 1000, "decay_rate": 0.002},
+            ),
+        )
+    ],
+)
+
+# Generate JSON schema (used by Claude structured outputs)
+schema = ModelSpecification.model_json_schema()
 ```
 
 ## Configuration
@@ -299,11 +324,8 @@ print(f"Features: {results['num_features']}")
 ### Environment Variables
 
 ```bash
-# Required for model design
+# Required for AI model design
 export ANTHROPIC_API_KEY="sk-ant-..."
-
-# Required for Hennepin County datasets
-export RTGS_FGDB_PATH="/path/to/HC_EasementAnalysis_Model_Inputs_2020.gdb"
 ```
 
 See `docs/configuration.md` for detailed setup instructions.
@@ -313,58 +335,73 @@ See `docs/configuration.md` for detailed setup instructions.
 ### Data Flow
 
 ```
-requirements.txt
-       │
-       ▼
+User file paths (CLI prompts)
+         │
+         ▼
 ┌──────────────────┐
-│  model_designer  │ ──► Claude AI
+│   spatial_data   │  extract_from_path, extract_all_from_directory
+│   extractors     │  generate_grid, get_dataset_schema
+└────────┬─────────┘
+         │ GeoDataFrames + schemas
+         ▼
+┌──────────────────┐
+│  model_designer  │ ──► Claude AI (structured outputs)
+└────────┬─────────┘
+         │ ModelSpecification (Pydantic)
+         ▼
+┌──────────────────┐
+│ execution_engine │  pre-loaded GeoDataFrames
 └────────┬─────────┘
          │
          ▼
-    model.yaml
-         │
-         ▼
-┌──────────────────┐     ┌──────────────┐
-│ execution_engine │ ◄── │ spatial_data │
-└────────┬─────────┘     └──────────────┘
-         │                     │
-         │              ┌──────┴──────┐
-         │              │             │
-         ▼              ▼             ▼
-   results.parquet   FGDB      MN Geospatial
+   results.parquet + model.yaml
 ```
 
-### Module Integration
+### Key Design Decisions
 
-The `suitability_modeling` module uses `spatial_data` as its data layer:
+- **Pydantic ModelSpecification** — Enables structured outputs (Claude's response is hard-constrained to the JSON schema), validation, and clean serialization
+- **Pre-loaded data** — GeoDataFrames stay in memory; no temp files or disk I/O round-trips
+- **No internal dataset registry** — Data comes from user-provided file paths routed through `spatial_data`'s extractors
+- **Linear CLI flow** — No menus, no back-navigation; each step validates before moving on
 
-- **spatial_data** handles all data extraction (FGDB + MN Geospatial)
-- **suitability_modeling** focuses on model design and execution
-- Unified dataset registry provides seamless access to all sources
+### Module Structure
 
-## Limitations (MVP)
+```
+suitability_modeling/
+├── __init__.py                    # v0.2.0, lazy imports
+├── README.md                      # This file
+├── cli.py                         # run, run-config, validate commands
+├── core/
+│   ├── __init__.py
+│   ├── model_specification.py    # Pydantic models (ModelSpecification, etc.)
+│   ├── model_designer.py         # design_model(), print_model_summary()
+│   └── execution_engine.py       # SuitabilityEngine, execute_model()
+├── llm/
+│   ├── __init__.py
+│   └── claude_client.py          # ClaudeClient with structured outputs
+├── examples/
+│   └── wildlife_corridor_requirements.txt
+└── docs/
+    ├── dev-notes.md              # Development notes and changelog
+    ├── pipeline_redesign.md      # v0.2.0 design document
+    └── *.md                      # Additional documentation
+```
+
+## Limitations
 
 **Current:**
-- Only weighted overlay method (no boolean constraints, no AHP)
+- Only weighted overlay method (no boolean or other options)
 - Only 2 scoring functions (distance decay, categorical)
-- Simple grid-based analysis (100m cells default)
+- Grid or feature-based analysis units
 - No interactive refinement (edit YAML manually)
 
-**Coming soon:**
+**Future:**
 - Boolean constraints
 - More scoring functions (linear, threshold, fuzzy)
 - Interactive refinement via chat
-- Custom study areas
-- AHP and other MCDA methods
+- Other MCDA methods
 
 ## Troubleshooting
-
-### "FGDB path not configured"
-
-Set the environment variable:
-```bash
-export RTGS_FGDB_PATH="/path/to/HC_EasementAnalysis_Model_Inputs_2020.gdb"
-```
 
 ### "Anthropic API key required"
 
@@ -373,37 +410,12 @@ Set your API key:
 export ANTHROPIC_API_KEY="your-key-here"
 ```
 
-### "Dataset not found"
-
-Check available datasets:
-```bash
-rtgs suitability list-datasets
-```
-
 ### Model execution is slow
 
-The MVP uses 100m grid cells. For large areas, this creates many cells. Use larger cell sizes for testing or limit study area.
+Large study areas with small grid cells create many cells. Increase the cell size or set a lower `max_cells` limit.
 
-## Examples
+### Validation failed: weights must sum to 100
 
-See `examples/wildlife_corridor_requirements.txt` for a complete example.
+All criterion weights in the YAML must sum to exactly 100. Check your `weight` values.
 
-## Contributing
-
-This is an MVP. Contributions welcome!
-
-**Priority improvements:**
-1. Add more scoring functions
-2. Implement boolean constraints
-3. Add interactive refinement
-4. Performance optimization
-5. Additional MCDA methods
-
-## Contact
-
-**RTGS Lab:** https://rtgs.umn.edu/
-**Repository:** https://github.com/RTGS-Lab/rtgs-lab-tools
-
-## License
-
-MIT License - see main project LICENSE file
+---

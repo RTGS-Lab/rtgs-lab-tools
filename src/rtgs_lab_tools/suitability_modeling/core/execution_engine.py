@@ -8,7 +8,6 @@ from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-# Import geopandas with error handling
 try:
     import geopandas as gpd
 except ImportError:
@@ -17,38 +16,32 @@ except ImportError:
 
 def execute_model(
     model_spec: "ModelSpecification",
+    datasets: Dict[str, "gpd.GeoDataFrame"],
+    study_area_boundary: "gpd.GeoDataFrame",
+    analysis_units: Optional["gpd.GeoDataFrame"] = None,
     output_dir: str = "./results",
     output_format: str = "geoparquet",
 ) -> Dict[str, Any]:
-    """Execute a suitability model and generate results.
-
-    This function:
-    1. Loads required datasets from spatial_data module (FGDB or MN Geospatial)
-    2. Creates a study area grid for analysis
-    3. Calculates scores for each criterion
-    4. Combines scores using weighted overlay
-    5. Exports results to file
+    """Execute a suitability model with pre-loaded data.
 
     Args:
         model_spec: ModelSpecification object or path to YAML file
+        datasets: Dict mapping dataset names to GeoDataFrames
+        study_area_boundary: GeoDataFrame with study area boundary
+        analysis_units: Optional pre-built analysis units (grid or features).
+            If None, will be generated from model_spec.analysis_units_config.
         output_dir: Directory to save results
         output_format: Output format (geoparquet, shapefile, geojson, csv)
 
     Returns:
         Dict with execution results and output file path
-
-    Example:
-        >>> from core.model_specification import ModelSpecification
-        >>> spec = ModelSpecification.from_yaml("model.yaml")
-        >>> results = execute_model(spec)
-        >>> print(f"Results saved to: {results['output_file']}")
     """
     if gpd is None:
         raise ImportError("geopandas required. Install with: pip install geopandas")
 
-    # Handle both ModelSpecification objects and file paths
     from .model_specification import ModelSpecification
 
+    # Handle YAML file path input
     if isinstance(model_spec, str):
         logger.info(f"Loading model specification from: {model_spec}")
         model_spec = ModelSpecification.from_yaml(model_spec)
@@ -61,11 +54,15 @@ def execute_model(
     output_path.mkdir(parents=True, exist_ok=True)
 
     # Execute the model
-    engine = SuitabilityEngine(model_spec)
+    engine = SuitabilityEngine(model_spec, datasets, study_area_boundary, analysis_units)
     results_gdf = engine.execute()
 
     # Export results
     output_file = engine.export_results(results_gdf, output_dir, output_format)
+
+    # Save model YAML alongside results
+    model_yaml_path = output_path / f"{model_spec.model_id}.yaml"
+    model_spec.to_yaml(str(model_yaml_path))
 
     end_time = datetime.now()
     duration = (end_time - start_time).total_seconds()
@@ -76,6 +73,7 @@ def execute_model(
         "success": True,
         "model_id": model_spec.model_id,
         "output_file": output_file,
+        "model_yaml": str(model_yaml_path),
         "num_features": len(results_gdf),
         "duration_seconds": duration,
         "timestamp": end_time.isoformat(),
@@ -85,15 +83,25 @@ def execute_model(
 class SuitabilityEngine:
     """Engine for executing weighted overlay suitability models."""
 
-    def __init__(self, model_spec: "ModelSpecification"):
-        """Initialize engine with model specification.
+    def __init__(
+        self,
+        model_spec: "ModelSpecification",
+        datasets: Dict[str, "gpd.GeoDataFrame"],
+        study_area_boundary: "gpd.GeoDataFrame",
+        analysis_units: Optional["gpd.GeoDataFrame"] = None,
+    ):
+        """Initialize engine with model specification and pre-loaded data.
 
         Args:
             model_spec: ModelSpecification object
+            datasets: Dict mapping dataset names to GeoDataFrames
+            study_area_boundary: GeoDataFrame with study area boundary
+            analysis_units: Optional pre-built analysis units
         """
         self.model_spec = model_spec
-        self.datasets = {}
-        self._temp_dir = None
+        self.datasets = datasets
+        self.study_area_boundary = study_area_boundary
+        self.analysis_units = analysis_units
 
     def execute(self) -> gpd.GeoDataFrame:
         """Execute the suitability model.
@@ -101,14 +109,13 @@ class SuitabilityEngine:
         Returns:
             GeoDataFrame with suitability scores
         """
-        logger.info("Loading study area boundary...")
-        study_area_boundary = self._load_study_area_boundary()
+        # Clip datasets to study area boundary
+        logger.info("Clipping datasets to study area boundary...")
+        self._clip_datasets_to_boundary()
 
-        logger.info("Loading required datasets...")
-        self._load_datasets(study_area_boundary)
-
-        logger.info("Creating analysis units...")
-        study_area = self._create_study_area(study_area_boundary)
+        # Create or use analysis units
+        logger.info("Preparing analysis units...")
+        study_area = self._prepare_analysis_units()
 
         logger.info("Calculating criterion scores...")
         criterion_scores = {}
@@ -133,304 +140,110 @@ class SuitabilityEngine:
 
         logger.info(f"Analysis complete. Mean suitability: {final_scores.mean():.2f}")
 
-        # Cleanup temp directory
-        self._cleanup_temp_dir()
-
         return study_area
 
-    def _get_temp_dir(self) -> Path:
-        """Get or create temporary directory for extracted data."""
-        if self._temp_dir is None:
-            import tempfile
+    def _clip_datasets_to_boundary(self) -> None:
+        """Clip all loaded datasets to the study area boundary."""
+        if self.study_area_boundary is None or self.study_area_boundary.empty:
+            return
 
-            self._temp_dir = Path(tempfile.mkdtemp(prefix="suitability_"))
-        return self._temp_dir
+        boundary_geom = self.study_area_boundary.unary_union
 
-    def _cleanup_temp_dir(self):
-        """Clean up temporary directory."""
-        if self._temp_dir is not None and self._temp_dir.exists():
-            import shutil
+        for name, gdf in self.datasets.items():
+            if gdf.empty:
+                continue
 
-            try:
-                shutil.rmtree(self._temp_dir)
-            except Exception as e:
-                logger.warning(f"Failed to cleanup temp dir: {e}")
+            original_count = len(gdf)
 
-    def _load_study_area_boundary(self) -> Optional[gpd.GeoDataFrame]:
-        """Load study area boundary if specified in model config.
+            # Ensure same CRS
+            if gdf.crs != self.study_area_boundary.crs:
+                gdf = gdf.to_crs(self.study_area_boundary.crs)
 
-        Returns:
-            GeoDataFrame with boundary geometry, or None if not specified
-        """
-        if (
-            not self.model_spec.study_area_config
-            or not self.model_spec.study_area_config.dataset
-        ):
-            logger.info("  No study area boundary specified")
-            return None
+            gdf = gdf[gdf.intersects(boundary_geom)]
+            self.datasets[name] = gdf
 
-        boundary_dataset = self.model_spec.study_area_config.dataset
-        logger.info(f"  Loading boundary: {boundary_dataset}")
+            logger.info(f"  {name}: {original_count} -> {len(gdf)} features")
 
-        boundary_gdf = self._load_dataset(boundary_dataset)
-        logger.info(f"    Loaded boundary with {len(boundary_gdf)} features")
-        return boundary_gdf
-
-    def _load_datasets(self, study_area_boundary: Optional[gpd.GeoDataFrame] = None):
-        """Load required datasets from spatial_data module.
-
-        Args:
-            study_area_boundary: Optional boundary to clip datasets to
-        """
-        for criterion in self.model_spec.criteria:
-            dataset_name = criterion.dataset_name
-
-            if dataset_name in self.datasets:
-                continue  # Already loaded
-
-            logger.info(f"  Loading dataset: {dataset_name}")
-
-            try:
-                gdf = self._load_dataset(dataset_name)
-
-                # Clip to study area boundary if specified
-                if study_area_boundary is not None and not study_area_boundary.empty:
-                    logger.info("    Clipping to study area boundary...")
-                    original_count = len(gdf)
-
-                    # Ensure same CRS
-                    if gdf.crs != study_area_boundary.crs:
-                        gdf = gdf.to_crs(study_area_boundary.crs)
-
-                    # Create union of boundary geometries
-                    boundary_geom = study_area_boundary.unary_union
-
-                    # Clip features to boundary
-                    gdf = gdf[gdf.intersects(boundary_geom)]
-
-                    logger.info(f"    Clipped {original_count} -> {len(gdf)} features")
-
-                self.datasets[dataset_name] = gdf
-                logger.info(f"    Loaded {len(gdf)} features")
-
-            except Exception as e:
-                logger.error(f"Failed to load dataset {dataset_name}: {e}")
-                raise
-
-    def _load_dataset(self, dataset_name: str) -> gpd.GeoDataFrame:
-        """Load dataset from spatial_data module.
-
-        Args:
-            dataset_name: Name of the dataset
-
-        Returns:
-            GeoDataFrame with the dataset
-        """
-        from ...spatial_data import extract_spatial_data
-        from .dataset_registry import get_dataset_source
-
-        source = get_dataset_source(dataset_name)
-        logger.info(f"    Source: {source}")
-
-        if source == "unknown":
-            raise ValueError(
-                f"Dataset '{dataset_name}' not found. "
-                f"Check that the dataset exists in spatial_data registry and "
-                f"FGDB is configured if using Hennepin County data."
-            )
-
-        # Extract dataset using spatial_data module
-        temp_dir = self._get_temp_dir()
-        result = extract_spatial_data(
-            dataset_name=dataset_name,
-            output_dir=str(temp_dir),
-            output_format="geoparquet",
-            note=f"Loaded for suitability model: {self.model_spec.model_id}",
-        )
-
-        # Load the GeoDataFrame
-        if result.get("output_file"):
-            return gpd.read_parquet(result["output_file"])
-        else:
-            raise ValueError(
-                f"Failed to extract dataset '{dataset_name}' from spatial_data"
-            )
-
-    def _create_study_area(
-        self, study_area_boundary: Optional[gpd.GeoDataFrame] = None
-    ) -> gpd.GeoDataFrame:
-        """Create analysis units for the study area.
-
-        Supports multiple analysis unit types:
-        - grid: Regular grid cells
-        - parcels: Land parcels from dataset
-        - cities: Municipality boundaries from dataset
-        - dataset: Any custom dataset
-
-        Args:
-            study_area_boundary: Optional boundary to clip analysis units to
+    def _prepare_analysis_units(self) -> gpd.GeoDataFrame:
+        """Create or return analysis units.
 
         Returns:
             GeoDataFrame with analysis units
         """
+        if self.analysis_units is not None:
+            logger.info(f"  Using provided analysis units: {len(self.analysis_units)} features")
+            return self.analysis_units.copy()
+
         analysis_config = self.model_spec.analysis_units_config
-        unit_type = analysis_config.type
 
-        logger.info(f"  Analysis unit type: {unit_type}")
-
-        if unit_type == "grid":
-            # Create grid cells
-            return self._create_grid_units(study_area_boundary, analysis_config)
-        elif unit_type in ["parcels", "cities", "dataset"]:
-            # Load analysis units from dataset
-            return self._load_analysis_units(study_area_boundary, analysis_config)
+        if analysis_config is None or analysis_config.type == "grid":
+            return self._create_grid_units()
+        elif analysis_config.type in ["parcels", "cities", "dataset"]:
+            return self._load_analysis_units_from_dataset(analysis_config)
         else:
-            raise ValueError(f"Unsupported analysis unit type: {unit_type}")
+            raise ValueError(f"Unsupported analysis unit type: {analysis_config.type}")
 
-    def _create_grid_units(
-        self, study_area_boundary: Optional[gpd.GeoDataFrame], analysis_config
-    ) -> gpd.GeoDataFrame:
-        """Create regular grid cells for analysis.
-
-        Args:
-            study_area_boundary: Optional boundary to clip grid to
-            analysis_config: AnalysisUnitsConfig with cell_size and max_cells
+    def _create_grid_units(self) -> gpd.GeoDataFrame:
+        """Create regular grid cells using spatial_data.generate_grid().
 
         Returns:
             GeoDataFrame with grid cells
         """
-        cell_size = analysis_config.cell_size
-        max_cells = analysis_config.max_cells
+        from ...spatial_data.core.grid import generate_grid
 
-        # Determine bounds
-        if study_area_boundary is not None and not study_area_boundary.empty:
-            # Use boundary extent
-            bounds = study_area_boundary.total_bounds
-            boundary_geom = study_area_boundary.unary_union
-        else:
-            # Use combined bounds of all datasets
-            all_bounds = []
-            for gdf in self.datasets.values():
-                if not gdf.empty:
-                    all_bounds.append(gdf.total_bounds)
+        analysis_config = self.model_spec.analysis_units_config
+        cell_size = analysis_config.cell_size if analysis_config else 100.0
+        max_cells = analysis_config.max_cells if analysis_config else 10000
 
-            if not all_bounds:
-                raise ValueError("No datasets loaded, cannot create study area")
+        grid = generate_grid(
+            boundary=self.study_area_boundary,
+            cell_size=cell_size,
+            max_cells=max_cells,
+        )
 
-            bounds_array = np.array(all_bounds)
-            bounds = [
-                bounds_array[:, 0].min(),
-                bounds_array[:, 1].min(),
-                bounds_array[:, 2].max(),
-                bounds_array[:, 3].max(),
-            ]
-            boundary_geom = None
+        logger.info(f"  Generated grid: {len(grid)} cells ({cell_size}m)")
+        return grid
 
-        minx, miny, maxx, maxy = bounds
-        logger.info(f"  Grid bounds: [{minx:.2f}, {miny:.2f}, {maxx:.2f}, {maxy:.2f}]")
-        logger.info(f"  Grid cell size: {cell_size}m")
-
-        # Create grid
-        from shapely.geometry import box
-
-        x_coords = np.arange(minx, maxx, cell_size)
-        y_coords = np.arange(miny, maxy, cell_size)
-
-        # Limit grid size
-        total_cells = len(x_coords) * len(y_coords)
-
-        if total_cells > max_cells:
-            logger.warning(
-                f"Grid would have {total_cells} cells, sampling {max_cells} instead"
-            )
-            # Sample uniformly
-            x_coords = np.linspace(minx, maxx, int(np.sqrt(max_cells)))
-            y_coords = np.linspace(miny, maxy, int(np.sqrt(max_cells)))
-
-        # Create grid cells
-        geometries = []
-        for x in x_coords:
-            for y in y_coords:
-                cell = box(x, y, x + cell_size, y + cell_size)
-
-                # Clip cells to boundary or include full cell if no boundary
-                if boundary_geom is None:
-                    geometries.append(cell)
-                elif cell.intersects(boundary_geom):
-                    # Clip cell to boundary to ensure cells don't extend outside study area
-                    clipped_cell = cell.intersection(boundary_geom)
-                    if not clipped_cell.is_empty:
-                        geometries.append(clipped_cell)
-
-        logger.info(f"  Created {len(geometries)} grid cells")
-
-        # Create GeoDataFrame
-        if study_area_boundary is not None:
-            crs = study_area_boundary.crs
-        else:
-            first_gdf = next(iter(self.datasets.values()))
-            crs = first_gdf.crs
-
-        grid_gdf = gpd.GeoDataFrame(geometry=geometries, crs=crs)
-        return grid_gdf
-
-    def _load_analysis_units(
-        self, study_area_boundary: Optional[gpd.GeoDataFrame], analysis_config
-    ) -> gpd.GeoDataFrame:
+    def _load_analysis_units_from_dataset(self, analysis_config) -> gpd.GeoDataFrame:
         """Load analysis units from a dataset (parcels, cities, etc.).
 
         Args:
-            study_area_boundary: Optional boundary to clip units to
             analysis_config: AnalysisUnitsConfig with dataset name
 
         Returns:
             GeoDataFrame with analysis units
         """
         dataset_name = analysis_config.dataset
-
         if not dataset_name:
             raise ValueError(
                 f"Analysis unit type '{analysis_config.type}' requires a dataset name"
             )
 
-        logger.info(f"  Loading analysis units from: {dataset_name}")
+        if dataset_name not in self.datasets:
+            raise ValueError(
+                f"Analysis units dataset '{dataset_name}' not found in loaded datasets"
+            )
 
-        # Load dataset using spatial_data
-        units_gdf = self._load_dataset(dataset_name)
+        units_gdf = self.datasets[dataset_name].copy()
 
-        logger.info(f"    Loaded {len(units_gdf)} units")
-
-        # Clip to study area boundary if specified
-        if study_area_boundary is not None and not study_area_boundary.empty:
-            logger.info("    Clipping to study area boundary...")
-            original_count = len(units_gdf)
-
-            # Ensure same CRS
-            if units_gdf.crs != study_area_boundary.crs:
-                units_gdf = units_gdf.to_crs(study_area_boundary.crs)
-
-            # Create union of boundary geometries
-            boundary_geom = study_area_boundary.unary_union
-
-            # Clip features to boundary by intersecting geometries
+        # Clip to boundary
+        if self.study_area_boundary is not None and not self.study_area_boundary.empty:
+            boundary_geom = self.study_area_boundary.unary_union
+            if units_gdf.crs != self.study_area_boundary.crs:
+                units_gdf = units_gdf.to_crs(self.study_area_boundary.crs)
             units_gdf = units_gdf[units_gdf.intersects(boundary_geom)].copy()
             units_gdf.geometry = units_gdf.geometry.intersection(boundary_geom)
-
-            # Remove any empty geometries
             units_gdf = units_gdf[~units_gdf.geometry.is_empty]
 
-            logger.info(f"    Clipped {original_count} -> {len(units_gdf)} units")
-
-        # Limit number of units if specified
+        # Limit number of units
         max_cells = analysis_config.max_cells
         if len(units_gdf) > max_cells:
             logger.warning(
-                f"Dataset has {len(units_gdf)} units, limiting to {max_cells} "
-                f"(randomly sampled)"
+                f"Dataset has {len(units_gdf)} units, limiting to {max_cells}"
             )
             units_gdf = units_gdf.sample(n=max_cells, random_state=42)
 
-        logger.info(f"  Using {len(units_gdf)} analysis units")
+        logger.info(f"  Using {len(units_gdf)} analysis units from {dataset_name}")
         return units_gdf
 
     def _calculate_criterion_score(
@@ -439,7 +252,7 @@ class SuitabilityEngine:
         """Calculate suitability score for a single criterion.
 
         Args:
-            study_area: GeoDataFrame with analysis grid
+            study_area: GeoDataFrame with analysis units
             criterion: ModelCriterion to score
 
         Returns:
@@ -469,7 +282,7 @@ class SuitabilityEngine:
         """Score based on distance to features with exponential decay.
 
         Args:
-            study_area: Analysis grid
+            study_area: Analysis units
             features: Features to calculate distance from
             scoring_func: Scoring function with parameters
 
@@ -480,12 +293,8 @@ class SuitabilityEngine:
         max_distance = params.get("max_distance", 2000)
         decay_rate = params.get("decay_rate", 0.001)
 
-        # Reproject to projected CRS if needed for accurate distance calculations
+        # Reproject to projected CRS for accurate distance calculations
         if study_area.crs and study_area.crs.is_geographic:
-            logger.warning(
-                f"Converting from geographic CRS ({study_area.crs}) to projected CRS for distance calculation"
-            )
-            # Use NAD83 / Conus Albers (EPSG:5070) for US data - good equal-area projection
             target_crs = "EPSG:5070"
             study_area_proj = study_area.to_crs(target_crs)
             features_proj = features.to_crs(target_crs)
@@ -493,7 +302,7 @@ class SuitabilityEngine:
             study_area_proj = study_area
             features_proj = features
 
-        # Calculate distance from each cell to nearest feature (in meters if projected)
+        # Calculate distance from each cell to nearest feature
         distances = study_area_proj.geometry.apply(
             lambda geom: features_proj.distance(geom).min()
         )
@@ -515,7 +324,7 @@ class SuitabilityEngine:
         """Score based on categorical attributes.
 
         Args:
-            study_area: Analysis grid
+            study_area: Analysis units
             features: Features with categorical attributes
             scoring_func: Scoring function with category mapping
 
@@ -526,7 +335,7 @@ class SuitabilityEngine:
         mapping = params.get("mapping", {})
         category_column = params.get("column", "category")
 
-        # Spatial join to get category for each grid cell
+        # Spatial join to get category for each analysis unit
         joined = gpd.sjoin(study_area, features, how="left", predicate="intersects")
 
         # Map categories to scores
@@ -536,9 +345,14 @@ class SuitabilityEngine:
             logger.warning(
                 f"Column '{category_column}' not found, using default score of 5"
             )
-            scores = np.full(len(study_area), 5.0)
+            scores = pd.Series(np.full(len(joined), 5.0), index=joined.index)
 
-        # Handle both pandas Series and numpy array cases
+        # sjoin may produce duplicate rows when a unit overlaps multiple features.
+        # Group by original index and take the max score per unit.
+        import pandas as pd
+
+        scores = scores.groupby(scores.index).max().reindex(study_area.index, fill_value=0)
+
         return np.asarray(scores)
 
     def _combine_scores(self, criterion_scores: Dict[str, np.ndarray]) -> np.ndarray:
@@ -555,7 +369,7 @@ class SuitabilityEngine:
 
         for criterion in self.model_spec.criteria:
             scores = criterion_scores[criterion.criterion_name]
-            weight = criterion.weight / 100.0  # Convert percentage to decimal
+            weight = criterion.weight / 100.0
             final_scores += scores * weight
 
         return final_scores
@@ -587,7 +401,6 @@ class SuitabilityEngine:
             results_gdf.to_file(file_path, driver="GeoJSON")
         elif output_format == "csv":
             file_path = output_path / f"{filename}.csv"
-            # Convert geometry to WKT
             results_csv = results_gdf.copy()
             results_csv["geometry"] = results_csv["geometry"].apply(lambda x: x.wkt)
             results_csv.to_csv(file_path, index=False)

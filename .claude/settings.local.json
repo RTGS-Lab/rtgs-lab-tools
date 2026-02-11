@@ -10,7 +10,9 @@
       "Bash(rtgs spatial-data extract-all --help)",
       "Bash(rtgs spatial-data test --dataset WAN)",
       "Bash(rtgs spatial-data test --dataset land_use)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(python -c:*)",
+      "Bash(python -m pytest:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import geopandas as gpd
 
@@ -140,3 +140,48 @@ def get_local_dataset_info(local_directory: Path) -> Dict[str, Dict[str, Any]]:
         config["file_size_mb"] = file_path.stat().st_size / (1024 * 1024)
 
     return datasets
+
+
+def extract_all_from_directory(
+    directory: Path, target_crs: str = "EPSG:4326"
+) -> Dict[str, gpd.GeoDataFrame]:
+    """Extract all spatial files from a directory.
+
+    Uses discover_local_datasets() to find files, then extracts each one.
+
+    Args:
+        directory: Path to directory containing spatial files
+        target_crs: Target CRS for standardization (default: EPSG:4326)
+
+    Returns:
+        Dictionary mapping dataset names to GeoDataFrames
+
+    Raises:
+        FileNotFoundError: If directory does not exist
+    """
+    directory = Path(directory)
+    if not directory.exists():
+        raise FileNotFoundError(f"Directory not found: {directory}")
+
+    datasets = discover_local_datasets(directory)
+    logger.info(f"Discovered {len(datasets)} datasets in {directory}")
+
+    results = {}
+    for name, config in datasets.items():
+        try:
+            extractor = LocalFileExtractor(config)
+            gdf = extractor.extract()
+
+            # Standardize CRS
+            if gdf.crs is not None and str(gdf.crs) != target_crs:
+                gdf = gdf.to_crs(target_crs)
+            elif gdf.crs is None:
+                gdf = gdf.set_crs(target_crs)
+
+            results[name] = gdf
+            logger.info(f"  Extracted {name}: {len(gdf)} features")
+        except Exception as e:
+            logger.warning(f"  Failed to extract {name}: {e}")
+
+    logger.info(f"Successfully extracted {len(results)}/{len(datasets)} datasets")
+    return results

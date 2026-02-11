@@ -1,11 +1,70 @@
 # Spatial Data Module - Development Notes
 
-**Last Updated**: 2025-10-20
+**Last Updated**: 2026-02-11
 **Branch**: `ben/etl-pipeline-v0`
 
 ---
 
 ## Recent Development Progress
+
+### 2026-02-11 - Pipeline Refactor: New Extraction & Analysis Utilities
+
+Major additions to support the suitability modeling pipeline refactor. These changes make `spatial_data` usable as a standalone spatial ETL layer without requiring the dataset registry for every operation.
+
+#### New Functions
+
+**`extract_from_path(file_path, layer_name, target_crs)`** — `core/extractor.py`
+
+Direct file extraction that bypasses the registry entirely. Detects format by extension (`.shp`, `.gpkg`, `.parquet`, `.geojson`, `.gdb`, `.zip`), routes to the appropriate extractor (`LocalFileExtractor` or `FGDBExtractor`), and returns a CRS-standardized GeoDataFrame.
+
+- Accepts any supported spatial file path
+- Auto-detects format, no config dict needed
+- Standardizes CRS to target (default EPSG:4326)
+
+**`extract_all_fgdb_layers(fgdb_path, target_crs)`** — `sources/fgdb.py`
+
+Batch extraction of all layers from a File Geodatabase. Uses `fiona.listlayers()` to discover layers, extracts each via `FGDBExtractor`, returns `Dict[str, GeoDataFrame]`.
+
+**`extract_all_from_directory(directory, target_crs)`** — `sources/local_file.py`
+
+Batch extraction of all spatial files from a directory. Uses `discover_local_datasets()` to find files, extracts each, returns `Dict[str, GeoDataFrame]`.
+
+**`generate_grid(boundary, cell_size, max_cells)`** — `core/grid.py` (new file)
+
+Standalone grid generation from a boundary polygon. Projects to EPSG:5070 (NAD83 / Conus Albers) for accurate meter-based cell sizing, creates the grid, clips cells to boundary, and reprojects back to the original CRS. Auto-scales cell size if the grid would exceed `max_cells`.
+
+Previously this logic was embedded in `SuitabilityEngine._create_grid_units()` — now it's a reusable spatial_data function.
+
+**`get_dataset_schema(name, gdf)` / `format_schemas_for_llm(schemas)`** — `core/schema.py` (new file)
+
+Schema introspection utilities for LLM-assisted analysis. `get_dataset_schema()` returns a dict with `{name, geometry_type, columns, feature_count}` for a GeoDataFrame. `format_schemas_for_llm()` formats a list of schemas into a minimal string suitable for LLM prompts.
+
+#### Modified Extractors
+
+**`FGDBExtractor.__init__`** now accepts an optional `fgdb_path` parameter that overrides the `RTGS_FGDB_PATH` environment variable lookup. This enables `extract_from_path()` to work with arbitrary `.gdb` files without setting env vars.
+
+#### Updated Exports
+
+All new functions are exported via lazy imports in:
+- `spatial_data/__init__.py`
+- `spatial_data/sources/__init__.py`
+
+#### New Dependencies
+
+Added to `pyproject.toml`:
+- `pydantic>=2.0.0` — used by suitability_modeling for model specification validation and JSON schema generation
+- `anthropic>=0.42.0` — used by suitability_modeling for Claude API structured outputs
+
+#### Tests
+
+New test files in `tests/spatial_data/`:
+- `test_extractor.py` — 8 tests for `extract_from_path()` and `extract_all_from_directory()`
+- `test_grid.py` — 5 tests for `generate_grid()`
+- `test_schema.py` — 6 tests for schema introspection
+
+All 19 tests pass.
+
+---
 
 ### 2025-10-20 - Dataset Expansion & Attribute Filtering
 

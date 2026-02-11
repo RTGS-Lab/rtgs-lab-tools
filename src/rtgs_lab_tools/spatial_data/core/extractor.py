@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import geopandas as gpd
+
 # Reuse existing rtgs-lab-tools infrastructure
 from ...core.exceptions import RTGSLabToolsError, ValidationError
 from ..config import get_config, SpatialDataConfig
@@ -240,3 +242,76 @@ def _save_to_file(
         return str(zip_path), file_size_mb
 
     return str(file_path), file_size_mb
+
+
+# Extension to format mapping for extract_from_path
+_EXTENSION_FORMAT_MAP = {
+    ".shp": "shapefile",
+    ".gpkg": "geopackage",
+    ".geoparquet": "parquet",
+    ".parquet": "parquet",
+    ".geojson": "geojson",
+    ".json": "geojson",
+    ".zip": "zip",
+    ".gdb": "fgdb",
+}
+
+
+def extract_from_path(
+    file_path: str,
+    layer_name: Optional[str] = None,
+    target_crs: str = "EPSG:4326",
+) -> gpd.GeoDataFrame:
+    """Extract spatial data directly from a file path, bypassing the registry.
+
+    Detects format by file extension and uses the appropriate extractor.
+    Returns a validated, CRS-standardized GeoDataFrame.
+
+    Args:
+        file_path: Path to spatial data file (.shp, .gpkg, .parquet, .geojson, .gdb, .zip)
+        layer_name: Optional layer name for multi-layer formats (FGDB, GeoPackage)
+        target_crs: Target CRS for standardization (default: EPSG:4326)
+
+    Returns:
+        GeoDataFrame with standardized CRS
+
+    Raises:
+        FileNotFoundError: If file does not exist
+        ValueError: If file format is not supported
+    """
+    path = Path(file_path)
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    suffix = path.suffix.lower()
+
+    # Handle FGDB directories (end in .gdb)
+    if suffix == ".gdb" or (path.is_dir() and path.name.endswith(".gdb")):
+        config = {
+            "source_type": "fgdb",
+            "layer_name": layer_name,
+        }
+        extractor = FGDBExtractor(config, fgdb_path=str(path))
+        gdf = extractor.extract()
+    elif suffix in (".shp", ".gpkg", ".geoparquet", ".parquet", ".geojson", ".json", ".zip"):
+        config = {
+            "source_type": "local",
+            "file_path": str(path),
+            "layer_name": layer_name,
+        }
+        extractor = LocalFileExtractor(config)
+        gdf = extractor.extract()
+    else:
+        raise ValueError(
+            f"Unsupported file format: {suffix}. "
+            f"Supported: {', '.join(sorted(_EXTENSION_FORMAT_MAP.keys()))}"
+        )
+
+    # Ensure target CRS
+    if gdf.crs is None:
+        logger.warning(f"No CRS defined, assuming {target_crs}")
+        gdf = gdf.set_crs(target_crs)
+    elif str(gdf.crs) != target_crs:
+        gdf = gdf.to_crs(target_crs)
+
+    return gdf

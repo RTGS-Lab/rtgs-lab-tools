@@ -2,8 +2,8 @@
 
 from .base import SpatialSourceExtractor
 from .mn_geospatial import MNGeospatialExtractor
-from .fgdb import FGDBExtractor, get_fgdb_path, is_fgdb_available, list_fgdb_layers
-from .local_file import LocalFileExtractor, discover_local_datasets, get_local_dataset_info
+from .fgdb import FGDBExtractor, get_fgdb_path, is_fgdb_available, list_fgdb_layers, extract_all_fgdb_layers
+from .local_file import LocalFileExtractor, discover_local_datasets, get_local_dataset_info, extract_all_from_directory
 
 __all__ = [
     "SpatialSourceExtractor",
@@ -13,6 +13,8 @@ __all__ = [
     "get_fgdb_path",
     "is_fgdb_available",
     "list_fgdb_layers",
+    "extract_all_fgdb_layers",
     "discover_local_datasets",
     "get_local_dataset_info",
+    "extract_all_from_directory",
 ]
