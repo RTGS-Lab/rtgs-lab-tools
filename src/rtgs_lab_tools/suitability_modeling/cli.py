@@ -4,6 +4,8 @@ Provides interactive and config-driven suitability analysis pipelines.
 """
 
 import logging
+import os
+import re
 import time
 from pathlib import Path
 from typing import Dict, Optional
@@ -11,6 +13,27 @@ from typing import Dict, Optional
 import click
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_path(path_str: str) -> str:
+    """Normalize a file path to work on the current OS.
+
+    Handles:
+    - MINGW64/Git Bash paths on Windows (/c/Users/... → C:\\Users\\...)
+    - Strips surrounding quotes from pasted paths
+    - Strips leading/trailing whitespace
+    """
+    path_str = path_str.strip().strip("'\"")
+
+    # Convert MINGW64 paths (/c/Users/...) to Windows paths (C:\Users\...)
+    if os.name == "nt":
+        match = re.match(r"^/([a-zA-Z])/(.*)", path_str)
+        if match:
+            drive = match.group(1).upper()
+            rest = match.group(2).replace("/", "\\")
+            path_str = f"{drive}:\\{rest}"
+
+    return path_str
 
 
 @click.group()
@@ -84,22 +107,33 @@ def _run_interactive_pipeline(
     from .core.model_designer import design_model, print_model_summary
     from .core.execution_engine import execute_model
 
-    # === Step 1: Study Area ===
+    # === Step 1: Output Options ===
     click.echo()
-    click.echo("=== Step 1: Study Area ===")
-    study_area_path = click.prompt("Path to study area boundary file")
+    click.echo("=== Step 1: Output Options ===")
+    output_format = click.prompt(
+        "Output format",
+        type=click.Choice(["geoparquet", "shapefile", "geojson", "csv"], case_sensitive=False),
+        default=output_format,
+    )
+    output_dir = _normalize_path(click.prompt("Output directory", default=output_dir))
+
+    # === Step 2: Study Area ===
+    click.echo()
+    click.echo("=== Step 2: Study Area ===")
+    study_area_path = _normalize_path(click.prompt("Path to study area boundary file"))
     study_area_boundary = extract_from_path(study_area_path)
     click.echo(
         f"  Loaded {len(study_area_boundary)} features, "
         f"CRS: {study_area_boundary.crs}"
     )
 
-    # === Step 2: Analysis Units ===
+    # === Step 3: Analysis Units ===
     click.echo()
-    click.echo("=== Step 2: Analysis Units ===")
+    click.echo("=== Step 3: Analysis Units ===")
     use_grid = click.confirm("Generate a regular grid?", default=True)
 
     analysis_units = None
+    id_column = None
     if use_grid:
         cell_size = click.prompt("Grid cell size in meters", default=100, type=float)
         max_cells = click.prompt("Maximum number of cells", default=50000, type=int)
@@ -109,14 +143,23 @@ def _run_interactive_pipeline(
         )
         click.echo(f"  Generated grid: {len(analysis_units):,} cells")
     else:
-        units_path = click.prompt("Path to analysis units file")
+        units_path = _normalize_path(click.prompt("Path to analysis units file"))
         analysis_units = extract_from_path(units_path)
         click.echo(f"  Loaded {len(analysis_units):,} analysis units")
 
-    # === Step 3: Variable Datasets ===
+        # Show columns and ask for identifier
+        non_geom_cols = [c for c in analysis_units.columns if c != analysis_units.geometry.name]
+        click.echo(f"  Columns: {', '.join(non_geom_cols)}")
+        id_column = click.prompt(
+            "Identifier column for output (or 'none' to skip)",
+        )
+        if id_column.lower() == "none" or id_column not in analysis_units.columns:
+            id_column = None
+
+    # === Step 4: Variable Datasets ===
     click.echo()
-    click.echo("=== Step 3: Variable Datasets ===")
-    datasets_path = click.prompt("Path to datasets (directory, .gdb, or file)")
+    click.echo("=== Step 4: Variable Datasets ===")
+    datasets_path = _normalize_path(click.prompt("Path to datasets (directory, .gdb, or file)"))
     datasets = _load_datasets(datasets_path)
 
     click.echo(f"  Loaded {len(datasets)} datasets:")
@@ -130,11 +173,11 @@ def _run_interactive_pipeline(
     # Build schemas for LLM
     schemas = [get_dataset_schema(name, gdf) for name, gdf in datasets.items()]
 
-    # === Step 4: Requirements ===
+    # === Step 5: Requirements ===
     click.echo()
-    click.echo("=== Step 4: Requirements ===")
+    click.echo("=== Step 5: Requirements ===")
     click.echo("Type your objective OR enter a path to a .txt file:")
-    requirements_input = click.prompt("Requirements")
+    requirements_input = _normalize_path(click.prompt("Requirements"))
 
     # Check if it's a file path
     req_path = Path(requirements_input)
@@ -145,9 +188,9 @@ def _run_interactive_pipeline(
     else:
         requirements_text = requirements_input
 
-    # === Step 5: AI Model Design ===
+    # === Step 6: AI Model Design ===
     click.echo()
-    click.echo("=== Step 5: AI Model Design ===")
+    click.echo("=== Step 6: AI Model Design ===")
     click.echo("Calling Claude AI...")
     start = time.time()
 
@@ -166,9 +209,9 @@ def _run_interactive_pipeline(
     summary = print_model_summary(model_spec)
     click.echo(summary)
 
-    # === Step 6: Review ===
+    # === Step 7: Review ===
     click.echo()
-    click.echo("=== Step 6: Review ===")
+    click.echo("=== Step 7: Review ===")
 
     # Offer to save YAML for editing
     accept = click.confirm("Accept this model?", default=True)
@@ -181,9 +224,9 @@ def _run_interactive_pipeline(
         click.echo(f"    rtgs suitability run-config --config {yaml_path}")
         return
 
-    # === Step 7: Executing ===
+    # === Step 8: Executing ===
     click.echo()
-    click.echo("=== Step 7: Executing ===")
+    click.echo("=== Step 8: Executing ===")
     start = time.time()
 
     results = execute_model(
@@ -193,6 +236,7 @@ def _run_interactive_pipeline(
         analysis_units=analysis_units,
         output_dir=output_dir,
         output_format=output_format,
+        id_column=id_column,
     )
 
     elapsed = time.time() - start

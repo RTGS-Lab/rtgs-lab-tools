@@ -74,9 +74,21 @@ def print_model_summary(spec: ModelSpecification) -> str:
         lines.append(f"\n  {i}. {criterion.criterion_name} ({criterion.weight}%)")
         lines.append(f"     Dataset: {criterion.dataset_name}")
         lines.append(f"     Scoring: {criterion.scoring_function.type}")
-        if criterion.scoring_function.params:
-            for key, value in criterion.scoring_function.params.items():
-                lines.append(f"       - {key}: {value}")
+        params = criterion.scoring_function.params
+        if params:
+            if params.max_distance is not None:
+                lines.append(f"       - max_distance: {params.max_distance}m")
+            if params.decay_rate is not None:
+                lines.append(f"       - decay_rate: {params.decay_rate}")
+            if params.column is not None:
+                lines.append(f"       - column: {params.column}")
+            if params.category_mappings:
+                mappings = {cm.category: cm.score for cm in params.category_mappings}
+                lines.append(f"       - mappings: {mappings}")
+            if (criterion.scoring_function.type == "direct_value"
+                    and params.column is not None
+                    and not params.category_mappings):
+                lines.append(f"       (uses raw column values as scores)")
 
     lines.append(f"\nOutput Range: {spec.output_range[0]} - {spec.output_range[1]}")
     lines.append("")

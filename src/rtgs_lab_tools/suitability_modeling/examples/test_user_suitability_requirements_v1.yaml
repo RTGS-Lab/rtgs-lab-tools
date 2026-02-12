@@ -1,0 +1,79 @@
+model_id: hennepin_county_conservation_suitability
+model_type: weighted_overlay
+objective: Find suitable CTUs within Hennepin County for natural resource conservation
+  based on proximity to protected areas, natural spaces, important bird areas, and
+  biodiversity significance
+study_area: Hennepin County CTUs
+study_area_config:
+  dataset: null
+  description: Hennepin County CTUs
+analysis_units_config:
+  type: dataset
+  dataset: hennepin_county_ctus
+  cell_size: 100.0
+  max_cells: 10000
+criteria:
+- dataset_name: protected_areas
+  criterion_name: Proximity to Protected Areas
+  scoring_function:
+    type: distance_decay
+    params:
+      max_distance: 5000.0
+      decay_rate: 0.001
+      column: null
+      category_mappings: null
+    output_range:
+    - 0.0
+    - 10.0
+  weight: 30.0
+- dataset_name: natural_spaces
+  criterion_name: Proximity to Natural Spaces
+  scoring_function:
+    type: distance_decay
+    params:
+      max_distance: 5000.0
+      decay_rate: 0.001
+      column: null
+      category_mappings: null
+    output_range:
+    - 0.0
+    - 10.0
+  weight: 30.0
+- dataset_name: important_bird_areas
+  criterion_name: Proximity to Important Bird Areas
+  scoring_function:
+    type: distance_decay
+    params:
+      max_distance: 5000.0
+      decay_rate: 0.001
+      column: null
+      category_mappings: null
+    output_range:
+    - 0.0
+    - 10.0
+  weight: 25.0
+- dataset_name: MBS
+  criterion_name: Minnesota Sites of Biodiversity Significance
+  scoring_function:
+    type: categorical
+    params:
+      max_distance: null
+      decay_rate: null
+      column: biodiv_sig
+      category_mappings:
+      - category: Outstanding
+        score: 10.0
+      - category: High
+        score: 7.0
+      - category: Moderate
+        score: 4.0
+      - category: Below
+        score: 1.0
+    output_range:
+    - 0.0
+    - 10.0
+  weight: 15.0
+output_range:
+- 0.0
+- 100.0
+metadata: null

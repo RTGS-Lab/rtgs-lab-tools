@@ -8,6 +8,50 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 
+def _add_additional_properties_false(schema: dict) -> dict:
+    """Recursively add 'additionalProperties': false to all object types in a JSON schema.
+
+    The Anthropic structured outputs API requires this on every object type.
+    Skips objects that are pure dict types (no 'properties' key) since those
+    represent arbitrary key-value mappings.
+    """
+    if not isinstance(schema, dict):
+        return schema
+
+    # Process $defs (Pydantic puts model definitions here)
+    if "$defs" in schema:
+        for key, defn in schema["$defs"].items():
+            schema["$defs"][key] = _add_additional_properties_false(defn)
+
+    # Strip unsupported array constraints (API only allows minItems 0 or 1)
+    if schema.get("type") == "array":
+        for key in ("minItems", "maxItems"):
+            if key in schema and schema[key] > 1:
+                del schema[key]
+        # Also strip prefixItems (from Tuple types) — use items instead
+        if "prefixItems" in schema:
+            # Use the first item type as the general items type
+            schema["items"] = schema["prefixItems"][0]
+            del schema["prefixItems"]
+
+    # If this is an object type with defined properties, lock it down
+    if schema.get("type") == "object" and "properties" in schema:
+        schema["additionalProperties"] = False
+        for prop_name, prop_schema in schema["properties"].items():
+            schema["properties"][prop_name] = _add_additional_properties_false(prop_schema)
+
+    # Handle anyOf, allOf, oneOf
+    for keyword in ("anyOf", "allOf", "oneOf"):
+        if keyword in schema:
+            schema[keyword] = [_add_additional_properties_false(s) for s in schema[keyword]]
+
+    # Handle items (arrays)
+    if "items" in schema:
+        schema["items"] = _add_additional_properties_false(schema["items"])
+
+    return schema
+
+
 class ClaudeClient:
     """Claude API client that uses structured outputs for suitability model design."""
 
@@ -53,27 +97,34 @@ class ClaudeClient:
 
         logger.info("Sending model design request to Claude...")
 
-        # Get JSON schema from Pydantic model
+        # Get JSON schema from Pydantic model, make it API-compatible
         json_schema = ModelSpecification.model_json_schema()
+
+        # Remove freeform Dict[str, Any] fields that the API can't handle
+        if "properties" in json_schema and "metadata" in json_schema["properties"]:
+            del json_schema["properties"]["metadata"]
+            if "required" in json_schema and "metadata" in json_schema["required"]:
+                json_schema["required"].remove("metadata")
+
+        json_schema = _add_additional_properties_false(json_schema)
 
         response = self.client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=4000,
             messages=[{"role": "user", "content": prompt}],
-            output_config={
-                "format": {
-                    "type": "json_schema",
-                    "json_schema": {
-                        "name": "ModelSpecification",
-                        "schema": json_schema,
-                    },
-                }
-            },
+            tools=[{
+                "name": "design_model",
+                "description": "Output the complete suitability model specification",
+                "input_schema": json_schema,
+            }],
+            tool_choice={"type": "tool", "name": "design_model"},
         )
 
-        # Parse structured response
-        response_text = response.content[0].text
-        model_spec_dict = json.loads(response_text)
+        # Extract model spec from tool use response
+        tool_use_block = next(
+            b for b in response.content if b.type == "tool_use"
+        )
+        model_spec_dict = tool_use_block.input
 
         # Validate through Pydantic
         spec = ModelSpecification.model_validate(model_spec_dict)
@@ -101,10 +152,17 @@ class ClaudeClient:
             name = schema["name"]
             geom = schema["geometry_type"]
             count = schema["feature_count"]
-            cols = [c["name"] for c in schema.get("columns", [])]
-            cols_str = ", ".join(cols[:15])
-            if len(cols) > 15:
-                cols_str += f", ... ({len(cols)} total)"
+            col_parts = []
+            for c in schema.get("columns", []):
+                part = c["name"]
+                if "unique_values" in c:
+                    vals = c["unique_values"]
+                    vals_str = ", ".join(str(v) for v in vals[:10])
+                    part += f" (values: [{vals_str}])"
+                col_parts.append(part)
+            cols_str = ", ".join(col_parts[:15])
+            if len(col_parts) > 15:
+                cols_str += f", ... ({len(col_parts)} total)"
             datasets_info.append(f"- {name} ({geom}, {count:,} features): columns [{cols_str}]")
 
         datasets_str = "\n".join(datasets_info)
@@ -119,14 +177,21 @@ Available Datasets:
 
 Design a weighted overlay suitability model. Instructions:
 1. Select appropriate datasets from the available list (use ONLY dataset names listed above)
-2. For each criterion, design a scoring function:
-   - "distance_decay": Score based on proximity to features (closer = higher)
-     Parameters: max_distance (meters), decay_rate (default 0.001)
-   - "categorical": Map attribute values to scores
-     Parameters: column (attribute name), mapping (dict of value: score)
-3. Assign weights to each criterion (MUST sum to exactly 100)
-4. Set a clear model_id (snake_case, descriptive)
-5. Include at least 2 criteria
+2. For each criterion, choose ONE scoring function:
+   - "distance_decay": Score based on proximity to features (closer = higher score).
+     Parameters: max_distance (meters), decay_rate.
+     Use when the dataset has point or polygon features and proximity matters.
+   - "categorical": Map specific attribute values to scores via a lookup.
+     Parameters: column (attribute name), category_mappings (list of {{category, score}} objects).
+     Use when a text/string column needs to be translated to numeric scores.
+   - "direct_value": Read a numeric column value directly as the score (no remapping).
+     Parameters: column (the numeric attribute column to read).
+     Use when the dataset already has a pre-computed numeric score or rating column.
+3. IMPORTANT: Look at the actual column values shown in parentheses. Use those exact values
+   for categorical mappings. If a column already contains numeric scores, prefer "direct_value".
+4. Assign weights to each criterion (MUST sum to exactly 100)
+5. Set a clear model_id (snake_case, descriptive)
+6. Include at least 2 criteria
 
 Return a complete model specification JSON object."""
 

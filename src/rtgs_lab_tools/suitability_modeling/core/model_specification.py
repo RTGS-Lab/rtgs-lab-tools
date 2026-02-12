@@ -11,6 +11,63 @@ from typing import Any, Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field, model_validator
 
 
+class CategoryMapping(BaseModel):
+    """Maps a single category value to a suitability score."""
+
+    category: str = Field(
+        description="Category value from the dataset attribute column"
+    )
+    score: float = Field(
+        description="Suitability score for this category (0-10)"
+    )
+
+
+class ScoringParams(BaseModel):
+    """Parameters for scoring functions.
+
+    For distance_decay: set max_distance and decay_rate.
+    For categorical: set column and category_mappings.
+    """
+
+    max_distance: Optional[float] = Field(
+        default=None,
+        description="Maximum distance in meters beyond which score is 0 (distance_decay only)",
+    )
+    decay_rate: Optional[float] = Field(
+        default=None,
+        description="Exponential decay rate (distance_decay only, default 0.001)",
+    )
+    column: Optional[str] = Field(
+        default=None,
+        description="Attribute column name to read values from (categorical only)",
+    )
+    category_mappings: Optional[List[CategoryMapping]] = Field(
+        default=None,
+        description="List of category-to-score mappings (categorical only)",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def convert_mapping_dict(cls, data):
+        """Convert legacy 'mapping' dict format to category_mappings list."""
+        if isinstance(data, dict) and "mapping" in data and "category_mappings" not in data:
+            mapping = data.pop("mapping")
+            if isinstance(mapping, dict):
+                data["category_mappings"] = [
+                    {"category": str(k), "score": v} for k, v in mapping.items()
+                ]
+        return data
+
+    def get(self, key, default=None):
+        """Dict-like access for backward compatibility with execution engine."""
+        if key == "mapping":
+            if self.category_mappings is not None:
+                return {cm.category: cm.score for cm in self.category_mappings}
+            return default
+        val = getattr(self, key, None)
+        return val if val is not None else default
+
+
 class ScoringFunction(BaseModel):
     """How to convert dataset values to suitability scores.
 
@@ -21,11 +78,9 @@ class ScoringFunction(BaseModel):
         description="Scoring function type: 'distance_decay' for proximity-based scoring, "
         "'categorical' for attribute-based scoring"
     )
-    params: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Parameters specific to the scoring function type. "
-        "For distance_decay: {max_distance: meters, decay_rate: float}. "
-        "For categorical: {column: str, mapping: {category: score}}.",
+    params: ScoringParams = Field(
+        default_factory=ScoringParams,
+        description="Parameters specific to the scoring function type.",
     )
     output_range: Tuple[float, float] = Field(
         default=(0, 10),
@@ -127,8 +182,8 @@ class ModelSpecification(BaseModel):
         default=(0, 100),
         description="Min and max final suitability scores",
     )
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict,
+    metadata: Optional[Dict[str, Any]] = Field(
+        default=None,
         description="Additional metadata (created_by, date, notes, etc.)",
     )
 

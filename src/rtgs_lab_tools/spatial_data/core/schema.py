@@ -33,10 +33,23 @@ def get_dataset_schema(name: str, gdf: gpd.GeoDataFrame) -> Dict[str, Any]:
     for col in gdf.columns:
         if col == gdf.geometry.name:
             continue
-        columns.append({
+        col_info = {
             "name": col,
             "dtype": str(gdf[col].dtype),
-        })
+        }
+        # Include unique values for columns with few distinct values
+        # (most useful for categorical scoring)
+        try:
+            nunique = gdf[col].nunique()
+            if nunique <= 20:
+                unique_vals = sorted(
+                    [v for v in gdf[col].dropna().unique().tolist()],
+                    key=lambda x: str(x),
+                )
+                col_info["unique_values"] = unique_vals
+        except (TypeError, ValueError):
+            pass
+        columns.append(col_info)
 
     return {
         "name": name,

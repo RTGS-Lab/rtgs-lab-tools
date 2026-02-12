@@ -21,6 +21,7 @@ def execute_model(
     analysis_units: Optional["gpd.GeoDataFrame"] = None,
     output_dir: str = "./results",
     output_format: str = "geoparquet",
+    id_column: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Execute a suitability model with pre-loaded data.
 
@@ -32,6 +33,8 @@ def execute_model(
             If None, will be generated from model_spec.analysis_units_config.
         output_dir: Directory to save results
         output_format: Output format (geoparquet, shapefile, geojson, csv)
+        id_column: Optional column name to keep as identifier in output.
+            If set, output will only contain this column, geometry, and scores.
 
     Returns:
         Dict with execution results and output file path
@@ -55,7 +58,7 @@ def execute_model(
 
     # Execute the model
     engine = SuitabilityEngine(model_spec, datasets, study_area_boundary, analysis_units)
-    results_gdf = engine.execute()
+    results_gdf = engine.execute(id_column=id_column)
 
     # Export results
     output_file = engine.export_results(results_gdf, output_dir, output_format)
@@ -103,8 +106,12 @@ class SuitabilityEngine:
         self.study_area_boundary = study_area_boundary
         self.analysis_units = analysis_units
 
-    def execute(self) -> gpd.GeoDataFrame:
+    def execute(self, id_column: Optional[str] = None) -> gpd.GeoDataFrame:
         """Execute the suitability model.
+
+        Args:
+            id_column: Optional column name to keep as identifier in output.
+                If set, output will only contain this column, geometry, and scores.
 
         Returns:
             GeoDataFrame with suitability scores
@@ -116,6 +123,11 @@ class SuitabilityEngine:
         # Create or use analysis units
         logger.info("Preparing analysis units...")
         study_area = self._prepare_analysis_units()
+
+        # Build a mapping from criterion_name to dataset_name for column naming
+        criterion_dataset_map = {}
+        for criterion in self.model_spec.criteria:
+            criterion_dataset_map[criterion.criterion_name] = criterion.dataset_name
 
         logger.info("Calculating criterion scores...")
         criterion_scores = {}
@@ -130,17 +142,28 @@ class SuitabilityEngine:
         min_score, max_score = self.model_spec.output_range
         final_scores = min_score + (final_scores / 10.0) * (max_score - min_score)
 
-        # Add to study area
-        study_area["suitability_score"] = final_scores
+        # Build clean output columns
+        score_columns = {}
+        score_columns["suitability_score"] = final_scores
 
-        # Add individual criterion scores for transparency
-        for name, scores in criterion_scores.items():
-            col_name = f"score_{name.lower().replace(' ', '_')}"
-            study_area[col_name] = scores
+        # Use dataset names for individual score columns
+        for criterion_name, scores in criterion_scores.items():
+            dataset_name = criterion_dataset_map[criterion_name]
+            col_name = f"score_{dataset_name}"
+            score_columns[col_name] = scores
+
+        # Build output GeoDataFrame
+        if id_column and id_column in study_area.columns:
+            output = study_area[[id_column, study_area.geometry.name]].copy()
+        else:
+            output = study_area[[study_area.geometry.name]].copy()
+
+        for col_name, values in score_columns.items():
+            output[col_name] = values
 
         logger.info(f"Analysis complete. Mean suitability: {final_scores.mean():.2f}")
 
-        return study_area
+        return output
 
     def _clip_datasets_to_boundary(self) -> None:
         """Clip all loaded datasets to the study area boundary."""
@@ -267,6 +290,8 @@ class SuitabilityEngine:
             scores = self._score_distance_decay(study_area, dataset, scoring_func)
         elif scoring_func.type == "categorical":
             scores = self._score_categorical(study_area, dataset, scoring_func)
+        elif scoring_func.type == "direct_value":
+            scores = self._score_direct_value(study_area, dataset, scoring_func)
         else:
             raise ValueError(f"Unsupported scoring function: {scoring_func.type}")
 
@@ -351,6 +376,48 @@ class SuitabilityEngine:
         # Group by original index and take the max score per unit.
         import pandas as pd
 
+        scores = scores.groupby(scores.index).max().reindex(study_area.index, fill_value=0)
+
+        return np.asarray(scores)
+
+    def _score_direct_value(
+        self,
+        study_area: gpd.GeoDataFrame,
+        features: gpd.GeoDataFrame,
+        scoring_func: "ScoringFunction",
+    ) -> np.ndarray:
+        """Score by reading a numeric column value directly via spatial join.
+
+        Uses the actual column values as scores without remapping.
+
+        Args:
+            study_area: Analysis units
+            features: Features with numeric score column
+            scoring_func: Scoring function with column parameter
+
+        Returns:
+            Array of scores
+        """
+        import pandas as pd
+
+        params = scoring_func.params
+        column = params.get("column", None)
+
+        if column is None:
+            raise ValueError("direct_value scoring requires a 'column' parameter")
+
+        # Spatial join to get values for each analysis unit
+        joined = gpd.sjoin(study_area, features, how="left", predicate="intersects")
+
+        if column not in joined.columns:
+            logger.warning(
+                f"Column '{column}' not found, using default score of 0"
+            )
+            return np.zeros(len(study_area))
+
+        scores = pd.to_numeric(joined[column], errors="coerce").fillna(0)
+
+        # sjoin may produce duplicate rows; take the max per unit
         scores = scores.groupby(scores.index).max().reindex(study_area.index, fill_value=0)
 
         return np.asarray(scores)
