@@ -32,16 +32,14 @@ def mock_config():
 def temp_env_file():
     """Create temporary .env file for testing."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-        f.write(
-            """DB_HOST=test-host
+        f.write("""DB_HOST=test-host
 DB_PORT=5432
 DB_NAME=test_db
 DB_USER=test_user
 DB_PASSWORD=test_password
 PARTICLE_ACCESS_TOKEN=test_token
 CDS_API_KEY=test_cds_key
-"""
-        )
+""")
         temp_path = f.name
 
     yield temp_path
