@@ -7,6 +7,8 @@ arguments:
     node_ids: list of node ids
     project: str
 """
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -73,6 +75,7 @@ def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
         if end_date
         else datetime.now().strftime("%Y-%m-%d")
     )
+
 
     monitor(
         start_date=start_date_str,

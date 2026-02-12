@@ -20,6 +20,7 @@ from .data_getter import get_data
 from .message_builder import build_message
 from .notification_system import notify
 
+from .produce_db import build_db
 
 def monitor(
     start_date=(datetime.now() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime(
@@ -45,6 +46,11 @@ def monitor(
     print(f"--Beginning data analysis--")
     analysis_dict = analyze_data(formatted_data)
     print(f"--Data analysis complete--")
+
+    # Step 3.5: Add data to SQLite database
+    print(f"--Beginning adding data to SQLite database--")
+    build_db(analysis_dict)
+    print(f"--Addition to SQLite database complete--")
 
     # Step 4: Build notification messages
     print(f"--Beginning message building--")
