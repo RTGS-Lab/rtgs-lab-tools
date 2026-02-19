@@ -1,25 +1,13 @@
 from datetime import datetime
 import json
 
-from .app import app
-from .models import db, Monitoring
+# from .app import app
+from .models import db, Monitoring, app
 
 
 def build_db(analyzed_data_dict):
-    print("inside function")
-    # try:
-    #     from .app import app
-    #     from .models import db, Monitoring
-    # except ImportError as e:
-    #     print(f'Import error: {e}')
-    #     raise
-    # except Exception as e:
-    #     print(f'General error during import: {e}')
-    print("next step")
     with app.app_context():
-        print("inside app.context")
         db.create_all()
-        # print(analyzed_data_dict)
         for node_id, data in analyzed_data_dict.items():
             monitor = Monitoring(
                 node_id = node_id,
@@ -36,12 +24,7 @@ def build_db(analyzed_data_dict):
                 last_heard = data.get("last_heard")
             )
             db.session.add(monitor)
-            print("added session")
         try:
             db.session.commit()
         except Exception as e:
             print(f'Unable to commit session: {e}')
-
-# if __name__ == "__main__":
-    # nodes = parse_error_file('errors.txt')
-    # build_db(nodes)

@@ -1,7 +1,16 @@
 from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
 from datetime import datetime
+import os
 
-db = SQLAlchemy()
+app = Flask(__name__)
+basedir = os.path.abspath(os.path.dirname(__file__))
+db_path = os.path.join(basedir, 'instance', 'device_monitoring.db')
+print(db_path)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///{}".format(db_path)
+
+db = SQLAlchemy(app)
 
 class Monitoring(db.Model):
     node_id = db.Column(db.String(255), primary_key=True)
