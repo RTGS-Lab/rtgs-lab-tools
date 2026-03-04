@@ -1,0 +1,22 @@
+flowchart TD
+    A["🌐 User's browser Loads and runs the React app"]
+
+    B["⚛️ React App component-based UI fetches data from Flask API and displays results to the user"]
+
+    subgraph backend ["Backend — API Layer"]
+        C["🐍 Flask API Defines URL endpoints, handles requests, queries the app DB, returns JSON responses"]
+        D["⚙️ Gunicorn production server runs Flask with multiple workers"]
+    end
+
+    E[("🗄️ Database containing device monitoring data, contact info, etc. for deployed loggers")]
+
+    F["🔧 Device monitoring report"]
+
+    G[("📦 GEMS Sensing Database")]
+
+    A  <-->|"HTTP / JSON"| B
+    B  <-->|"REST API calls — fetch / axios"| C
+    C  <-->|"runs inside"| D
+    C  -->|"SQL queries"| E
+    F  -->|"writes transformed data"| E
+    F  -->|"read-only queries"| G
