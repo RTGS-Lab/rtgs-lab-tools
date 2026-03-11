@@ -1,0 +1,6 @@
+{
+  "disabledMcpjsonServers": [
+    "particle",
+    "rtgs_lab_tools"
+  ]
+}

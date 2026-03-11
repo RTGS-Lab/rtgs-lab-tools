@@ -13,7 +13,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///{}".format(db_path)
 db = SQLAlchemy(app)
 
 class Monitoring(db.Model):
-    node_id = db.Column(db.String(255), primary_key=True)
+    node_id = db.Column(db.String(50), primary_key=True)
     monitoring_timestamp = db.Column(db.String(30), primary_key=True) # "YYYY-MM-DD HH:MM:SS.SSS"
     device_timestamp = db.Column(db.String(30), nullable=True) # "YYYY-MM-DD HH:MM:SS.SSS"
     flagged = db.Column(db.String(20), nullable=False)
@@ -38,4 +38,20 @@ class Monitoring(db.Model):
             "last_heard": self.last_heard
             # "particle_url": self.particle_url,
             # "diagnostics": self.diagnostics
+        }
+    
+class LoggerInfo(db.Model):
+    node_id = db.Column(db.String(50), primary_key=True)
+    field_name = db.Column(db.String(50), nullable=False)   # ex. "WinterTurf_Type_A_64"
+    product_name = db.Column(db.String(50), nullable=False) # ex. "Winter Turf - v3"
+    particle_url = db.Column(db.String(100), nullable=False)
+    # status = db.Column(db.Boolean, nullable=False)
+
+    def to_dict(self):
+        return {
+            "node_id": self.node_id,
+            "field_name": self.field_name,
+            "product_name": self.product_name,
+            "particle_url": self.particle_url,
+            # "status": self.status
         }

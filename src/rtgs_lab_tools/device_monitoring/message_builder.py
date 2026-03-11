@@ -90,6 +90,28 @@ def get_product_slug(product_id):
     except Exception:
         return None
 
+def get_product_name(product_id):
+    """Fetch product name from Particle API using product_id."""
+    if not PARTICLE_ACCESS_TOKEN or not product_id:
+        return None
+
+    try:
+        url = PARTICLE_API_BASE_URL + PARTICLE_PRODUCT_ENDPOINT.format(
+            product_id=product_id
+        )
+        headers = {"Authorization": f"Bearer {PARTICLE_ACCESS_TOKEN}"}
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == HTTP_SUCCESS_CODE:
+            response_data = response.json()
+            product_data = response_data.get("product", {})
+            return product_data.get("name")
+        else:
+            return None
+    except Exception:
+        return None
+
+
 
 def get_console_url(node_id, product_id, slug):
     """Generate Particle console URL for a device."""

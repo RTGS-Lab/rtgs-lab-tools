@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 from flask_cors import CORS
 from sqlalchemy import func
-from .models import db, Monitoring
+from .models import db, Monitoring, LoggerInfo
 import os
 
 app = Flask(__name__)
@@ -44,6 +44,11 @@ def index():
 def get_fleet_monitoring():
     data = Monitoring.query.all()
     return jsonify([m.to_dict() for m in data])
+
+@app.route('/api/logger-info')
+def get_logger_info():
+    data = LoggerInfo.query.all()
+    return jsonify([l.to_dict() for l in data])
 
 @app.route("/api/entries", methods=["GET"])
 def get_all_entries():

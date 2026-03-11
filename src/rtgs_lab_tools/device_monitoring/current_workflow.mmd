@@ -1,0 +1,78 @@
+flowchart LR
+    Start([rtgs device-monitoring monitor]) --> Inputs[/"Inputs: start_date, end_date,
+    project, node_ids, no_email"/]
+
+    %% ===== Step 1: Get Data =====
+    Inputs --> GetData["<b>Step 1: get_data()</b>
+    <i>data_getter.py</i>
+    <i>Get raw data from database, stored as DataFrame</i>"]
+
+    %% ===== Step 2: Format Data =====
+    GetData --> FormatData["<b>Step 2: format_data_with_parser()</b>
+    <i>data_formatter.py</i>"]
+    FormatData --> CreateDFs["parse_gems_data()
+    packet_types: error/v2, diagnostic/v2"]
+
+    subgraph CreateDFs["Create DataFrames from Parsed Data"]
+        direction LR
+        ErrDF["create_error_count_dataframe()
+        Error counts by node_id"]
+        BatDF["create_battery_voltage_dataframe()
+        PORT_V index 0 from Kestrels"]
+        SysDF["create_system_usage_dataframe()
+        AVG_P index 1 from Kestrels"]
+        HumDF["create_inbox_humidity_dataframe()
+        RH from Kestrels"]
+    end
+
+    CreateDFs --> FormatDict[/"Return dict:
+    parsed_data, battery_data,
+    error_data, system_current_data,
+    inbox_humidity_data"/]
+
+    %% ===== Step 3: Analyze Data =====
+    FormatDict --> AnalyzeData["<b>Step 3: analyze_data()</b>
+    <i>data_analyzer.py</i>"]
+    AnalyzeData --> CollectNodes["Collect all unique node_ids
+    from all DataFrames"]
+    CollectNodes --> IdentifyMissing["Identify missing nodes
+    (no data within 24 hours)"]
+    IdentifyMissing --> LoopNodes["For each node_id"]
+
+    LoopNodes --> CheckBattery{"Battery voltage
+    < 3.6V?"}
+    CheckBattery -- Yes --> FlagNode1["Flag node"]
+    CheckBattery -- No --> CheckPower
+
+    FlagNode1 --> CheckPower{"System power
+    > 0.364W?"}
+    CheckPower -- Yes --> FlagNode2["Flag node"]
+    CheckPower -- No --> CheckHumidity
+
+    FlagNode2 --> CheckHumidity{"Inbox humidity
+    > 65%?"}
+    CheckHumidity -- Yes --> FlagNode3["Flag node"]
+    CheckHumidity -- No --> CheckErrors
+
+    FlagNode3 --> CheckErrors{"Critical errors
+    present?"}
+    CheckErrors -- Yes --> FlagNode4["Flag node"]
+    CheckErrors -- No --> CheckMissing
+
+    FlagNode4 --> CheckMissing{"Node missing
+    (24+ hrs)?"}
+    CheckMissing -- Yes --> FlagNode5["Flag node"]
+    CheckMissing -- No --> StoreResult
+
+    FlagNode5 --> StoreResult["Store node analysis:
+    flagged, battery, system,
+    humidity, errors, timestamps,
+    is_missing, last_heard"]
+    StoreResult --> MoreNodes{More nodes?}
+    MoreNodes -- Yes --> LoopNodes
+    MoreNodes -- No --> AnalysisDict[/"Return analysis_dict"/]
+
+    %% ===== Step 4: Build Message =====
+    AnalysisDict --> BuildMsg["<b>Step 4: Build message and send notification email()</b>
+    <i>message_builder.py, notification_system.py</i>"]
+    

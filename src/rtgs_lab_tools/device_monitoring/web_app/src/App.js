@@ -1,33 +1,41 @@
-// import logo from './logo.svg';
+import { useState, useEffect } from "react";
 import './App.css';
-
-import NodeMonitorDashboard from "./NodeMonitorDashboard";
+import { fetchLoggerInfo } from "./api";
+import ProductSelector from "./components/ProductSelector";
+import NodeMonitorDashboard from "./components/NodeMonitorDashboard";
 
 function App() {
-  return <NodeMonitorDashboard />;
+  const [loggerInfo, setLoggerInfo] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+
+  useEffect(() => {
+    fetchLoggerInfo().then(setLoggerInfo);
+  }, []);
+
+  // Unique product names
+  const productNames = [...new Set(loggerInfo.map(l => l.product_name))].sort();
+
+  // Node IDs belonging to the selected product
+  const allowedNodeIds = selectedProduct
+    ? loggerInfo.filter(l => l.product_name === selectedProduct).map(l => l.node_id)
+    : null;
+
+  if (selectedProduct) {
+    return (
+      <NodeMonitorDashboard
+        allowedNodeIds={allowedNodeIds}
+        productName={selectedProduct}
+        onBack={() => setSelectedProduct(null)}
+      />
+    );
+  }
+
+  return (
+    <ProductSelector
+      productNames={productNames}
+      onSelect={setSelectedProduct}
+    />
+  );
 }
 
 export default App;
-
-// function App() {
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <img src={logo} className="App-logo" alt="logo" />
-//         <p>
-//           Edit <code>src/App.js</code> and save to reload.
-//         </p>
-//         <a
-//           className="App-link"
-//           href="https://reactjs.org"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           Learn React
-//         </a>
-//       </header>
-//     </div>
-//   );
-// }
-
-// export default App;

@@ -20,7 +20,8 @@ from .data_getter import get_data
 from .message_builder import build_message
 from .notification_system import notify
 
-from .web_app.produce_db import build_db
+from .web_app.models import app
+from .web_app.produce_db import init_db, build_db, build_logger_info
 
 def monitor(
     start_date=(datetime.now() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime(
@@ -35,10 +36,6 @@ def monitor(
     # Step 1: Get the data
     print(f"--Beginning data retrieval--")
     data_frame = get_data(start_date, end_date, project, node_ids)
-    print(data_frame.shape)
-    print(data_frame.info())
-    new_df = data_frame.loc[data_frame['node_id'] == 'e00fce689ccbd1c4e5d4a9b7']      # 11B
-    print(new_df.loc[:,:])
     print(f"--Data retrieval complete--")
 
     # Step 2: Format the data
@@ -53,7 +50,10 @@ def monitor(
 
     # Step 3.5: Add data to SQLite database
     print(f"--Beginning adding data to SQLite database--")
-    build_db(analysis_dict)
+    with app.app_context():
+        init_db()
+        build_db(analysis_dict)
+        build_logger_info(analysis_dict)
     print(f"--Addition to SQLite database complete--")
 
     # Step 4: Build notification messages
