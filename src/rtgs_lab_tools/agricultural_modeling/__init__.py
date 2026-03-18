@@ -103,11 +103,38 @@ def __getattr__(name):
         from .weather_api import validate_date_range
 
         return validate_date_range
+    # Winter injury model
+    elif name == "WinterInjuryModel":
+        from .winter_injury import WinterInjuryModel
+
+        return WinterInjuryModel
+    elif name == "run_simulation":
+        from .winter_injury import run_simulation
+
+        return run_simulation
+    elif name == "get_cultivar_names":
+        from .winter_injury import get_cultivar_names
+
+        return get_cultivar_names
+    elif name == "get_cultivar_parameters":
+        from .winter_injury import get_cultivar_parameters
+
+        return get_cultivar_parameters
+    elif name == "load_csv_column":
+        from .winter_injury import load_csv_column
+
+        return load_csv_column
     else:
         raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 __all__ = [
+    # Winter injury model
+    "WinterInjuryModel",
+    "run_simulation",
+    "get_cultivar_names",
+    "get_cultivar_parameters",
+    "load_csv_column",
     # Temperature conversions
     "celsius_to_fahrenheit",
     "fahrenheit_to_celsius",

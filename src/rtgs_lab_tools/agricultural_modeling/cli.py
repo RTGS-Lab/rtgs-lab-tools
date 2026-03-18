@@ -29,6 +29,12 @@ from .growing_degree_days import (
     calculate_gdd_original,
 )
 from .temperature import celsius_to_fahrenheit, fahrenheit_to_celsius
+from .winter_injury import (
+    get_cultivar_names,
+    get_cultivar_parameters,
+    load_csv_column,
+    run_simulation,
+)
 
 
 @click.group()
@@ -465,6 +471,202 @@ def requirements(ctx, verbose, log_file, no_postgres_log, note):
     )
     click.echo(
         "  ETr (in/day)    - Reference evapotranspiration for grass (inches/day)"
+    )
+
+
+@agricultural_modeling_cli.group()
+def winter_injury():
+    """Winter cereal cold hardiness (LT50) simulation commands.
+
+    Simulates the Winter Cereal Survival Model (WCSM) from Byrns et al. (2020).
+    Predicts daily LT50 values based on crown temperature, daylength, and
+    cultivar-specific parameters.
+    """
+    pass
+
+
+@winter_injury.command()
+@click.option("--cultivar", help="Cultivar preset name (e.g. Norstar)")
+@add_common_options
+@click.pass_context
+@handle_common_errors("winter-injury-cultivars")
+def cultivars(ctx, cultivar, verbose, log_file, no_postgres_log, note):
+    """List available cultivar presets or show details for one."""
+    cli_ctx = ctx.obj
+    cli_ctx.setup("winter-injury-cultivars", verbose, log_file, no_postgres_log)
+
+    if cultivar:
+        params = get_cultivar_parameters(cultivar)
+        click.echo(f"Parameters for {cultivar}:")
+        click.echo(f"  Type:           {params['type']}")
+        click.echo(f"  Origin:         {params['origin']}")
+        click.echo(f"  LT50c:          {params['LT50c']}°C")
+        click.echo(f"  Vern. Req.:     {params['vernReq']} days")
+        click.echo(f"  Min DD:         {params['minDD'] or 'N/A (winter type)'}")
+        click.echo(f"  Photo Coeff:    {params['photoCoeff']}")
+        click.echo(f"  Photo Critical: {params['photoCritical']} h")
+    else:
+        names = get_cultivar_names()
+        click.echo("Available cultivar presets:")
+        for name in names:
+            p = get_cultivar_parameters(name)
+            click.echo(f"  {name:<20s} LT50c={p['LT50c']:6.1f}°C  {p['type']}")
+        click.echo(f"\nTotal: {len(names)} cultivars")
+        click.echo("Use --cultivar <name> for details")
+
+
+@winter_injury.command()
+@click.option(
+    "--crown-temp-csv",
+    required=True,
+    type=click.Path(exists=True),
+    help="CSV file with crown temperature data",
+)
+@click.option(
+    "--crown-temp-col",
+    default="crownTemp",
+    help="Column name for crown temperature (default: crownTemp)",
+)
+@click.option(
+    "--daylength-csv",
+    required=True,
+    type=click.Path(exists=True),
+    help="CSV file with daylength data",
+)
+@click.option(
+    "--daylength-col",
+    default="daylength",
+    help="Column name for daylength (default: daylength)",
+)
+@click.option("--cultivar", help="Cultivar preset name (e.g. Norstar)")
+@click.option("--lt50c", type=float, help="LT50c parameter (overrides cultivar)")
+@click.option("--vern-req", type=float, help="Vernalization requirement (overrides cultivar)")
+@click.option("--min-dd", type=float, help="Minimum degree days (overrides cultivar)")
+@click.option("--photo-coeff", type=float, help="Photoperiod coefficient (overrides cultivar)")
+@click.option("--photo-critical", type=float, default=13.5, help="Critical photoperiod (default: 13.5)")
+@click.option("--output", "-o", help="Output CSV file path (default: stdout)")
+@add_common_options
+@click.pass_context
+@handle_common_errors("winter-injury-simulate")
+def simulate(
+    ctx,
+    crown_temp_csv,
+    crown_temp_col,
+    daylength_csv,
+    daylength_col,
+    cultivar,
+    lt50c,
+    vern_req,
+    min_dd,
+    photo_coeff,
+    photo_critical,
+    output,
+    verbose,
+    log_file,
+    no_postgres_log,
+    note,
+):
+    """Run a winter injury (LT50) simulation.
+
+    Requires crown temperature and daylength time series as CSV files.
+    Use a cultivar preset or specify parameters manually.
+
+    Example:
+
+        rtgs agricultural-modeling winter-injury simulate
+            --cultivar Norstar
+            --crown-temp-csv temps.csv --crown-temp-col crownTemp
+            --daylength-csv daylengths.csv --daylength-col daylength
+            -o results.csv
+    """
+    import csv as csv_mod
+
+    cli_ctx = ctx.obj
+    cli_ctx.setup("winter-injury-simulate", verbose, log_file, no_postgres_log)
+
+    # Build parameters from cultivar preset + overrides
+    if cultivar:
+        preset = get_cultivar_parameters(cultivar)
+        params = {
+            "LT50c": lt50c if lt50c is not None else preset["LT50c"],
+            "vernReq": vern_req if vern_req is not None else preset["vernReq"],
+            "minDD": min_dd if min_dd is not None else (preset["minDD"] or 370),
+            "photoCoeff": photo_coeff if photo_coeff is not None else preset["photoCoeff"],
+            "photoCritical": photo_critical,
+            "initLT50": -3.0,
+        }
+    else:
+        if lt50c is None:
+            click.echo("Error: --lt50c is required when not using a cultivar preset")
+            sys.exit(1)
+        params = {
+            "LT50c": lt50c,
+            "vernReq": vern_req if vern_req is not None else 49,
+            "minDD": min_dd if min_dd is not None else 370,
+            "photoCoeff": photo_coeff if photo_coeff is not None else 50,
+            "photoCritical": photo_critical,
+            "initLT50": -3.0,
+        }
+
+    # Load input data
+    crown_temps = load_csv_column(crown_temp_csv, crown_temp_col)
+    daylengths = load_csv_column(daylength_csv, daylength_col)
+
+    click.echo(f"Crown temps: {len(crown_temps)} days from {crown_temp_csv}")
+    click.echo(f"Daylengths:  {len(daylengths)} days from {daylength_csv}")
+    click.echo(f"Parameters:  LT50c={params['LT50c']}, vernReq={params['vernReq']}, "
+               f"minDD={params['minDD']}, photoCoeff={params['photoCoeff']}")
+
+    # Run simulation
+    records = run_simulation(params, crown_temps, daylengths)
+
+    click.echo(f"Simulation:  {len(records)} timesteps")
+
+    # Output
+    out_fields = [
+        "time", "LT50", "LT50raw", "temperature", "daylength",
+        "accAmt", "dehardAmt", "dehardAmtStress", "vernDays", "vernProg",
+        "photoReqFraction", "mflnFraction", "respProg", "minLT50",
+        "respiration", "vernSaturation",
+    ]
+    # First record (initial state) lacks diagnostics; fill them
+    for key in ["LT50", "temperature", "daylength", "respiration", "vernSaturation"]:
+        if key not in records[0]:
+            records[0][key] = "" if key != "LT50" else records[0]["LT50raw"]
+
+    if output:
+        from pathlib import Path as P
+
+        with open(P(output), "w", newline="") as f:
+            writer = csv_mod.DictWriter(f, fieldnames=out_fields, extrasaction="ignore")
+            writer.writeheader()
+            writer.writerows(records)
+        click.echo(f"Output:      {output}")
+    else:
+        writer = csv_mod.DictWriter(
+            sys.stdout, fieldnames=out_fields, extrasaction="ignore"
+        )
+        writer.writeheader()
+        writer.writerows(records)
+
+    # Log
+    parameters_dict = {
+        "cultivar": cultivar,
+        "crown_temp_csv": crown_temp_csv,
+        "daylength_csv": daylength_csv,
+        "params": params,
+        "note": note,
+    }
+    results = {
+        "success": True,
+        "timesteps": len(records),
+        "output_file": output or "stdout",
+    }
+    cli_ctx.log_success(
+        operation=f"Winter injury simulation ({cultivar or 'custom'})",
+        parameters=parameters_dict,
+        results=results,
+        script_path=__file__,
     )
 
 
