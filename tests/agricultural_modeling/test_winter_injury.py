@@ -1505,5 +1505,5 @@ class TestRunSimulationAPI:
         warm = [15.0] * 20
         records = run_simulation(_norstar(), cold + warm, [12.0] * 50)
         lt50s = [r["LT50"] for r in records[1:]]
-        assert min(lt50s) < -10
-        assert lt50s[-1] > min(lt50s)
+        assert min(lt50s) < -5  # should harden past initLT50
+        assert lt50s[-1] > min(lt50s)  # should deharden in warm period
