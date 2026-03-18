@@ -9,9 +9,8 @@ Expected values are hand-traced from the R formulas. Each test documents the
 step-by-step derivation so discrepancies can be diagnosed against the R source.
 """
 
-import math
-
 import csv
+import math
 
 import numpy as np
 import pandas as pd
