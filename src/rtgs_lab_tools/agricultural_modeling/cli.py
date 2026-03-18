@@ -540,10 +540,19 @@ def cultivars(ctx, cultivar, verbose, log_file, no_postgres_log, note):
 )
 @click.option("--cultivar", help="Cultivar preset name (e.g. Norstar)")
 @click.option("--lt50c", type=float, help="LT50c parameter (overrides cultivar)")
-@click.option("--vern-req", type=float, help="Vernalization requirement (overrides cultivar)")
+@click.option(
+    "--vern-req", type=float, help="Vernalization requirement (overrides cultivar)"
+)
 @click.option("--min-dd", type=float, help="Minimum degree days (overrides cultivar)")
-@click.option("--photo-coeff", type=float, help="Photoperiod coefficient (overrides cultivar)")
-@click.option("--photo-critical", type=float, default=13.5, help="Critical photoperiod (default: 13.5)")
+@click.option(
+    "--photo-coeff", type=float, help="Photoperiod coefficient (overrides cultivar)"
+)
+@click.option(
+    "--photo-critical",
+    type=float,
+    default=13.5,
+    help="Critical photoperiod (default: 13.5)",
+)
 @click.option("--output", "-o", help="Output CSV file path (default: stdout)")
 @add_common_options
 @click.pass_context
@@ -591,7 +600,9 @@ def simulate(
             "LT50c": lt50c if lt50c is not None else preset["LT50c"],
             "vernReq": vern_req if vern_req is not None else preset["vernReq"],
             "minDD": min_dd if min_dd is not None else (preset["minDD"] or 370),
-            "photoCoeff": photo_coeff if photo_coeff is not None else preset["photoCoeff"],
+            "photoCoeff": (
+                photo_coeff if photo_coeff is not None else preset["photoCoeff"]
+            ),
             "photoCritical": photo_critical,
             "initLT50": -3.0,
         }
@@ -614,8 +625,10 @@ def simulate(
 
     click.echo(f"Crown temps: {len(crown_temps)} days from {crown_temp_csv}")
     click.echo(f"Daylengths:  {len(daylengths)} days from {daylength_csv}")
-    click.echo(f"Parameters:  LT50c={params['LT50c']}, vernReq={params['vernReq']}, "
-               f"minDD={params['minDD']}, photoCoeff={params['photoCoeff']}")
+    click.echo(
+        f"Parameters:  LT50c={params['LT50c']}, vernReq={params['vernReq']}, "
+        f"minDD={params['minDD']}, photoCoeff={params['photoCoeff']}"
+    )
 
     # Run simulation
     records = run_simulation(params, crown_temps, daylengths)
@@ -624,10 +637,22 @@ def simulate(
 
     # Output
     out_fields = [
-        "time", "LT50", "LT50raw", "temperature", "daylength",
-        "accAmt", "dehardAmt", "dehardAmtStress", "vernDays", "vernProg",
-        "photoReqFraction", "mflnFraction", "respProg", "minLT50",
-        "respiration", "vernSaturation",
+        "time",
+        "LT50",
+        "LT50raw",
+        "temperature",
+        "daylength",
+        "accAmt",
+        "dehardAmt",
+        "dehardAmtStress",
+        "vernDays",
+        "vernProg",
+        "photoReqFraction",
+        "mflnFraction",
+        "respProg",
+        "minLT50",
+        "respiration",
+        "vernSaturation",
     ]
     # First record (initial state) lacks diagnostics; fill them
     for key in ["LT50", "temperature", "daylength", "respiration", "vernSaturation"]:

@@ -190,7 +190,7 @@ class WinterInjuryModel:
         """Return crown temps over a trailing window (R DELAY equivalent)."""
         r_t = t + 1
         start = max(0, r_t - d - 1)
-        return self.crown_temps[start : r_t]
+        return self.crown_temps[start:r_t]
 
     def model_step(
         self, t: int, Y: Dict[str, float]
@@ -256,8 +256,7 @@ class WinterInjuryModel:
             vernRate = 1.0
         elif crownTemp >= 10 and crownTemp < 12:
             vernRate = 0.364 * (
-                3.313 * (crownTemp + 1.3) ** 0.423
-                - (crownTemp + 1.3) ** 0.846
+                3.313 * (crownTemp + 1.3) ** 0.423 - (crownTemp + 1.3) ** 0.846
             )
         else:
             vernRate = 0.0
@@ -267,19 +266,13 @@ class WinterInjuryModel:
         VRFactor = 1.0 / (1.0 + np.exp(80.0 * (VRProg - 0.9)))
 
         # Respiration stress [Formula 11]
-        if (
-            fiveDayTempMean < 1.5
-            and fiveDayTempMean > -1
-            and fiveDayTempSD < 0.75
-        ):
+        if fiveDayTempMean < 1.5 and fiveDayTempMean > -1 and fiveDayTempSD < 0.75:
             respFlow = 0.54 * (np.exp(0.84 + 0.051 * crownTemp) - 2) / 1.85
         else:
             respFlow = 0.0
 
         # Dehardening [Formula 10]
-        dehardRate = 5.05 / (
-            1.0 + np.exp(4.35 - 0.28 * min(crownTemp, thresholdTemp))
-        )
+        dehardRate = 5.05 / (1.0 + np.exp(4.35 - 0.28 * min(crownTemp, thresholdTemp)))
         if respFlow > 0:
             dehardFlow = 0.0
         elif crownTemp > thresholdTemp and LT50 < initLT50:
@@ -297,8 +290,7 @@ class WinterInjuryModel:
             and crownTemp < initLT50
         ):
             LTStressFlow = abs(
-                (minLT50 - crownTemp)
-                / np.exp(-0.654 * (minLT50 - crownTemp) - 3.74)
+                (minLT50 - crownTemp) / np.exp(-0.654 * (minLT50 - crownTemp) - 3.74)
             )
         else:
             LTStressFlow = 0.0
@@ -323,9 +315,7 @@ class WinterInjuryModel:
         photoFlow = photoFactor / (3.25 * photoCoeff) if photoCoeff > 0 else 0.0
 
         # Acclimation [Formula 2]
-        accRate = max(
-            0.0, 0.014 * (thresholdTemp - crownTemp) * (LT50 - LT50DamageAdj)
-        )
+        accRate = max(0.0, 0.014 * (thresholdTemp - crownTemp) * (LT50 - LT50DamageAdj))
         if respFlow > 0:
             accFlow = 0.0
         elif LTStressFlow == 0:

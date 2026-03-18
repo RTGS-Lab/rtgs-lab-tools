@@ -9,7 +9,6 @@ Expected values are hand-traced from the R formulas. Each test documents the
 step-by-step derivation so discrepancies can be diagnosed against the R source.
 """
 
-
 import math
 
 import csv
@@ -34,6 +33,7 @@ TOL = 1e-10
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _model(params, crown_temps, daylengths):
     """Construct a WinterInjuryModel from plain lists."""
@@ -94,6 +94,7 @@ def _const_series(value, n=21):
 # Tested indirectly: threshold_temp controls whether acclimation rate > 0.
 # ---------------------------------------------------------------------------
 
+
 class TestFormula4ThresholdTemp:
     def test_norstar_threshold_enables_acclimation(self):
         """
@@ -128,6 +129,7 @@ class TestFormula4ThresholdTemp:
 # DD_req = max(minDD, (0.95*minDD - 340)*(crownTemp - 2) + minDD)
 # mfln_flow = max(crownTemp, 0) / DD_req
 # ---------------------------------------------------------------------------
+
 
 class TestFormula1DegreeDays:
     def test_warm_temp_uses_min_dd(self):
@@ -171,6 +173,7 @@ class TestFormula1DegreeDays:
 #   10 <= T < 12   →  beta-function transition
 #   else           →  rate = 0
 # ---------------------------------------------------------------------------
+
 
 class TestFormula2Vernalization:
     def test_optimal_range(self):
@@ -243,6 +246,7 @@ class TestFormula2Vernalization:
 # resp_flow = 0.54 * (exp(0.84 + 0.051 * crownTemp) - 2) / 1.85
 # ---------------------------------------------------------------------------
 
+
 class TestFormula7Respiration:
     def test_respiration_active(self):
         """
@@ -299,6 +303,7 @@ class TestFormula7Respiration:
 #           (3) T>initLT50 & LT50<init → rate*(1-VRfactor), (4) else → 0
 # ---------------------------------------------------------------------------
 
+
 class TestFormula6Dehardening:
     def test_above_threshold_full_rate(self):
         """
@@ -326,8 +331,13 @@ class TestFormula6Dehardening:
         params = _norstar()
         T = 5.0
         m = _model(params, _const_series(T), _const_series(10.0))
-        Y = _state(LT50raw=-15, mflnFraction=0.3, photoReqFraction=0.3,
-                   vernDays=20, vernProg=20.0/49)
+        Y = _state(
+            LT50raw=-15,
+            mflnFraction=0.3,
+            photoReqFraction=0.3,
+            vernDays=20,
+            vernProg=20.0 / 49,
+        )
         d, _ = m.model_step(15, Y)
         # VR_prog = min(min(1, 0.3), min(0.3, 1), min(20/49, 1)) = 0.3
         # VR_factor = 1/(1+exp(80*(0.3-0.9))) = 1/(1+exp(-48)) ≈ 1.0
@@ -360,6 +370,7 @@ class TestFormula6Dehardening:
 # LT_stress = |( minLT50 - T ) / exp(-0.654*(minLT50 - T) - 3.74)|
 # ---------------------------------------------------------------------------
 
+
 class TestFormula8LTStress:
     def test_lt_stress_active(self):
         """
@@ -374,14 +385,17 @@ class TestFormula8LTStress:
         T = -12.0
         m = _model(params, _const_series(T), _const_series(9.5))
         Y = _state(
-            LT50raw=-20, minLT50=-18, dehardAmtStress=-1.0,
-            vernDays=49, mflnFraction=0.5, photoReqFraction=0.6, vernProg=1.0,
+            LT50raw=-20,
+            minLT50=-18,
+            dehardAmtStress=-1.0,
+            vernDays=49,
+            mflnFraction=0.5,
+            photoReqFraction=0.6,
+            vernProg=1.0,
         )
         d, _ = m.model_step(15, Y)
         min_LT50 = -18.0
-        expected_stress = abs(
-            (min_LT50 - T) / np.exp(-0.654 * (min_LT50 - T) - 3.74)
-        )
+        expected_stress = abs((min_LT50 - T) / np.exp(-0.654 * (min_LT50 - T) - 3.74))
         assert d["dLT50raw"] == pytest.approx(expected_stress, abs=TOL)
         assert d["ddehardAmtStress"] == pytest.approx(-expected_stress, abs=TOL)
         # Acclimation suppressed when LT stress > 0
@@ -422,6 +436,7 @@ class TestFormula8LTStress:
 # photo_factor = |3.5/(1+exp(0.504*(DL-CDL) - 0.321*(T-13.242))) - 3.5|
 # photo_flow = photo_factor / (3.25 * photoCoeff)
 # ---------------------------------------------------------------------------
+
 
 class TestFormula3Photoperiod:
     def test_photoperiod_active(self):
@@ -475,6 +490,7 @@ class TestFormula3Photoperiod:
 # acc_flow = VR_factor * acc_rate  (when resp=0 and LT_stress=0)
 # ---------------------------------------------------------------------------
 
+
 class TestFormula5Acclimation:
     def test_acclimation_active_cold(self):
         """
@@ -486,9 +502,14 @@ class TestFormula5Acclimation:
         params = _norstar()
         T = -2.0
         m = _model(params, _const_series(T), _const_series(9.0))
-        Y = _state(LT50raw=-15, dehardAmtStress=0.0,
-                   mflnFraction=0.3, photoReqFraction=0.3,
-                   vernDays=20, vernProg=20.0/49)
+        Y = _state(
+            LT50raw=-15,
+            dehardAmtStress=0.0,
+            mflnFraction=0.3,
+            photoReqFraction=0.3,
+            vernDays=20,
+            vernProg=20.0 / 49,
+        )
         d, _ = m.model_step(15, Y)
         threshold = 3.7214 - 0.4011 * (-24.0)
         LT50_dmg = -24.0 - 0.0
@@ -514,8 +535,15 @@ class TestFormula5Acclimation:
         params = _norstar()
         T = -12.0
         m = _model(params, _const_series(T), _const_series(9.5))
-        Y = _state(LT50raw=-20, minLT50=-18, dehardAmtStress=-1.0,
-                   vernDays=49, mflnFraction=0.5, photoReqFraction=0.6, vernProg=1.0)
+        Y = _state(
+            LT50raw=-20,
+            minLT50=-18,
+            dehardAmtStress=-1.0,
+            vernDays=49,
+            mflnFraction=0.5,
+            photoReqFraction=0.6,
+            vernProg=1.0,
+        )
         d, _ = m.model_step(15, Y)
         assert d["ddehardAmtStress"] < 0  # stress is active
         assert d["daccAmt"] == pytest.approx(0.0, abs=TOL)
@@ -538,6 +566,7 @@ class TestFormula5Acclimation:
 # VR_factor = 1 / (1 + exp(80 * (VR_prog - 0.9)))
 # ---------------------------------------------------------------------------
 
+
 class TestVRT:
     def test_vr_prog_clamp_mfln_at_1(self):
         """
@@ -551,8 +580,12 @@ class TestVRT:
         T = -2.0  # Below threshold, no respiration
         m = _model(params, _const_series(T), _const_series(9.0))
         Y = _state(
-            LT50raw=-20, dehardAmtStress=0.0,
-            mflnFraction=1.5, photoReqFraction=1.5, vernDays=49, vernProg=1.0,
+            LT50raw=-20,
+            dehardAmtStress=0.0,
+            mflnFraction=1.5,
+            photoReqFraction=1.5,
+            vernDays=49,
+            vernProg=1.0,
         )
         d, _ = m.model_step(15, Y)
         # VR_factor should be very small — acclimation nearly zero
@@ -587,6 +620,7 @@ class TestVRT:
 # Integration: full model_step with all values traced
 # ---------------------------------------------------------------------------
 
+
 class TestIntegrationColdAcclimation:
     """Scenario: Norstar at -2°C, mid-autumn, acclimation dominant."""
 
@@ -596,10 +630,16 @@ class TestIntegrationColdAcclimation:
         DL = 9.0
         m = _model(params, _const_series(T), _const_series(DL))
         Y = _state(
-            vernDays=20, dehardAmt=0.0, dehardAmtStress=0.0,
-            accAmt=5.0, respProg=0.0, LT50raw=-15.0,
-            photoReqFraction=0.3, minLT50=-15.0,
-            mflnFraction=0.3, vernProg=20.0/49,
+            vernDays=20,
+            dehardAmt=0.0,
+            dehardAmtStress=0.0,
+            accAmt=5.0,
+            respProg=0.0,
+            LT50raw=-15.0,
+            photoReqFraction=0.3,
+            minLT50=-15.0,
+            mflnFraction=0.3,
+            vernProg=20.0 / 49,
         )
         d, diag = m.model_step(15, Y)
 
@@ -672,10 +712,16 @@ class TestIntegrationRespirationStress:
         DL = 9.0
         m = _model(params, _const_series(T), _const_series(DL))
         Y = _state(
-            vernDays=40, dehardAmt=-2.0, dehardAmtStress=-1.0,
-            accAmt=10.0, respProg=0.5, LT50raw=-22.0,
-            photoReqFraction=0.5, minLT50=-22.0,
-            mflnFraction=0.5, vernProg=40.0/49,
+            vernDays=40,
+            dehardAmt=-2.0,
+            dehardAmtStress=-1.0,
+            accAmt=10.0,
+            respProg=0.5,
+            LT50raw=-22.0,
+            photoReqFraction=0.5,
+            minLT50=-22.0,
+            mflnFraction=0.5,
+            vernProg=40.0 / 49,
         )
         d, diag = m.model_step(15, Y)
 
@@ -715,18 +761,22 @@ class TestIntegrationLTStressEvent:
         DL = 9.5
         m = _model(params, _const_series(T), _const_series(DL))
         Y = _state(
-            vernDays=49, dehardAmt=-3.0, dehardAmtStress=-1.0,
-            accAmt=12.0, respProg=0.0, LT50raw=-20.0,
-            photoReqFraction=0.6, minLT50=-18.0,
-            mflnFraction=0.5, vernProg=1.0,
+            vernDays=49,
+            dehardAmt=-3.0,
+            dehardAmtStress=-1.0,
+            accAmt=12.0,
+            respProg=0.0,
+            LT50raw=-20.0,
+            photoReqFraction=0.6,
+            minLT50=-18.0,
+            mflnFraction=0.5,
+            vernProg=1.0,
         )
         d, _ = m.model_step(15, Y)
 
         minLT50 = -18.0
         LT50 = min(-3, -20)  # -20
-        stress = abs(
-            (minLT50 - T) / np.exp(-0.654 * (minLT50 - T) - 3.74)
-        )
+        stress = abs((minLT50 - T) / np.exp(-0.654 * (minLT50 - T) - 3.74))
         # All other flows zero: dehard=0 (cold), resp=0 (cold), photo=0 (T<0)
         # Acclimation suppressed by LT stress
         assert d["dLT50raw"] == pytest.approx(stress, abs=TOL)
@@ -748,10 +798,16 @@ class TestIntegrationWarmDehardening:
         DL = 14.0
         m = _model(params, _const_series(T), _const_series(DL))
         Y = _state(
-            vernDays=49, dehardAmt=-5.0, dehardAmtStress=-2.0,
-            accAmt=15.0, respProg=0.0, LT50raw=-18.0,
-            photoReqFraction=0.8, minLT50=-20.0,
-            mflnFraction=0.7, vernProg=1.0,
+            vernDays=49,
+            dehardAmt=-5.0,
+            dehardAmtStress=-2.0,
+            accAmt=15.0,
+            respProg=0.0,
+            LT50raw=-18.0,
+            photoReqFraction=0.8,
+            minLT50=-20.0,
+            mflnFraction=0.7,
+            vernProg=1.0,
         )
         d, _ = m.model_step(15, Y)
 
@@ -790,10 +846,16 @@ class TestIntegrationSpringType:
         DL = 14.0
         m = _model(params, _const_series(T), _const_series(DL))
         Y = _state(
-            vernDays=0, dehardAmt=0.0, dehardAmtStress=0.0,
-            accAmt=2.0, respProg=0.0, LT50raw=-5.0,
-            photoReqFraction=0.0, minLT50=-5.0,
-            mflnFraction=0.8, vernProg=0.0,
+            vernDays=0,
+            dehardAmt=0.0,
+            dehardAmtStress=0.0,
+            accAmt=2.0,
+            respProg=0.0,
+            LT50raw=-5.0,
+            photoReqFraction=0.0,
+            minLT50=-5.0,
+            mflnFraction=0.8,
+            vernProg=0.0,
         )
         d, _ = m.model_step(15, Y)
 
@@ -823,14 +885,13 @@ class TestIntegrationSpringType:
         assert d["dvernDays"] == pytest.approx(1.0, abs=TOL)
         assert d["dvernProg"] == pytest.approx(0.0, abs=TOL)
         assert d["dmflnFraction"] == pytest.approx(mfln, abs=TOL)
-        assert d["dLT50raw"] == pytest.approx(
-            0 + 0 + dehard_flow - acc_flow, abs=TOL
-        )
+        assert d["dLT50raw"] == pytest.approx(0 + 0 + dehard_flow - acc_flow, abs=TOL)
 
 
 # ---------------------------------------------------------------------------
 # Edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeCases:
     def test_t_zero_single_datapoint(self):
@@ -895,6 +956,7 @@ class TestEdgeCases:
 # Derivative sign & conservation tests
 # ---------------------------------------------------------------------------
 
+
 class TestDerivativeSigns:
     def test_acclimation_decreases_lt50(self):
         """Active acclimation → dLT50raw < 0 (getting colder = more hardy)."""
@@ -909,8 +971,13 @@ class TestDerivativeSigns:
         """Active dehardening → dLT50raw > 0 (getting warmer = less hardy)."""
         params = _norstar()
         m = _model(params, _const_series(15.0), _const_series(14.0))
-        Y = _state(LT50raw=-18, vernDays=49, mflnFraction=0.7,
-                   photoReqFraction=0.8, vernProg=1.0)
+        Y = _state(
+            LT50raw=-18,
+            vernDays=49,
+            mflnFraction=0.7,
+            photoReqFraction=0.8,
+            vernProg=1.0,
+        )
         d, _ = m.model_step(15, Y)
         assert d["dLT50raw"] > 0
 
@@ -927,8 +994,15 @@ class TestDerivativeSigns:
         """LT stress → dLT50raw > 0."""
         params = _norstar()
         m = _model(params, _const_series(-12.0), _const_series(9.5))
-        Y = _state(LT50raw=-20, minLT50=-18, dehardAmtStress=-1.0,
-                   vernDays=49, mflnFraction=0.5, photoReqFraction=0.6, vernProg=1.0)
+        Y = _state(
+            LT50raw=-20,
+            minLT50=-18,
+            dehardAmtStress=-1.0,
+            vernDays=49,
+            mflnFraction=0.5,
+            photoReqFraction=0.6,
+            vernProg=1.0,
+        )
         d, _ = m.model_step(15, Y)
         assert d["dLT50raw"] > 0
 
@@ -941,6 +1015,7 @@ class TestDerivativeSigns:
 # DELAY function — matches R: DELAY(t, d, df) = df[max(1,t-d):t, 2]
 # R uses 1-based inclusive ranges, so d+1 elements for t > d.
 # ---------------------------------------------------------------------------
+
 
 class TestDELAYFunction:
     def test_delay_element_count_mid(self):
@@ -994,6 +1069,7 @@ class TestDELAYFunction:
 # Verifies accAmt, dehardAmt, LT50raw for first steps (minDD-independent)
 # ---------------------------------------------------------------------------
 
+
 class TestKleefieldGolden:
     """
     Compare Python model against kleefield-output.csv from the R Shiny app repo.
@@ -1004,15 +1080,27 @@ class TestKleefieldGolden:
     """
 
     R_OUTPUT_COLS = {
-        "time": 0, "LT50raw": 1, "minLT50": 2, "dehardAmt": 3,
-        "dehardAmtStress": 4, "mflnFraction": 5, "photoReqFraction": 6,
-        "accAmt": 7, "vernDays": 8,
+        "time": 0,
+        "LT50raw": 1,
+        "minLT50": 2,
+        "dehardAmt": 3,
+        "dehardAmtStress": 4,
+        "mflnFraction": 5,
+        "photoReqFraction": 6,
+        "accAmt": 7,
+        "vernDays": 8,
     }
 
     @pytest.fixture
     def kleefield(self):
         from pathlib import Path
-        csv_path = Path(__file__).parent / "verification_data" / "winter_injury" / "kleefield-output.csv"
+
+        csv_path = (
+            Path(__file__).parent
+            / "verification_data"
+            / "winter_injury"
+            / "kleefield-output.csv"
+        )
         if not csv_path.exists():
             pytest.skip("kleefield-output.csv not found")
         return pd.read_csv(csv_path)
@@ -1077,6 +1165,7 @@ class TestKleefieldGolden:
 # Multi-step Euler integration — run Python model forward and verify
 # ---------------------------------------------------------------------------
 
+
 class TestMultiStepEuler:
     """Run the model for multiple steps with Euler integration, verifying
     state consistency and trajectory properties."""
@@ -1086,10 +1175,16 @@ class TestMultiStepEuler:
         """Run Euler integration for n_steps, return list of state dicts."""
         model = WinterInjuryModel(params, daylengths, crown_temps)
         Y = {
-            "vernDays": 0, "dehardAmt": 0.0, "dehardAmtStress": 0.0,
-            "accAmt": 0.0, "respProg": 0.0, "LT50raw": -3.0,
-            "photoReqFraction": 0.0, "minLT50": -3.0,
-            "mflnFraction": 0.0, "vernProg": 0.0,
+            "vernDays": 0,
+            "dehardAmt": 0.0,
+            "dehardAmtStress": 0.0,
+            "accAmt": 0.0,
+            "respProg": 0.0,
+            "LT50raw": -3.0,
+            "photoReqFraction": 0.0,
+            "minLT50": -3.0,
+            "mflnFraction": 0.0,
+            "vernProg": 0.0,
         }
         trajectory = [dict(Y)]
         for t in range(n_steps):
@@ -1143,10 +1238,16 @@ class TestMultiStepEuler:
         daylengths = [14.0] * n
         model = WinterInjuryModel(params, daylengths, temps)
         Y = {
-            "vernDays": 49, "dehardAmt": -5.0, "dehardAmtStress": -2.0,
-            "accAmt": 15.0, "respProg": 0.0, "LT50raw": -20.0,
-            "photoReqFraction": 0.8, "minLT50": -22.0,
-            "mflnFraction": 0.7, "vernProg": 1.0,
+            "vernDays": 49,
+            "dehardAmt": -5.0,
+            "dehardAmtStress": -2.0,
+            "accAmt": 15.0,
+            "respProg": 0.0,
+            "LT50raw": -20.0,
+            "photoReqFraction": 0.8,
+            "minLT50": -22.0,
+            "mflnFraction": 0.7,
+            "vernProg": 1.0,
         }
         for t in range(n):
             d, _ = model.model_step(t, Y)
@@ -1158,7 +1259,9 @@ class TestMultiStepEuler:
         # Plant should have dehardened significantly
         assert Y["LT50raw"] > -20
         # But LT50 is capped at initLT50=-3 in the model
-        assert Y["LT50raw"] <= -3 or Y["LT50raw"] > -3  # can exceed init via dehardening
+        assert (
+            Y["LT50raw"] <= -3 or Y["LT50raw"] > -3
+        )  # can exceed init via dehardening
 
     def test_respiration_under_snow(self):
         """
@@ -1181,6 +1284,7 @@ class TestMultiStepEuler:
     def test_no_nan_full_season(self):
         """Run a full season with real weather data — no NaN in any output."""
         from pathlib import Path
+
         data_dir = Path(__file__).parent / "verification_data" / "winter_injury"
         csv_path = data_dir / "wcsmR2_Data_crownTemp.csv"
         dl_path = data_dir / "wcsmR2_Data_daylength.csv"
@@ -1233,6 +1337,7 @@ class TestMultiStepEuler:
 # Mutual exclusivity tests — process interactions
 # ---------------------------------------------------------------------------
 
+
 class TestProcessInteractions:
     def test_resp_and_dehard_mutually_exclusive(self):
         """When respiration is active, dehardening must be zero."""
@@ -1265,8 +1370,15 @@ class TestProcessInteractions:
         """When LT stress is active, acclimation must be zero."""
         params = _norstar()
         m = _model(params, _const_series(-12.0), _const_series(9.0))
-        Y = _state(LT50raw=-20, minLT50=-18, dehardAmtStress=-1.0,
-                   vernDays=49, mflnFraction=0.5, photoReqFraction=0.6, vernProg=1.0)
+        Y = _state(
+            LT50raw=-20,
+            minLT50=-18,
+            dehardAmtStress=-1.0,
+            vernDays=49,
+            mflnFraction=0.5,
+            photoReqFraction=0.6,
+            vernProg=1.0,
+        )
         d, _ = m.model_step(15, Y)
         if d["ddehardAmtStress"] < 0:  # LT stress active
             assert d["daccAmt"] == pytest.approx(0.0, abs=TOL)
@@ -1291,6 +1403,7 @@ class TestProcessInteractions:
 # R reference validation — machine-precision match against deSolve output
 # ---------------------------------------------------------------------------
 
+
 class TestRReferenceValidation:
     """Validate against R reference output generated from wcsmR2.R.
 
@@ -1302,6 +1415,7 @@ class TestRReferenceValidation:
     @pytest.fixture
     def verification_dir(self):
         from pathlib import Path
+
         d = Path(__file__).parent / "verification_data" / "winter_injury"
         if not d.exists():
             pytest.skip("Verification data not found")
@@ -1314,8 +1428,12 @@ class TestRReferenceValidation:
         dls = pd.read_csv(verification_dir / "wcsmR2_Data_daylength.csv")
 
         params = {
-            "minDD": 370, "photoCoeff": 50, "photoCritical": 13.5,
-            "vernReq": 49, "initLT50": -3, "LT50c": -24.0,
+            "minDD": 370,
+            "photoCoeff": 50,
+            "photoCritical": 13.5,
+            "vernReq": 49,
+            "initLT50": -3,
+            "LT50c": -24.0,
         }
 
         records = run_simulation(
@@ -1325,9 +1443,16 @@ class TestRReferenceValidation:
         )
 
         state_cols = [
-            "LT50raw", "minLT50", "dehardAmt", "dehardAmtStress",
-            "mflnFraction", "photoReqFraction", "accAmt", "vernDays",
-            "vernProg", "respProg",
+            "LT50raw",
+            "minLT50",
+            "dehardAmt",
+            "dehardAmtStress",
+            "mflnFraction",
+            "photoReqFraction",
+            "accAmt",
+            "vernDays",
+            "vernProg",
+            "respProg",
         ]
 
         n = min(len(records), len(r_ref))
@@ -1335,9 +1460,9 @@ class TestRReferenceValidation:
             for i in range(n):
                 py_val = records[i][col]
                 r_val = r_ref[col].iloc[i]
-                assert abs(py_val - r_val) < 1e-10, (
-                    f"{col} mismatch at step {i}: py={py_val:.12f} r={r_val:.12f}"
-                )
+                assert (
+                    abs(py_val - r_val) < 1e-10
+                ), f"{col} mismatch at step {i}: py={py_val:.12f} r={r_val:.12f}"
 
 
 class TestCultivarPresets:
