@@ -2,8 +2,8 @@ function GaugeBar({ label, displayValue, pct, color }) {
   return (
     <div style={{ marginBottom: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#8899aa", letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
-        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color, fontWeight: 700 }}>{displayValue}</span>
+        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#8899aa", letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
+        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 15, color, fontWeight: 500 }}>{displayValue}</span>
       </div>
       <div style={{ height: 6, background: "#1a2233", borderRadius: 3, overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 3, transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)" }} />

@@ -6,7 +6,7 @@ import StatusPill from "./StatusPill";
 import { SectionCard, DataRow } from "./Layout";
 import { NodeSelector, TimestampSelector } from "./Selectors";
 
-export default function NodeMonitorDashboard({ allowedNodeIds, productName, onBack }) {
+export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName = {}, productName, onBack }) {
   const [allEntries, setAllEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -20,18 +20,27 @@ export default function NodeMonitorDashboard({ allowedNodeIds, productName, onBa
       setAllEntries(filtered);
       setLoading(false);
       if (filtered.length > 0) {
-        setSelectedNode(filtered[0].node_id);
-        setSelectedTs(filtered[0].monitoring_timestamp);
+        const firstNode = filtered[0].node_id;
+        setSelectedNode(firstNode);
+        const tsForFirstNode = filtered
+          .filter(e => e.node_id === firstNode)
+          .map(e => e.monitoring_timestamp)
+          .sort((a, b) => Date.parse(b) - Date.parse(a))[0];
+        setSelectedTs(tsForFirstNode || null);
       }
     });
   }, [allowedNodeIds]);
 
-  const nodeIds = [...new Set(allEntries.map(e => e.node_id))].sort();
+  const nodeIds = [...new Set(allEntries.map(e => e.node_id))].sort((a, b) => {
+    const nameA = nodeIdToFieldName[a] ?? a;
+    const nameB = nodeIdToFieldName[b] ?? b;
+    return nameA.localeCompare(nameB);
+  });
 
   const timestampsForNode = allEntries
     .filter(e => e.node_id === selectedNode)
     .map(e => e.monitoring_timestamp)
-    .sort();
+    .sort((a, b) => Date.parse(b) - Date.parse(a));
 
   const entry = allEntries.find(
     e => e.node_id === selectedNode && e.monitoring_timestamp === selectedTs
@@ -39,7 +48,10 @@ export default function NodeMonitorDashboard({ allowedNodeIds, productName, onBa
 
   const handleNodeChange = useCallback((id) => {
     setSelectedNode(id);
-    const ts = allEntries.find(e => e.node_id === id)?.monitoring_timestamp || null;
+    const ts = allEntries
+      .filter(e => e.node_id === id)
+      .map(e => e.monitoring_timestamp)
+      .sort((a, b) => Date.parse(b) - Date.parse(a))[0] || null;
     setSelectedTs(ts);
   }, [allEntries]);
 
@@ -100,13 +112,13 @@ export default function NodeMonitorDashboard({ allowedNodeIds, productName, onBa
             </h1>
           </div>
           <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#2a4a60", marginTop: 6 }}>
-            {allEntries.length} entries across {nodeIds.length} node{nodeIds.length !== 1 ? "s" : ""}
+            {allEntries.length} entries across {nodeIds.length} field{nodeIds.length !== 1 ? "s" : ""}
           </p>
         </div>
 
         {/* Node Selector */}
-        <SectionCard title="Node ID" accent="#8bbbf7">
-          <NodeSelector nodeIds={nodeIds} selectedNode={selectedNode} onChange={handleNodeChange} />
+        <SectionCard title="Field Name" accent="#8bbbf7">
+          <NodeSelector nodeIds={nodeIds} selectedNode={selectedNode} onChange={handleNodeChange} nodeIdToFieldName={nodeIdToFieldName} />
         </SectionCard>
 
         <div style={{ height: 16 }} />
@@ -130,6 +142,7 @@ export default function NodeMonitorDashboard({ allowedNodeIds, productName, onBa
               <GaugeBarBattery value={entry.battery} color={getBatteryColor(entry.battery)} label="Battery" />
               <GaugeBarSystem value={entry.system} color={getSystemColor(entry.system)} label="System Load" />
               <GaugeBarHumidity value={entry.humidity} color={getHumidityColor(entry.humidity)} label="Humidity" />
+              <DataRow label="Last Connected" value={formatTimestamp(entry.time_of_last_device_connection)} />
             </SectionCard>
 
             {/* Status */}
@@ -152,15 +165,6 @@ export default function NodeMonitorDashboard({ allowedNodeIds, productName, onBa
                 </div>
               </div>
             </SectionCard>
-
-            {/* Timestamps */}
-            <div style={{ gridColumn: "1 / -1" }}>
-              <SectionCard title="Timestamps" accent="#38bdf8">
-                <DataRow label="Monitoring TS" value={formatTimestamp(entry.monitoring_timestamp)} />
-                <DataRow label="Device TS" value={formatTimestamp(entry.device_timestamp)} />
-                <DataRow label="Last Heard" value={formatTimestamp(entry.last_heard)} />
-              </SectionCard>
-            </div>
 
           </div>
         ) : (

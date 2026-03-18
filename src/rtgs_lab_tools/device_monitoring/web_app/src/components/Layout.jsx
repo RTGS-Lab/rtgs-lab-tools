@@ -17,7 +17,7 @@ export function SectionCard({ title, accent = "#60a5fa", children }) {
       }} />
       <div style={{
         fontFamily: "'Space Mono', monospace",
-        fontSize: 10,
+        fontSize: 15,
         color: accent,
         letterSpacing: "0.2em",
         textTransform: "uppercase",
@@ -42,8 +42,8 @@ export function DataRow({ label, value, mono = true }) {
     }}>
       <span style={{
         fontFamily: "'Space Mono', monospace",
-        fontSize: 11,
-        color: "#4a6880",
+        fontSize: 12,
+        color: "#8899aa",
         textTransform: "uppercase",
         letterSpacing: "0.1em",
         minWidth: 140,
@@ -52,7 +52,7 @@ export function DataRow({ label, value, mono = true }) {
       </span>
       <span style={{
         fontFamily: mono ? "'Space Mono', monospace" : "'DM Sans', sans-serif",
-        fontSize: mono ? 12 : 13,
+        fontSize: mono ? 14 : 13,
         color: "#c8ddef",
         textAlign: "right",
         wordBreak: "break-all",

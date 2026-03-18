@@ -20,10 +20,20 @@ function App() {
     ? loggerInfo.filter(l => l.product_name === selectedProduct).map(l => l.node_id)
     : null;
 
+  // Map from node_id -> field_name for the selected product
+  const nodeIdToFieldName = selectedProduct
+    ? Object.fromEntries(
+        loggerInfo
+          .filter(l => l.product_name === selectedProduct)
+          .map(l => [l.node_id, l.field_name])
+      )
+    : {};
+
   if (selectedProduct) {
     return (
       <NodeMonitorDashboard
         allowedNodeIds={allowedNodeIds}
+        nodeIdToFieldName={nodeIdToFieldName}
         productName={selectedProduct}
         onBack={() => setSelectedProduct(null)}
       />
