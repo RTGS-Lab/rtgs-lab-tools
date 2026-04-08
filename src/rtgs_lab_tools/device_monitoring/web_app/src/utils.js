@@ -1,3 +1,7 @@
+export function isFlagged(value) {
+  return value === true || value === "true" || value === 1 || value === "1";
+}
+
 export function formatTimestamp(ts) {
   if (!ts) return "—";
   return ts.replace("T", " ").slice(0, 23);

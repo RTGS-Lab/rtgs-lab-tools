@@ -1,4 +1,4 @@
-export default function ProductSelector({ productNames, onSelect }) {
+export default function ProductSelector({ productNames, onSelect, flaggedCounts = {} }) {
   return (
     <>
       <style>{`
@@ -34,7 +34,9 @@ export default function ProductSelector({ productNames, onSelect }) {
 
         {/* Product Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-          {productNames.map(name => (
+          {productNames.map(name => {
+            const counts = flaggedCounts[name] || { flagged: 0, ok: 0 };
+            return (
             <button
               key={name}
               onClick={() => onSelect(name)}
@@ -86,8 +88,32 @@ export default function ProductSelector({ productNames, onSelect }) {
               }}>
                 View nodes →
               </div>
+
+              {/* Flagged / OK indicator */}
+              <div style={{
+                marginTop: 16,
+                paddingTop: 12,
+                paddingLeft: 4,
+                borderTop: "1px solid #0f1c28",
+                display: "flex",
+                gap: 16,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#f87171", display: "inline-block", flexShrink: 0 }} />
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 14, color: "#f87171", letterSpacing: "0.08em" }}>
+                    {counts.flagged} FLAGGED
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block", flexShrink: 0 }} />
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 14, color: "#4ade80", letterSpacing: "0.08em" }}>
+                    {counts.ok} OK
+                  </span>
+                </div>
+              </div>
             </button>
-          ))}
+            );
+          })}
         </div>
 
       </div>

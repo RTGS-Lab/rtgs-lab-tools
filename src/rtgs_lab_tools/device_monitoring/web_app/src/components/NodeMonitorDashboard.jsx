@@ -6,30 +6,34 @@ import StatusPill from "./StatusPill";
 import { SectionCard, DataRow } from "./Layout";
 import { NodeSelector, TimestampSelector } from "./Selectors";
 
-export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName = {}, productName, onBack }) {
+export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName = {}, productName, defaultNodeId, allEntriesProp, onBack }) {
   const [allEntries, setAllEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedTs, setSelectedTs] = useState(null);
 
   useEffect(() => {
-    fetchAllEntries().then(data => {
+    const load = allEntriesProp != null
+      ? Promise.resolve(allEntriesProp)
+      : fetchAllEntries();
+
+    load.then(data => {
       const filtered = allowedNodeIds
         ? data.filter(e => allowedNodeIds.includes(e.node_id))
         : data;
       setAllEntries(filtered);
       setLoading(false);
-      if (filtered.length > 0) {
-        const firstNode = filtered[0].node_id;
-        setSelectedNode(firstNode);
-        const tsForFirstNode = filtered
-          .filter(e => e.node_id === firstNode)
+      const startNode = defaultNodeId || (filtered.length > 0 ? filtered[0].node_id : null);
+      if (startNode) {
+        setSelectedNode(startNode);
+        const ts = filtered
+          .filter(e => e.node_id === startNode)
           .map(e => e.monitoring_timestamp)
-          .sort((a, b) => Date.parse(b) - Date.parse(a))[0];
-        setSelectedTs(tsForFirstNode || null);
+          .sort((a, b) => Date.parse(b) - Date.parse(a))[0] || null;
+        setSelectedTs(ts);
       }
     });
-  }, [allowedNodeIds]);
+  }, [allowedNodeIds, defaultNodeId, allEntriesProp]);
 
   const nodeIds = [...new Set(allEntries.map(e => e.node_id))].sort((a, b) => {
     const nameA = nodeIdToFieldName[a] ?? a;
@@ -107,21 +111,33 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
                 ← BACK
               </button>
             )}
-            <h1 style={{ fontFamily: "'Space Mono', monospace", fontSize: 22, fontWeight: 200, color: "#e8f4ff", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              {productName || "Node Monitor"}
-            </h1>
+            <div>
+              <h1 style={{ fontFamily: "'Space Mono', monospace", fontSize: 22, fontWeight: 200, color: "#e8f4ff", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                {defaultNodeId ? (nodeIdToFieldName[defaultNodeId] || defaultNodeId) : (productName || "Node Monitor")}
+              </h1>
+              {defaultNodeId && productName && (
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: "#2a4a60", letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 4 }}>
+                  {productName}
+                </div>
+              )}
+            </div>
           </div>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#2a4a60", marginTop: 6 }}>
-            {allEntries.length} entries across {nodeIds.length} field{nodeIds.length !== 1 ? "s" : ""}
-          </p>
+          {!defaultNodeId && (
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#2a4a60", marginTop: 6 }}>
+              {allEntries.length} entries across {nodeIds.length} field{nodeIds.length !== 1 ? "s" : ""}
+            </p>
+          )}
         </div>
 
-        {/* Node Selector */}
-        <SectionCard title="Field Name" accent="#8bbbf7">
-          <NodeSelector nodeIds={nodeIds} selectedNode={selectedNode} onChange={handleNodeChange} nodeIdToFieldName={nodeIdToFieldName} />
-        </SectionCard>
-
-        <div style={{ height: 16 }} />
+        {/* Node Selector — only shown when not navigating from a specific field */}
+        {!defaultNodeId && (
+          <>
+            <SectionCard title="Field Name" accent="#8bbbf7">
+              <NodeSelector nodeIds={nodeIds} selectedNode={selectedNode} onChange={handleNodeChange} nodeIdToFieldName={nodeIdToFieldName} />
+            </SectionCard>
+            <div style={{ height: 16 }} />
+          </>
+        )}
 
         {/* Timestamp Selector */}
         <SectionCard title="Monitoring Timestamp" accent="#a78bfa">
@@ -149,15 +165,15 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
             <SectionCard title="Status" accent="#38bdf8">
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Flagged</div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Flagged</div>
                   <StatusPill value={entry.flagged} trueLabel="NEEDS ATTENTION" falseLabel="ALL GOOD" trueColor="#f87171" falseColor="#4ade80" />
                 </div>
                 <div>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Missing</div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Missing</div>
                   <StatusPill value={entry.is_missing} trueLabel="MISSING" falseLabel="CONNECTED" trueColor="#f87171" falseColor="#4ade80" />
                 </div>
                 <div>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Errors</div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Errors</div>
                   {entry.errors
                     ? <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#f87171", background: "#f8717118", border: "1px solid #f8717133", padding: "3px 10px", borderRadius: 4 }}>{entry.errors}</span>
                     : <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#4ade80", background: "#4ade8018", border: "1px solid #4ade8033", padding: "3px 10px", borderRadius: 4 }}>NONE</span>
@@ -179,7 +195,7 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
             color: "#2a4060",
             letterSpacing: "0.1em",
           }}>
-            SELECT A NODE AND TIMESTAMP TO VIEW DATA
+            SELECT A TIMESTAMP TO VIEW DATA
           </div>
         )}
 

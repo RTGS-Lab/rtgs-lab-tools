@@ -45,7 +45,7 @@ class LoggerInfo(db.Model):
     field_name = db.Column(db.String(50), nullable=False)   # ex. "WinterTurf_Type_A_64"
     product_name = db.Column(db.String(50), nullable=False) # ex. "Winter Turf - v3"
     particle_url = db.Column(db.String(100), nullable=False)
-    # status = db.Column(db.Boolean, nullable=False)
+    active = db.Column(db.Boolean, nullable=False, default=True)
 
     def to_dict(self):
         return {
@@ -53,5 +53,5 @@ class LoggerInfo(db.Model):
             "field_name": self.field_name,
             "product_name": self.product_name,
             "particle_url": self.particle_url,
-            # "status": self.status
+            "active": self.active,
         }

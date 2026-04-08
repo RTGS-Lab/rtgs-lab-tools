@@ -10,6 +10,7 @@ def init_db():
 
 def build_db(analyzed_data_dict):
     for node_id, data in analyzed_data_dict.items():
+        print(data)
         monitor = Monitoring(
             node_id = node_id,
             flagged = data.get("flagged", False),
@@ -31,22 +32,28 @@ def build_db(analyzed_data_dict):
         print(f'Unable to commit session: {e}')
 
 def build_logger_info(analyzed_data_dict):
+    active_node_ids = set(analyzed_data_dict.keys())
+
     for node_id, data in analyzed_data_dict.items():
         field_name, product_id = get_device_info(node_id)
         product_slug = get_product_slug(product_id)
         product_name = get_product_name(product_id)
         particle_url = get_console_url(node_id, product_id, product_slug)
 
-        print(field_name, product_id, product_slug, product_name, particle_url)
-
         monitor = LoggerInfo(
             node_id = node_id,
             field_name = field_name,
             product_name = product_name,
-            particle_url = particle_url
+            particle_url = particle_url,
+            active = True,
         )
-        print(monitor.node_id, monitor.field_name, monitor.product_name, monitor.particle_url)
         db.session.add(monitor)
+
+    # Mark any node not in this run as inactive
+    LoggerInfo.query.filter(
+        LoggerInfo.node_id.notin_(active_node_ids)
+    ).update({LoggerInfo.active: False}, synchronize_session=False)
+
     try:
         db.session.commit()
     except Exception as e:
