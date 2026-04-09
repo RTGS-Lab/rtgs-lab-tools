@@ -29,6 +29,7 @@ def build_db(analyzed_data_dict):
     try:
         db.session.commit()
     except Exception as e:
+        db.session.rollback()
         print(f'Unable to commit session: {e}')
 
 def build_logger_info(analyzed_data_dict):
@@ -47,7 +48,7 @@ def build_logger_info(analyzed_data_dict):
             particle_url = particle_url,
             active = True,
         )
-        db.session.add(monitor)
+        db.session.merge(monitor)
 
     # Mark any node not in this run as inactive
     LoggerInfo.query.filter(
@@ -57,4 +58,5 @@ def build_logger_info(analyzed_data_dict):
     try:
         db.session.commit()
     except Exception as e:
+        db.session.rollback()
         print(f'Unable to commit session: {e}')
