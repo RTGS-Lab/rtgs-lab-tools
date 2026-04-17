@@ -1,0 +1,79 @@
+model_id: hennepin_conservation_suitability
+model_type: weighted_overlay
+objective: Identify suitable areas for natural resource conservation in Hennepin County
+  based on proximity to protected areas, natural spaces, and important bird areas,
+  with consideration of biodiversity significance
+study_area: Hennepin County, Minnesota
+study_area_config:
+  dataset: hennepin_county_boundary
+  description: Hennepin County, Minnesota boundary
+analysis_units_config:
+  type: dataset
+  dataset: hennepin_county_ctus
+  cell_size: 100.0
+  max_cells: 10000
+criteria:
+- dataset_name: protected_areas
+  criterion_name: Proximity to Protected Areas
+  scoring_function:
+    type: distance_decay
+    params:
+      max_distance: 5000.0
+      decay_rate: 0.0005
+      column: null
+      category_mappings: null
+    output_range:
+    - 0.0
+    - 10.0
+  weight: 35.0
+- dataset_name: natural_spaces
+  criterion_name: Proximity to Natural Spaces
+  scoring_function:
+    type: distance_decay
+    params:
+      max_distance: 3000.0
+      decay_rate: 0.001
+      column: null
+      category_mappings: null
+    output_range:
+    - 0.0
+    - 10.0
+  weight: 30.0
+- dataset_name: important_bird_areas
+  criterion_name: Proximity to Important Bird Areas
+  scoring_function:
+    type: distance_decay
+    params:
+      max_distance: 2000.0
+      decay_rate: 0.001
+      column: null
+      category_mappings: null
+    output_range:
+    - 0.0
+    - 10.0
+  weight: 20.0
+- dataset_name: MBS
+  criterion_name: Biodiversity Significance Score
+  scoring_function:
+    type: categorical
+    params:
+      max_distance: null
+      decay_rate: null
+      column: Bio_Sig_Sc
+      category_mappings:
+      - category: '1'
+        score: 2.0
+      - category: '2'
+        score: 4.0
+      - category: '3'
+        score: 7.0
+      - category: '4'
+        score: 10.0
+    output_range:
+    - 0.0
+    - 10.0
+  weight: 15.0
+output_range:
+- 0.0
+- 100.0
+metadata: null

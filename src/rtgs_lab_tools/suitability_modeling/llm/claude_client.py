@@ -110,6 +110,9 @@ class ClaudeClient:
 
         response = self.client.messages.create(
             model="claude-sonnet-4-20250514",
+            # Use cheaper model
+            # Haiku 3.5(?)
+            # DeepSeek maybe?? Smaller model??
             max_tokens=4000,
             messages=[{"role": "user", "content": prompt}],
             tools=[{
