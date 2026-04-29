@@ -75,11 +75,16 @@ function App() {
       )
     : {};
 
+  const nodeIdToParticleUrl = Object.fromEntries(
+    loggerInfo.map(l => [l.node_id, l.particle_url])
+  );
+
   if (selectedNodeId) {
     return (
       <NodeMonitorDashboard
         allowedNodeIds={allowedNodeIds}
         nodeIdToFieldName={nodeIdToFieldName}
+        nodeIdToParticleUrl={nodeIdToParticleUrl}
         productName={selectedProduct}
         defaultNodeId={selectedNodeId}
         allEntriesProp={allEntries}

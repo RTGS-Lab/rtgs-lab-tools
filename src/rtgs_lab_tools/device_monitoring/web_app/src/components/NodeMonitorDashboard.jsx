@@ -6,7 +6,7 @@ import StatusPill from "./StatusPill";
 import { SectionCard, DataRow } from "./Layout";
 import { NodeSelector, TimestampSelector } from "./Selectors";
 
-export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName = {}, productName, defaultNodeId, allEntriesProp, onBack }) {
+export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName = {}, nodeIdToParticleUrl = {}, productName, defaultNodeId, allEntriesProp, onBack }) {
   const [allEntries, setAllEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -151,38 +151,70 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
 
         {/* Entry Detail */}
         {entry ? (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
 
-            {/* Metrics */}
-            <SectionCard title="Metrics" accent="#38bdf8">
-              <GaugeBarBattery value={entry.battery} color={getBatteryColor(entry.battery)} label="Battery" />
-              <GaugeBarSystem value={entry.system} color={getSystemColor(entry.system)} label="System Load" />
-              <GaugeBarHumidity value={entry.humidity} color={getHumidityColor(entry.humidity)} label="Humidity" />
-              <DataRow label="Last Connected" value={formatTimestamp(entry.time_of_last_device_connection)} />
-            </SectionCard>
+              {/* Metrics */}
+              <SectionCard title="Metrics" accent="#38bdf8">
+                <GaugeBarBattery value={entry.battery} color={getBatteryColor(entry.battery)} label="Battery" />
+                <GaugeBarSystem value={entry.system} color={getSystemColor(entry.system)} label="System Load" />
+                <GaugeBarHumidity value={entry.humidity} color={getHumidityColor(entry.humidity)} label="Humidity" />
+                <DataRow label="Last Connected" value={formatTimestamp(entry.time_of_last_device_connection)} />
+              </SectionCard>
 
-            {/* Status */}
-            <SectionCard title="Status" accent="#38bdf8">
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <div>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Flagged</div>
-                  <StatusPill value={entry.flagged} trueLabel="NEEDS ATTENTION" falseLabel="ALL GOOD" trueColor="#f87171" falseColor="#4ade80" />
+              {/* Status */}
+              <SectionCard title="Status" accent="#38bdf8">
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Flagged</div>
+                    <StatusPill value={entry.flagged} trueLabel="NEEDS ATTENTION" falseLabel="ALL GOOD" trueColor="#f87171" falseColor="#4ade80" />
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Missing</div>
+                    <StatusPill value={entry.is_missing} trueLabel="MISSING" falseLabel="CONNECTED" trueColor="#f87171" falseColor="#4ade80" />
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Errors</div>
+                    {entry.errors
+                      ? <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#f87171", background: "#f8717118", border: "1px solid #f8717133", padding: "3px 10px", borderRadius: 4 }}>{entry.errors}</span>
+                      : <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#4ade80", background: "#4ade8018", border: "1px solid #4ade8033", padding: "3px 10px", borderRadius: 4 }}>NONE</span>
+                    }
+                  </div>
                 </div>
-                <div>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Missing</div>
-                  <StatusPill value={entry.is_missing} trueLabel="MISSING" falseLabel="CONNECTED" trueColor="#f87171" falseColor="#4ade80" />
-                </div>
-                <div>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Errors</div>
-                  {entry.errors
-                    ? <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#f87171", background: "#f8717118", border: "1px solid #f8717133", padding: "3px 10px", borderRadius: 4 }}>{entry.errors}</span>
-                    : <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#4ade80", background: "#4ade8018", border: "1px solid #4ade8033", padding: "3px 10px", borderRadius: 4 }}>NONE</span>
-                  }
-                </div>
-              </div>
-            </SectionCard>
+              </SectionCard>
 
-          </div>
+            </div>
+
+            {/* Particle URL */}
+            {nodeIdToParticleUrl[selectedNode] && (
+              <>
+                <div style={{ height: 16 }} />
+                <SectionCard title="Particle Console" accent="#a78bfa">
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", minWidth: 80 }}>
+                      Device URL
+                    </span>
+                    <a
+                      href={nodeIdToParticleUrl[selectedNode]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontFamily: "'Space Mono', monospace",
+                        fontSize: 13,
+                        color: "#a78bfa",
+                        textDecoration: "none",
+                        wordBreak: "break-all",
+                        borderBottom: "1px solid #a78bfa44",
+                        paddingBottom: 1,
+                      }}
+                    >
+                      {nodeIdToParticleUrl[selectedNode]}
+                    </a>
+                  </div>
+                </SectionCard>
+              </>
+            )}
+          </>
         ) : (
           <div style={{
             background: "#0b1622",
