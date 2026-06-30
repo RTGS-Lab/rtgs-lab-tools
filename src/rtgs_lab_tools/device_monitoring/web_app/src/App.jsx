@@ -11,11 +11,39 @@ function App() {
   const [allEntries, setAllEntries] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [overrides, setOverridesState] = useState(() => {
+    try {
+      const stored = localStorage.getItem('device-flag-overrides');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     fetchLoggerInfo().then(setLoggerInfo);
     fetchAllEntries().then(setAllEntries);
   }, []);
+
+  function setOverride(nodeId, value) {
+    setOverridesState(prev => {
+      const next = { ...prev };
+      if (value === null) {
+        delete next[nodeId];
+      } else {
+        next[nodeId] = value;
+      }
+      try {
+        localStorage.setItem('device-flag-overrides', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }
+
+  function getEffectiveFlagged(nodeId, rawFlagged) {
+    if (nodeId in overrides) return overrides[nodeId];
+    return isFlagged(rawFlagged);
+  }
 
   const productNames = [...new Set(loggerInfo.map(l => l.product_name))].sort();
 
@@ -38,7 +66,7 @@ function App() {
       if (!loggerEntry?.active) continue;
       const entry = latestEntryPerNode[nodeId];
       if (entry) {
-        if (isFlagged(entry.flagged)) flagged++;
+        if (getEffectiveFlagged(nodeId, entry.flagged)) flagged++;
         else ok++;
       }
     }
@@ -55,6 +83,8 @@ function App() {
             node_id: l.node_id,
             field_name: l.field_name,
             flagged: entry.flagged,
+            effectiveFlagged: getEffectiveFlagged(l.node_id, entry.flagged),
+            hasOverride: l.node_id in overrides,
             battery: entry.battery != null ? entry.battery : null,
             device_timestamp: entry.time_of_last_device_connection || null,
             active: l.active,
@@ -89,6 +119,8 @@ function App() {
         defaultNodeId={selectedNodeId}
         allEntriesProp={allEntries}
         onBack={() => setSelectedNodeId(null)}
+        overrides={overrides}
+        onOverride={setOverride}
       />
     );
   }

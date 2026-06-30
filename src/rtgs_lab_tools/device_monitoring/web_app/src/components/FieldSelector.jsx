@@ -70,8 +70,8 @@ export default function FieldSelector({ productName, fields, onSelect, onBack })
 
         {/* Field rows — active nodes in two groups, inactive at the bottom */}
         {[
-          { label: "Needs Attention", color: "#ff0000",  dim: false, subset: fields.filter(f =>  f.active && isFlagged(f.flagged)) },
-          { label: "OK",              color: "#4ade80",  dim: false, subset: fields.filter(f =>  f.active && !isFlagged(f.flagged)) },
+          { label: "Needs Attention", color: "#ff0000",  dim: false, subset: fields.filter(f =>  f.active && f.effectiveFlagged) },
+          { label: "OK",              color: "#4ade80",  dim: false, subset: fields.filter(f =>  f.active && !f.effectiveFlagged) },
           { label: "Inactive",        color: "#2a4a60",  dim: true,  subset: fields.filter(f => !f.active) },
         ].map(({ label, color, dim, subset }) => subset.length === 0 ? null : (
           <div key={label} style={{ marginBottom: 28 }}>
@@ -86,7 +86,6 @@ export default function FieldSelector({ productName, fields, onSelect, onBack })
 
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {subset.map(field => {
-                const isFieldFlagged = isFlagged(field.flagged);
                 const batteryColor = field.battery != null ? getBatteryColor(field.battery) : "#4a6880";
                 return (
                   <button
@@ -94,7 +93,7 @@ export default function FieldSelector({ productName, fields, onSelect, onBack })
                     onClick={() => onSelect(field.node_id)}
                     style={{
                       background: "#0b1622",
-                      border: `1px solid ${isFieldFlagged ? "#f8717133" : "#131f2e"}`,
+                      border: `1px solid ${field.effectiveFlagged ? "#f8717133" : "#131f2e"}`,
                       borderRadius: 8,
                       padding: "14px 20px",
                       textAlign: "left",
@@ -114,7 +113,7 @@ export default function FieldSelector({ productName, fields, onSelect, onBack })
                     <div style={{
                       position: "absolute", top: 0, left: 0,
                       width: 3, height: "100%",
-                      background: dim ? "#2a4a60" : (isFieldFlagged ? "#ff0000" : "#4ade80"),
+                      background: dim ? "#2a4a60" : (field.effectiveFlagged ? "#ff0000" : "#4ade80"),
                       borderRadius: "8px 0 0 8px",
                     }} />
 
@@ -134,7 +133,7 @@ export default function FieldSelector({ productName, fields, onSelect, onBack })
                     {/* Flagged status */}
                     <div style={{ minWidth: 110, textAlign: "center" }}>
                       <StatusPill
-                        value={field.flagged}
+                        value={field.effectiveFlagged}
                         trueLabel="NEEDS ATTN"
                         falseLabel="ALL GOOD"
                         trueColor="#ff0000"

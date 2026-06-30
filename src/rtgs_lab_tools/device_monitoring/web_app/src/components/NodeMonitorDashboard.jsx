@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchAllEntries } from "../api";
-import { formatTimestamp, getBatteryColor, getSystemColor, getHumidityColor } from "../utils";
+import { formatTimestamp, getBatteryColor, getSystemColor, getHumidityColor, isFlagged } from "../utils";
 import { GaugeBarBattery, GaugeBarSystem, GaugeBarHumidity } from "./GaugeBars";
 import StatusPill from "./StatusPill";
 import { SectionCard, DataRow } from "./Layout";
 import { NodeSelector, TimestampSelector } from "./Selectors";
 
-export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName = {}, nodeIdToParticleUrl = {}, productName, defaultNodeId, allEntriesProp, onBack }) {
+export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName = {}, nodeIdToParticleUrl = {}, productName, defaultNodeId, allEntriesProp, onBack, overrides = {}, onOverride }) {
   const [allEntries, setAllEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -167,7 +167,69 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Flagged</div>
-                    <StatusPill value={entry.flagged} trueLabel="NEEDS ATTENTION" falseLabel="ALL GOOD" trueColor="#f87171" falseColor="#4ade80" />
+                    {(() => {
+                      const effectiveFlagged = selectedNode in overrides ? overrides[selectedNode] : isFlagged(entry.flagged);
+                      const hasOverride = selectedNode in overrides;
+                      return (
+                        <>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                            <StatusPill value={effectiveFlagged} trueLabel="NEEDS ATTENTION" falseLabel="ALL GOOD" trueColor="#f87171" falseColor="#4ade80" />
+                            {hasOverride && (
+                              <span style={{
+                                fontFamily: "'Space Mono', monospace",
+                                fontSize: 10,
+                                color: "#a78bfa",
+                                background: "#a78bfa18",
+                                border: "1px solid #a78bfa33",
+                                padding: "2px 7px",
+                                borderRadius: 3,
+                                letterSpacing: "0.08em",
+                              }}>MANUAL</span>
+                            )}
+                          </div>
+                          {onOverride && (
+                            <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                              <button
+                                onClick={() => onOverride(selectedNode, effectiveFlagged ? false : true)}
+                                style={{
+                                  background: "none",
+                                  border: `1px solid ${effectiveFlagged ? "#4ade8055" : "#f8717155"}`,
+                                  borderRadius: 4,
+                                  color: effectiveFlagged ? "#4ade80" : "#f87171",
+                                  fontFamily: "'Space Mono', monospace",
+                                  fontSize: 11,
+                                  letterSpacing: "0.08em",
+                                  padding: "4px 10px",
+                                  cursor: "pointer",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                {effectiveFlagged ? "MARK AS OK" : "MARK AS FLAGGED"}
+                              </button>
+                              {hasOverride && (
+                                <button
+                                  onClick={() => onOverride(selectedNode, null)}
+                                  style={{
+                                    background: "none",
+                                    border: "1px solid #1e2d40",
+                                    borderRadius: 4,
+                                    color: "#4a6880",
+                                    fontFamily: "'Space Mono', monospace",
+                                    fontSize: 11,
+                                    letterSpacing: "0.08em",
+                                    padding: "4px 10px",
+                                    cursor: "pointer",
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  CLEAR OVERRIDE
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                   <div>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Missing</div>
