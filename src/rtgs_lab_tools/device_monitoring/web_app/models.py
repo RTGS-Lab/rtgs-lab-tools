@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 db_path = os.path.join(basedir, 'instance', 'device_monitoring.db')
-print(db_path)
+os.makedirs(os.path.dirname(db_path), exist_ok=True)        # create a new database if it doesn't exist
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///{}".format(db_path)
 
