@@ -1,5 +1,5 @@
 #!/bin/bash
-
+export PYTHONUTF8=1	# ensure proper encoding so that this script can print emojis without error
 # Scheduled Device Monitoring Script for CRON
 # Based on .github/workflows/daily-device-monitoring.yml
 # 
@@ -91,7 +91,7 @@ fi
 
 # Activate virtual environment
 log "Activating virtual environment"
-source venv/bin/activate
+source venv/Scripts/activate
 
 # Source RTGS credentials (use generic path)
 if [ -f "$HOME/.rtgs_credentials" ]; then
