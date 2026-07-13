@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+instance
+__pycache__
+*.pyc
+.env
+.env.*
+vite-project
+templates

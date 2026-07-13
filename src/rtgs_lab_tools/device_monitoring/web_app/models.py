@@ -1,14 +1,48 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
-from datetime import datetime
 import os
 
-app = Flask(__name__)
-basedir = os.path.abspath(os.path.dirname(__file__))
-db_path = os.path.join(basedir, 'instance', 'device_monitoring.db')
-os.makedirs(os.path.dirname(db_path), exist_ok=True)        # create a new database if it doesn't exist
+from dotenv import load_dotenv
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///{}".format(db_path)
+load_dotenv()
+
+
+def configure_database(flask_app):
+    """Point flask_app at the Cloud SQL Postgres instance if configured,
+    otherwise fall back to a local SQLite file for local development."""
+    instance_connection_name = os.getenv("DEVICEMON_INSTANCE_CONNECTION_NAME")
+
+    if instance_connection_name:
+        import pg8000
+        from google.cloud.sql.connector import Connector, IPTypes
+
+        connector = Connector()
+
+        def getconn():
+            return connector.connect(
+                instance_connection_name,
+                "pg8000",
+                user=os.getenv("DEVICEMON_DB_USER", "devicemon_app"),
+                password=os.getenv("DEVICEMON_DB_PASSWORD"),
+                db=os.getenv("DEVICEMON_DB_NAME", "device_monitoring"),
+                ip_type=IPTypes.PUBLIC,
+            )
+
+        flask_app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+pg8000://"
+        flask_app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+            "creator": getconn,
+            "pool_pre_ping": True,
+            "pool_recycle": 3600,
+        }
+    else:
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        db_path = os.path.join(basedir, 'instance', 'device_monitoring.db')
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)        # create a new database if it doesn't exist
+        flask_app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///{}".format(db_path)
+
+
+app = Flask(__name__)
+configure_database(app)
 
 db = SQLAlchemy(app)
 

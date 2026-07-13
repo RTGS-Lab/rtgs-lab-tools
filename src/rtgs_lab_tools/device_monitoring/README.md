@@ -86,6 +86,16 @@ export LOGGING_DB_NAME=logs
 export LOGGING_DB_USER=your_logging_username
 export LOGGING_DB_PASSWORD=your_logging_password
 
+# Device Monitoring Database (Cloud SQL Postgres - backs the web dashboard)
+export DEVICEMON_INSTANCE_CONNECTION_NAME=sustained-edge-501900-p8:us-central1:device-monitoring-db
+export DEVICEMON_DB_NAME=device_monitoring
+export DEVICEMON_DB_USER=devicemon_app
+export DEVICEMON_DB_PASSWORD=your_devicemon_db_password
+# Path to a service account key with only the `roles/cloudsql.client` role,
+# used to authenticate the Cloud SQL connector from MSI (which has no gcloud
+# login of its own). Get this from whoever manages the GCP project.
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/device-monitoring-writer-key.json
+
 # Particle Cloud API
 export PARTICLE_ACCESS_TOKEN=your_particle_token
 
@@ -101,6 +111,7 @@ export GMAIL_RECIPIENT=notification_recipient@umn.edu
 - **No VPN required**: MSI infrastructure has direct access to the database
 - **Secure storage**: Credentials are stored locally on MSI, not in version control
 - **Alternative names**: The script also checks for `~/.rtgs_credentials` as a fallback
+- **Service account key**: `GOOGLE_APPLICATION_CREDENTIALS` should also point to a file with `600` permissions, kept outside version control like the credentials file itself
 
 ### MSI Monitoring Workflow
 
@@ -275,6 +286,7 @@ for project in projects:
 - **MSI Infrastructure**: Direct database access (no VPN required)
 - **External Networks**: UMN VPN connection required for database access
 - **Internet Access**: Required for Particle Cloud API communication
+- **Google Cloud access**: Outbound HTTPS access to Google APIs is required to write results to the device monitoring Postgres database (Cloud SQL) via the Cloud SQL connector. The web dashboard that reads this data runs separately on Cloud Run and cannot reach the GEMS database directly (it's not on the UMN/MSI network) — that's why this script, not a cloud job, is what writes to Postgres.
 
 ## Known Bugs
 
