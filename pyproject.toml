@@ -45,6 +45,7 @@ dependencies = [
     "pyserial>=3.5",
     "streamlit>=1.58.0",
     "flask-sqlalchemy>=3.1",
+    "flask-cors>=6.0",
 ]
 
 [project.optional-dependencies]
