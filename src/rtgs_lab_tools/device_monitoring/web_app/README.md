@@ -1,70 +1,53 @@
-# Getting Started with Create React App
+# Device Monitoring Web App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This app displays daily (7 days a week) monitoring checks run by `../scheduled_device_monitoring.sh` on MSI. This app, and the Postgres database with which it interacts, are hosted on Google Cloud. The daily monitoring script pushes its data to this Postgres database.
 
-## Available Scripts
+The website for this app can be found [here](https://device-monitoring-web-711082233215.us-central1.run.app/). You will need to sign in with the lab's credentials.
 
-In the project directory, you can run:
+## Updating the Web App
+After making changes to your local version of the web app, you need to deploy those changes to Google Cloud Run.
 
-### `npm start`
+1. In your terminal, navigate to the `rtgs-lab-tools/src/rtgs_lab_tools/device_monitoring/web_app` directory.
+2. Run the following command:
+    ~~~
+    gcloud run deploy device-monitoring-web --source . --project sustained-edge-501900-p8 --region us-central1
+    ~~~
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Changing the Username or Password
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Notes:
+1. You must do this in Git Bash or a Linux terminal, not Windows Powershell.
+2. You need to have the `gcloud` CLI installed in your terminal.
 
-### `npm test`
+### Changing the Username
+Replace `<new_username>` with the new username.
+~~~
+gcloud run services update device-monitoring-web --project sustained-edge-501900-p8 --region us-central1 --update-env-vars=DEVICEMON_SITE_USERNAME=<new_username>
+~~~
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Changing the Password
+This takes multiple commands. \
 
-### `npm run build`
+1. 
+    ~~~
+    read -s -p "Enter new site password: " NEWPW
+    ~~~
+    Press the enter key, then type in the new password. You won't be able to see it. Press enter when you're done.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+2. Run the following commands one at a time. Press the enter key after each one. Some of them might take a bit of time to complete. Be patient.
+    ~~~
+    echo
+    ~~~
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+    ~~~
+    printf '%s' "$NEWPW" | gcloud secrets versions add rtgs-devicemon-site-password --project sustained-edge-501900-p8 --data-file=-
+    ~~~
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+    ~~~
+    unset NEWPW
+    ~~~
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+3. Deploy the changes to the web app:
+    ~~~
+    gcloud run services update device-monitoring-web --project sustained-edge-501900-p8 --region us-central1 --update-secrets=DEVICEMON_SITE_PASSWORD=rtgs-devicemon-site-password:latest
+    ~~~
