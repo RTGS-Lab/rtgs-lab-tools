@@ -1,6 +1,7 @@
+import hmac
 import os
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 from .models import db, Monitoring, LoggerInfo, configure_database
 
@@ -12,6 +13,30 @@ CORS(app)
 
 configure_database(app)
 db.init_app(app)
+
+SITE_PASSWORD = os.getenv("DEVICEMON_SITE_PASSWORD")
+SITE_USERNAME = os.getenv("DEVICEMON_SITE_USERNAME", "rtgs")
+
+@app.before_request
+def require_site_password():
+    """Gate the whole site behind a single shared username/password (HTTP Basic Auth).
+
+    Skipped entirely when DEVICEMON_SITE_PASSWORD isn't set, so local dev
+    stays open by default.
+    """
+    if not SITE_PASSWORD:
+        return
+    auth = request.authorization
+    valid = (
+        auth
+        and hmac.compare_digest(auth.username or "", SITE_USERNAME)
+        and hmac.compare_digest(auth.password or "", SITE_PASSWORD)
+    )
+    if not valid:
+        return Response(
+            "Authentication required", 401,
+            {"WWW-Authenticate": 'Basic realm="Device Monitoring"'},
+        )
 
 @app.route('/')
 def index():
