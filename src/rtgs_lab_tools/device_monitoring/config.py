@@ -21,7 +21,7 @@ CRITICAL_ERRORS = [
 
 # Historic monitoring thresholds
 MISSING_NODE_THRESHOLD_HOURS = 24  # Hours since last contact to mark node as missing
-DATA_COLLECTION_WINDOW_DAYS = 2  # Days of historical data to analyze
+DATA_COLLECTION_WINDOW_DAYS = 3  # Days of historical data to analyze
 DECOMMISSIONED_NODE_THRESHOLD_DAYS = (
     10  # Days after which missing nodes are ignored (assumed decommissioned)
 )
