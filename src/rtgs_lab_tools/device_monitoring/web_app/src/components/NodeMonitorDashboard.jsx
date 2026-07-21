@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchAllEntries } from "../api";
-import { formatTimestamp, getBatteryColor, getSystemColor, getHumidityColor, isFlagged } from "../utils";
+import { formatTimestamp, getBatteryColor, getSystemColor, getHumidityColor, computeEffectiveFlagged, deriveProblems, DEFAULT_CONFIG } from "../utils";
 import { GaugeBarBattery, GaugeBarSystem, GaugeBarHumidity } from "./GaugeBars";
 import StatusPill from "./StatusPill";
 import { SectionCard, DataRow } from "./Layout";
 import { NodeSelector, TimestampSelector } from "./Selectors";
 
-export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName = {}, nodeIdToParticleUrl = {}, productName, defaultNodeId, allEntriesProp, onBack, overrides = {}, onOverride }) {
+export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName = {}, nodeIdToParticleUrl = {}, productName, defaultNodeId, allEntriesProp, onBack, config = {}, ignores = {}, onIgnore, onUnignore }) {
   const [allEntries, setAllEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -66,6 +66,23 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
       </div>
     );
   }
+
+  // Problem / ignore state for the selected node + entry. Problems are derived
+  // from the raw metrics using this product's effective (possibly overridden)
+  // config, so per-product threshold changes are reflected immediately.
+  const problems = deriveProblems(entry, config);
+  const criticalErrors = config.critical_errors || DEFAULT_CONFIG.critical_errors;
+  const ignoredKeys = ignores[selectedNode] || [];
+  const effectiveFlagged = computeEffectiveFlagged(problems, ignoredKeys);
+
+  // Parse the raw errors JSON string into [name, count] pairs for display
+  const errorEntries = (() => {
+    try {
+      return Object.entries(JSON.parse(entry?.errors || "{}"));
+    } catch {
+      return [];
+    }
+  })();
 
   return (
     <>
@@ -167,80 +184,131 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Flagged</div>
-                    {(() => {
-                      const effectiveFlagged = selectedNode in overrides ? overrides[selectedNode] : isFlagged(entry.flagged);
-                      const hasOverride = selectedNode in overrides;
-                      return (
-                        <>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                            <StatusPill value={effectiveFlagged} trueLabel="NEEDS ATTENTION" falseLabel="ALL GOOD" trueColor="#f87171" falseColor="#4ade80" />
-                            {hasOverride && (
-                              <span style={{
-                                fontFamily: "'Space Mono', monospace",
-                                fontSize: 10,
-                                color: "#a78bfa",
-                                background: "#a78bfa18",
-                                border: "1px solid #a78bfa33",
-                                padding: "2px 7px",
-                                borderRadius: 3,
-                                letterSpacing: "0.08em",
-                              }}>MANUAL</span>
-                            )}
-                          </div>
-                          {onOverride && (
-                            <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <StatusPill value={effectiveFlagged} trueLabel="NEEDS ATTENTION" falseLabel="ALL GOOD" trueColor="#f87171" falseColor="#4ade80" />
+                      {problems.length > 0 && !effectiveFlagged && (
+                        <span style={{
+                          fontFamily: "'Space Mono', monospace",
+                          fontSize: 10,
+                          color: "#a78bfa",
+                          background: "#a78bfa18",
+                          border: "1px solid #a78bfa33",
+                          padding: "2px 7px",
+                          borderRadius: 3,
+                          letterSpacing: "0.08em",
+                        }}>ALL IGNORED</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Per-problem ignore controls */}
+                  <div>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Problems</div>
+                    {problems.length === 0 ? (
+                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#4ade80", background: "#4ade8018", border: "1px solid #4ade8033", padding: "3px 10px", borderRadius: 4 }}>NONE</span>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {problems.map(p => {
+                          const isIgnored = ignoredKeys.includes(p.key);
+                          const accent = p.is_critical ? "#f87171" : "#facc15";
+                          return (
+                            <div key={p.key} style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                              padding: "8px 10px",
+                              borderRadius: 6,
+                              background: "#0b1622",
+                              border: `1px solid ${isIgnored ? "#1e2d40" : accent + "33"}`,
+                              opacity: isIgnored ? 0.5 : 1,
+                            }}>
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: accent, flexShrink: 0 }} />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                                  <span style={{
+                                    fontFamily: "'Space Mono', monospace",
+                                    fontSize: 12,
+                                    color: p.is_critical ? "#f8a4a4" : "#d6c98a",
+                                    textDecoration: isIgnored ? "line-through" : "none",
+                                  }}>
+                                    {p.label}
+                                  </span>
+                                  {p.is_critical && (
+                                    <span style={{
+                                      fontFamily: "'Space Mono', monospace",
+                                      fontSize: 9,
+                                      color: "#f87171",
+                                      background: "#f8717118",
+                                      border: "1px solid #f8717144",
+                                      padding: "1px 5px",
+                                      borderRadius: 3,
+                                      letterSpacing: "0.1em",
+                                    }}>CRITICAL</span>
+                                  )}
+                                </div>
+                                {p.detail && (
+                                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: "#4a6880", marginTop: 2 }}>
+                                    {p.detail}
+                                  </div>
+                                )}
+                              </div>
                               <button
-                                onClick={() => onOverride(selectedNode, effectiveFlagged ? false : true)}
+                                onClick={() => (isIgnored ? onUnignore : onIgnore)(selectedNode, p.key)}
                                 style={{
                                   background: "none",
-                                  border: `1px solid ${effectiveFlagged ? "#4ade8055" : "#f8717155"}`,
+                                  border: `1px solid ${isIgnored ? "#4ade8055" : "#1e2d40"}`,
                                   borderRadius: 4,
-                                  color: effectiveFlagged ? "#4ade80" : "#f87171",
+                                  color: isIgnored ? "#4ade80" : "#6dc5ff",
                                   fontFamily: "'Space Mono', monospace",
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   letterSpacing: "0.08em",
-                                  padding: "4px 10px",
+                                  padding: "4px 9px",
                                   cursor: "pointer",
                                   textTransform: "uppercase",
+                                  flexShrink: 0,
                                 }}
                               >
-                                {effectiveFlagged ? "MARK AS OK" : "MARK AS FLAGGED"}
+                                {isIgnored ? "Un-ignore" : "Ignore"}
                               </button>
-                              {hasOverride && (
-                                <button
-                                  onClick={() => onOverride(selectedNode, null)}
-                                  style={{
-                                    background: "none",
-                                    border: "1px solid #1e2d40",
-                                    borderRadius: 4,
-                                    color: "#4a6880",
-                                    fontFamily: "'Space Mono', monospace",
-                                    fontSize: 11,
-                                    letterSpacing: "0.08em",
-                                    padding: "4px 10px",
-                                    cursor: "pointer",
-                                    textTransform: "uppercase",
-                                  }}
-                                >
-                                  CLEAR OVERRIDE
-                                </button>
-                              )}
                             </div>
-                          )}
-                        </>
-                      );
-                    })()}
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
+
                   <div>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Missing</div>
                     <StatusPill value={entry.is_missing} trueLabel="MISSING" falseLabel="CONNECTED" trueColor="#f87171" falseColor="#4ade80" />
                   </div>
+
+                  {/* All errors (critical ones highlighted, matching the email) */}
                   <div>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Errors</div>
-                    {entry.errors
-                      ? <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#f87171", background: "#f8717118", border: "1px solid #f8717133", padding: "3px 10px", borderRadius: 4 }}>{entry.errors}</span>
-                      : <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#4ade80", background: "#4ade8018", border: "1px solid #4ade8033", padding: "3px 10px", borderRadius: 4 }}>NONE</span>
-                    }
+                    {errorEntries.length === 0 ? (
+                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#4ade80", background: "#4ade8018", border: "1px solid #4ade8033", padding: "3px 10px", borderRadius: 4 }}>NONE</span>
+                    ) : (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {errorEntries.map(([name, count]) => {
+                          const critical = criticalErrors.includes(name);
+                          const color = critical ? "#f87171" : "#8899aa";
+                          return (
+                            <span key={name} title={critical ? "Critical error" : "Error"} style={{
+                              fontFamily: "'Space Mono', monospace",
+                              fontSize: 11,
+                              color,
+                              background: `${color}18`,
+                              border: `1px solid ${color}33`,
+                              padding: "3px 10px",
+                              borderRadius: 4,
+                              fontWeight: critical ? 700 : 400,
+                            }}>
+                              {critical && "⚠ "}{name} ({count})
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               </SectionCard>

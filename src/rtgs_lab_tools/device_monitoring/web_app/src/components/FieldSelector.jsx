@@ -1,4 +1,4 @@
-import { formatTimestamp, getBatteryColor, isFlagged } from "../utils";
+import { formatTimestamp, getBatteryColor } from "../utils";
 import StatusPill from "./StatusPill";
 
 export default function FieldSelector({ productName, fields, onSelect, onBack }) {

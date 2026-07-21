@@ -1,48 +1,90 @@
 import { useState, useEffect } from "react";
 import './App.css';
-import { fetchLoggerInfo, fetchAllEntries } from "./api";
-import { isFlagged } from "./utils";
+import {
+  fetchLoggerInfo,
+  fetchAllEntries,
+  fetchIgnoredProblems,
+  fetchConfig,
+  fetchProductConfig,
+  saveProductConfig,
+  ignoreProblem,
+  unignoreProblem,
+} from "./api";
+import { computeEffectiveFlagged, deriveProblems, resolveConfig } from "./utils";
 import ProductSelector from "./components/ProductSelector";
 import FieldSelector from "./components/FieldSelector";
 import NodeMonitorDashboard from "./components/NodeMonitorDashboard";
+import ConfigEditor from "./components/ConfigEditor";
 
 function App() {
   const [loggerInfo, setLoggerInfo] = useState([]);
   const [allEntries, setAllEntries] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
-  const [overrides, setOverridesState] = useState(() => {
-    try {
-      const stored = localStorage.getItem('device-flag-overrides');
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [view, setView] = useState("monitor"); // "monitor" | "config"
+  const [config, setConfig] = useState({}); // global defaults from /api/config
+  const [productConfig, setProductConfig] = useState({}); // { product_name: { key: value } }
+  // Map of node_id -> array of ignored problem keys, loaded from the server.
+  const [ignores, setIgnores] = useState({});
 
   useEffect(() => {
     fetchLoggerInfo().then(setLoggerInfo);
     fetchAllEntries().then(setAllEntries);
+    fetchConfig().then(setConfig);
+    fetchProductConfig().then(setProductConfig);
+    fetchIgnoredProblems().then(loadIgnores);
   }, []);
 
-  function setOverride(nodeId, value) {
-    setOverridesState(prev => {
-      const next = { ...prev };
-      if (value === null) {
-        delete next[nodeId];
-      } else {
-        next[nodeId] = value;
-      }
-      try {
-        localStorage.setItem('device-flag-overrides', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
+  function loadIgnores(rows) {
+    const map = {};
+    for (const row of rows) {
+      (map[row.node_id] ||= []).push(row.problem_key);
+    }
+    setIgnores(map);
   }
 
-  function getEffectiveFlagged(nodeId, rawFlagged) {
-    if (nodeId in overrides) return overrides[nodeId];
-    return isFlagged(rawFlagged);
+  async function addIgnore(nodeId, problemKey) {
+    setIgnores(prev => {
+      const keys = prev[nodeId] || [];
+      if (keys.includes(problemKey)) return prev;
+      return { ...prev, [nodeId]: [...keys, problemKey] };
+    });
+    try {
+      await ignoreProblem(nodeId, problemKey);
+    } catch {
+      fetchIgnoredProblems().then(loadIgnores); // resync on failure
+    }
+  }
+
+  async function removeIgnore(nodeId, problemKey) {
+    setIgnores(prev => ({
+      ...prev,
+      [nodeId]: (prev[nodeId] || []).filter(k => k !== problemKey),
+    }));
+    try {
+      await unignoreProblem(nodeId, problemKey);
+    } catch {
+      fetchIgnoredProblems().then(loadIgnores); // resync on failure
+    }
+  }
+
+  async function handleSaveProductConfig(productNames, overrides) {
+    const updated = await saveProductConfig(productNames, overrides);
+    setProductConfig(updated);
+  }
+
+  // Effective config for a product = global defaults + that product's overrides.
+  const nodeIdToProduct = Object.fromEntries(
+    loggerInfo.map(l => [l.node_id, l.product_name])
+  );
+
+  function effectiveConfigForProduct(productName) {
+    return resolveConfig(config, productConfig[productName] || {});
+  }
+
+  function getEffectiveFlagged(nodeId, entry) {
+    const cfg = effectiveConfigForProduct(nodeIdToProduct[nodeId]);
+    return computeEffectiveFlagged(deriveProblems(entry, cfg), ignores[nodeId] || []);
   }
 
   const productNames = [...new Set(loggerInfo.map(l => l.product_name))].sort();
@@ -66,7 +108,7 @@ function App() {
       if (!loggerEntry?.active) continue;
       const entry = latestEntryPerNode[nodeId];
       if (entry) {
-        if (getEffectiveFlagged(nodeId, entry.flagged)) flagged++;
+        if (getEffectiveFlagged(nodeId, entry)) flagged++;
         else ok++;
       }
     }
@@ -79,12 +121,13 @@ function App() {
         .filter(l => l.product_name === selectedProduct)
         .map(l => {
           const entry = latestEntryPerNode[l.node_id] || {};
+          const nodeIgnores = ignores[l.node_id] || [];
           return {
             node_id: l.node_id,
             field_name: l.field_name,
             flagged: entry.flagged,
-            effectiveFlagged: getEffectiveFlagged(l.node_id, entry.flagged),
-            hasOverride: l.node_id in overrides,
+            effectiveFlagged: getEffectiveFlagged(l.node_id, entry),
+            hasIgnores: nodeIgnores.length > 0,
             battery: entry.battery != null ? entry.battery : null,
             device_timestamp: entry.time_of_last_device_connection || null,
             active: l.active,
@@ -109,6 +152,18 @@ function App() {
     loggerInfo.map(l => [l.node_id, l.particle_url])
   );
 
+  if (view === "config") {
+    return (
+      <ConfigEditor
+        productNames={productNames}
+        defaults={config}
+        productConfig={productConfig}
+        onSave={handleSaveProductConfig}
+        onBack={() => setView("monitor")}
+      />
+    );
+  }
+
   if (selectedNodeId) {
     return (
       <NodeMonitorDashboard
@@ -119,8 +174,10 @@ function App() {
         defaultNodeId={selectedNodeId}
         allEntriesProp={allEntries}
         onBack={() => setSelectedNodeId(null)}
-        overrides={overrides}
-        onOverride={setOverride}
+        config={effectiveConfigForProduct(selectedProduct)}
+        ignores={ignores}
+        onIgnore={addIgnore}
+        onUnignore={removeIgnore}
       />
     );
   }
@@ -141,6 +198,7 @@ function App() {
       productNames={productNames}
       flaggedCounts={flaggedCountsPerProduct}
       onSelect={setSelectedProduct}
+      onOpenConfig={() => setView("config")}
     />
   );
 }

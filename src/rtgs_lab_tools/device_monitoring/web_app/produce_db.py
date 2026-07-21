@@ -2,11 +2,41 @@ from datetime import datetime
 import json
 
 # from .app import app
-from .models import db, Monitoring, LoggerInfo, app
+from .models import db, Monitoring, LoggerInfo, AppConfig, app
+from ..config import (
+    BATTERY_VOLTAGE_MIN,
+    CRITICAL_ERRORS,
+    INBOX_HUMIDITY_MAX,
+    SYSTEM_POWER_MAX,
+)
 from ..message_builder import get_device_info, get_product_slug, get_product_name, get_console_url
 
 def init_db():
     db.create_all()
+
+
+def build_app_config():
+    """Publish the standard config.py defaults into the AppConfig table.
+
+    The web container is isolated from config.py (see Dockerfile), so the daily
+    pipeline is what keeps config.py as the single source of truth for defaults:
+    it writes them here for the web app to read via /api/config. Per-product
+    overrides (ProductConfig) are layered on top of these in the web app and are
+    never touched here.
+    """
+    defaults = {
+        "battery_voltage_min": BATTERY_VOLTAGE_MIN,
+        "system_power_max": SYSTEM_POWER_MAX,
+        "inbox_humidity_max": INBOX_HUMIDITY_MAX,
+        "critical_errors": CRITICAL_ERRORS,
+    }
+    for key, value in defaults.items():
+        db.session.merge(AppConfig(config_key=key, config_value=json.dumps(value)))
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Unable to commit app config: {e}")
 
 def build_db(analyzed_data_dict):
     for node_id, data in analyzed_data_dict.items():

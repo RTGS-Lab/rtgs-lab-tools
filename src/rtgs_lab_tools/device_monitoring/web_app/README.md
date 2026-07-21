@@ -4,6 +4,44 @@ This app displays daily (7 days a week) monitoring checks run by `../scheduled_d
 
 The website for this app can be found [here](https://device-monitoring-web-711082233215.us-central1.run.app/). You will need to sign in with the lab's credentials.
 
+## Device Status: Problems and Ignores
+
+A device is flagged **Needs Attention** when it has one or more active *problems*. The possible problems mirror the flagging logic in `../data_analyzer.py`:
+
+| Problem key | Meaning |
+|---|---|
+| `battery` | Battery voltage below the threshold |
+| `system` | System power above the threshold |
+| `humidity` | Inbox humidity above the threshold |
+| `missing` | Node not heard from within the threshold window |
+| `error:<NAME>` | A critical error (one problem per critical error present) |
+
+Critical errors are also highlighted (⚠, red) in the dashboard's **Errors** list, matching the daily email.
+
+On each device's page, every active problem has its own **Ignore / Un-ignore** toggle. A device is shown **OK only when every active problem is ignored** (or it has no problems to begin with). For example, a device with a low battery *and* a critical error stays **Needs Attention** until *both* are ignored; if humidity later becomes an issue, the device returns to **Needs Attention** because that new problem has not been ignored.
+
+Ignores are stored in the database (`IgnoredProblem` table), so they are **shared across all users** and **persist until explicitly cleared** — they are not tied to a browser and do not auto-expire when a problem resolves.
+
+## Configuration Tab (Per-Product Overrides)
+
+The **⚙ Configuration** button on the home screen opens an editor for the thresholds and critical-error list. The standard values come from `../config.py` and are shown as **Standard Defaults**. You can override them **per `product_name`** (from the `LoggerInfo` table):
+
+- Editable per product: **battery min voltage**, **system power max**, **inbox humidity max**, and the **critical-error list**.
+- Select one, several, or **all** products, choose **Set** (new value) or **Default** (revert) for each field, and **Apply to selected** — a change can be applied to multiple products at once.
+- The **Per-Product Configuration** table shows each product's effective values; a `*` marks values overridden from the default. **Reset** clears all overrides for a product.
+
+Overrides affect the **web dashboard only** — the daily monitoring email still uses the standard `config.py` values.
+
+## How Configuration Reaches the Web App
+
+The Cloud Run container is deliberately isolated: the `Dockerfile` packages only `models.py` and `app.py` (plus the built frontend), so **the web app cannot import `config.py`** (it lives outside the build context). Configuration flows through the database instead:
+
+1. The daily pipeline (`produce_db.build_app_config`, called from `core.monitor`) writes the current `config.py` defaults into the `AppConfig` table. This keeps `config.py` as the single source of truth for defaults.
+2. The web app serves those defaults at `GET /api/config`, and per-product overrides at `GET /api/product-config` (edited via `PUT /api/product-config`).
+3. The **frontend** derives each device's problems from the raw metrics + the effective config (defaults merged with that product's overrides), mirroring `../data_analyzer.py`.
+
+The `IgnoredProblem`, `AppConfig`, and `ProductConfig` tables are created automatically by `db.create_all()` — no manual migration is required. `AppConfig` is populated on the **next pipeline run**; until then the frontend falls back to the defaults baked into `src/utils.js` (`DEFAULT_CONFIG`).
+
 ## MSI Credentials Configuration
 There are two sets of credentials you need to add to `~/.rtgs_creds`. The first needs to be added to the top of the file.
 

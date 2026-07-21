@@ -1,4 +1,4 @@
-export default function ProductSelector({ productNames, onSelect, flaggedCounts = {} }) {
+export default function ProductSelector({ productNames, onSelect, flaggedCounts = {}, onOpenConfig }) {
   return (
     <>
       <style>{`
@@ -24,9 +24,28 @@ export default function ProductSelector({ productNames, onSelect, flaggedCounts 
             </span>
             <div style={{ flex: 1, height: 1, background: "#0f1c28" }} />
           </div>
-          <h1 style={{ fontFamily: "'Space Mono', monospace", fontSize: 22, fontWeight: 700, color: "#e8f4ff", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            Node Monitor
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+            <h1 style={{ fontFamily: "'Space Mono', monospace", fontSize: 22, fontWeight: 700, color: "#e8f4ff", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              Node Monitor
+            </h1>
+            {onOpenConfig && (
+              <button onClick={onOpenConfig} style={{
+                background: "none",
+                border: "1px solid #1e2d40",
+                borderRadius: 4,
+                color: "#a78bfa",
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 12,
+                letterSpacing: "0.1em",
+                padding: "6px 14px",
+                cursor: "pointer",
+                textTransform: "uppercase",
+                whiteSpace: "nowrap",
+              }}>
+                ⚙ Configuration
+              </button>
+            )}
+          </div>
           <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6dc5ff", marginTop: 6 }}>
             Select a product to view its nodes
           </p>

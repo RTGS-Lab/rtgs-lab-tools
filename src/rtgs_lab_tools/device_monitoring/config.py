@@ -16,6 +16,7 @@ CRITICAL_ERRORS = [
     "FIND_FAIL",
     "FRAM_SPACE_CRITICAL",
     "FRAM_SPACE_WARNING",
+    "FRAM_OVERRUN",
 ]
 
 # Historic monitoring thresholds
