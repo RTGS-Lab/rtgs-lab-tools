@@ -47,7 +47,7 @@ def format_data_with_parser(data_frame):
         return None
 
     # error counts
-    error_counts_df = create_error_count_dataframe(parsed_df)
+    error_counts_df, error_counts_new_df = create_error_count_dataframe(parsed_df)
 
     # battery voltages
     battery_voltages_df = create_battery_voltage_dataframe(parsed_df)
@@ -62,6 +62,7 @@ def format_data_with_parser(data_frame):
         "parsed_data": parsed_df,
         "battery_data": battery_voltages_df,
         "error_data": error_counts_df,
+        "error_data_new": error_counts_new_df,
         "system_current_data": system_usage_df,
         "inbox_humidity_data": inbox_humidity_df,
     }
@@ -116,6 +117,35 @@ def create_system_usage_dataframe(df):
         .last()[["avg_p_1", "timestamp"]]
     )
 
+def normalize_device_position(pos):
+    """Collapse the many shapes of 'device_position' into one hashable string.
+
+    The error parser sets device_position straight from the packet's "Pos"
+    field, so at this point it can be:
+        None / NaN          -> device has no position (e.g. Kestrel itself)
+        [3] or [None]       -> single-element list
+        [2, 4] / [None,None]-> multi-element list
+        "[2, 4]"            -> string, if the frame round-tripped through CSV
+
+    Returns a canonical string: "2,4", "3", "none", "" (unknown/absent).
+    Lists are unhashable, so this normalization is what makes groupby possible.
+    """
+    if isinstance(pos, str):
+        try:
+            pos = ast.literal_eval(pos)
+        except (ValueError, SyntaxError):
+            return pos.strip()
+
+    if pos is None or (not isinstance(pos, (list, tuple)) and pd.isna(pos)):
+        return ""
+
+    if not isinstance(pos, (list, tuple)):
+        return str(pos)
+
+    if len(pos) == 0:
+        return ""
+
+    return ",".join("none" if p is None else str(p) for p in pos)
 
 # Create a DataFrame with error counts by node_id
 def create_error_count_dataframe(df):
@@ -136,7 +166,40 @@ def create_error_count_dataframe(df):
         error_df.groupby(["node_id", "error_name"]).size().unstack(fill_value=0)
     )
 
-    return error_counts
+
+
+    """Create a DataFrame with error counts by node_id, device type and position.
+
+    Args:
+        df (pandas.DataFrame): Input dataframe with columns including 'node_id',
+            'device_type', 'device_position' and 'error_name'
+
+    Returns:
+        pandas.DataFrame: DataFrame indexed by
+            (node_id, device_type, device_position) with error names as columns
+            and occurrence counts as values.
+    """
+    error_df = df[df["error_name"].notna() & (df["error_name"] != "")].copy()
+
+    error_df["device_type"] = error_df["device_type"].fillna("").astype(str)
+    error_df["device_position"] = error_df["device_position"].apply(
+        normalize_device_position
+    )
+
+    error_counts_new = (
+        error_df.groupby(
+            ["node_id", "device_type", "device_position", "error_name"],
+            dropna=False,
+        )
+        .size()
+        .unstack("error_name", fill_value=0)
+    )
+
+    error_counts_new.columns.name = None
+
+
+
+    return error_counts, error_counts_new
 
 
 # Create a DataFrame with inbox humidity data by node id
