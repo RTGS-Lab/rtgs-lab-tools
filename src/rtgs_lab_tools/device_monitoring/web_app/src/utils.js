@@ -110,7 +110,7 @@ export function deriveProblems(entry, config = {}) {
       const where = formatErrorLocation(rec) || "unknown sensor";
       problems.push({
         key: errorProblemKey(rec),
-        label: `Critical error: ${rec.error_name} (${where})`,
+        label: `${rec.error_name} (${where})`,
         detail: `${rec.count} occurrence${rec.count !== 1 ? "s" : ""}`,
         is_critical: true,
       });
