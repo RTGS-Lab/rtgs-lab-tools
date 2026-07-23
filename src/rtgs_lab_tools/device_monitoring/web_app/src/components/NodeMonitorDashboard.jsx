@@ -78,6 +78,23 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
   // Parse the raw errors JSON into per-sensor records for display
   const errorRecords = parseErrors(entry?.errors);
 
+  // Group errors under a subheader per sensor (device_type [position]).
+  // Sensors are listed alphabetically, and each sensor's errors alphabetically.
+  const errorsBySensor = (() => {
+    const groups = new Map();
+    for (const rec of errorRecords) {
+      const sensor = formatErrorLocation(rec) || "—";
+      if (!groups.has(sensor)) groups.set(sensor, []);
+      groups.get(sensor).push(rec);
+    }
+    return [...groups.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([sensor, recs]) => [
+        sensor,
+        recs.slice().sort((x, y) => x.error_name.localeCompare(y.error_name)),
+      ]);
+  })();
+
   return (
     <>
       <style>{`
@@ -282,29 +299,42 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
                     {errorRecords.length === 0 ? (
                       <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#4ade80", background: "#4ade8018", border: "1px solid #4ade8033", padding: "3px 10px", borderRadius: 4 }}>NONE</span>
                     ) : (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {errorRecords.map((rec, i) => {
-                          const critical = criticalErrors.includes(rec.error_name);
-                          const color = critical ? "#f87171" : "#8899aa";
-                          const where = formatErrorLocation(rec) || "—";
-                          return (
-                            <span key={`${rec.device_type}:${rec.device_position}:${rec.error_name}:${i}`} title={critical ? "Critical error" : "Error"} style={{
-                              display: "inline-flex",
-                              flexDirection: "column",
+                      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                        {errorsBySensor.map(([sensor, recs]) => (
+                          <div key={sensor}>
+                            <div style={{
                               fontFamily: "'Space Mono', monospace",
                               fontSize: 11,
-                              color,
-                              background: `${color}18`,
-                              border: `1px solid ${color}33`,
-                              padding: "4px 10px",
-                              borderRadius: 4,
-                              fontWeight: critical ? 700 : 400,
+                              color: "#6dc5ff",
+                              letterSpacing: "0.08em",
+                              marginBottom: 6,
+                              paddingBottom: 3,
+                              borderBottom: "1px solid #1e2d40",
                             }}>
-                              <span>{critical && "⚠ "}{rec.error_name} ({rec.count})</span>
-                              <span style={{ fontSize: 9, color: "#4a6880", fontWeight: 400, marginTop: 2 }}>{where}</span>
-                            </span>
-                          );
-                        })}
+                              {sensor}
+                            </div>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                              {recs.map((rec, i) => {
+                                const critical = criticalErrors.includes(rec.error_name);
+                                const color = critical ? "#f87171" : "#8899aa";
+                                return (
+                                  <span key={`${rec.error_name}:${i}`} title={critical ? "Critical error" : "Error"} style={{
+                                    fontFamily: "'Space Mono', monospace",
+                                    fontSize: 11,
+                                    color,
+                                    background: `${color}18`,
+                                    border: `1px solid ${color}33`,
+                                    padding: "3px 10px",
+                                    borderRadius: 4,
+                                    fontWeight: critical ? 700 : 400,
+                                  }}>
+                                    {critical && "⚠ "}{rec.error_name} ({rec.count})
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
