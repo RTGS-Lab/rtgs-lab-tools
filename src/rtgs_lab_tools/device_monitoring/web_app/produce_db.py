@@ -47,7 +47,7 @@ def build_db(analyzed_data_dict):
             battery = data.get("battery"),
             system = data.get("system"),
             humidity = data.get("humidity"),
-            errors = json.dumps(data.get("errors", {})),
+            errors = json.dumps(data.get("errors", [])),
             device_timestamp = (data.get("battery_timestamp") or
                             data.get("system_timestamp") or
                             data.get("humidity_timestamp")).strftime("%Y-%m-%d %H:%M"),

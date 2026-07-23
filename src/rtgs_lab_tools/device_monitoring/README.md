@@ -87,7 +87,7 @@ export LOGGING_DB_USER=your_logging_username
 export LOGGING_DB_PASSWORD=your_logging_password
 
 # Device Monitoring Database (Cloud SQL Postgres - backs the web dashboard)
-export DEVICEMON_INSTANCE_CONNECTION_NAME=sustained-edge-501900-p8:us-central1:device-monitoring-db
+export DEVICEMON_INSTANCE_CONNECTION_NAME=sustained-edge-501900-p8:us-central1:device-monitoring-database
 export DEVICEMON_DB_NAME=device_monitoring
 export DEVICEMON_DB_USER=devicemon_app
 export DEVICEMON_DB_PASSWORD=your_devicemon_db_password

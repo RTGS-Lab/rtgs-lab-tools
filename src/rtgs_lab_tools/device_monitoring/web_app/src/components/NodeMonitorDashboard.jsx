@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchAllEntries } from "../api";
-import { formatTimestamp, getBatteryColor, getSystemColor, getHumidityColor, computeEffectiveFlagged, deriveProblems, DEFAULT_CONFIG } from "../utils";
+import { formatTimestamp, getBatteryColor, getSystemColor, getHumidityColor, computeEffectiveFlagged, deriveProblems, parseErrors, formatErrorLocation, DEFAULT_CONFIG } from "../utils";
 import { GaugeBarBattery, GaugeBarSystem, GaugeBarHumidity } from "./GaugeBars";
 import StatusPill from "./StatusPill";
 import { SectionCard, DataRow } from "./Layout";
@@ -75,14 +75,8 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
   const ignoredKeys = ignores[selectedNode] || [];
   const effectiveFlagged = computeEffectiveFlagged(problems, ignoredKeys);
 
-  // Parse the raw errors JSON string into [name, count] pairs for display
-  const errorEntries = (() => {
-    try {
-      return Object.entries(JSON.parse(entry?.errors || "{}"));
-    } catch {
-      return [];
-    }
-  })();
+  // Parse the raw errors JSON into per-sensor records for display
+  const errorRecords = parseErrors(entry?.errors);
 
   return (
     <>
@@ -285,25 +279,29 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
                   {/* All errors (critical ones highlighted, matching the email) */}
                   <div>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, color: "#4a6880", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>Errors</div>
-                    {errorEntries.length === 0 ? (
+                    {errorRecords.length === 0 ? (
                       <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: "#4ade80", background: "#4ade8018", border: "1px solid #4ade8033", padding: "3px 10px", borderRadius: 4 }}>NONE</span>
                     ) : (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {errorEntries.map(([name, count]) => {
-                          const critical = criticalErrors.includes(name);
+                        {errorRecords.map((rec, i) => {
+                          const critical = criticalErrors.includes(rec.error_name);
                           const color = critical ? "#f87171" : "#8899aa";
+                          const where = formatErrorLocation(rec) || "—";
                           return (
-                            <span key={name} title={critical ? "Critical error" : "Error"} style={{
+                            <span key={`${rec.device_type}:${rec.device_position}:${rec.error_name}:${i}`} title={critical ? "Critical error" : "Error"} style={{
+                              display: "inline-flex",
+                              flexDirection: "column",
                               fontFamily: "'Space Mono', monospace",
                               fontSize: 11,
                               color,
                               background: `${color}18`,
                               border: `1px solid ${color}33`,
-                              padding: "3px 10px",
+                              padding: "4px 10px",
                               borderRadius: 4,
                               fontWeight: critical ? 700 : 400,
                             }}>
-                              {critical && "⚠ "}{name} ({count})
+                              <span>{critical && "⚠ "}{rec.error_name} ({rec.count})</span>
+                              <span style={{ fontSize: 9, color: "#4a6880", fontWeight: 400, marginTop: 2 }}>{where}</span>
                             </span>
                           );
                         })}

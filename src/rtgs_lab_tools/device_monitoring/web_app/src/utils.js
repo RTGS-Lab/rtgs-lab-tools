@@ -25,6 +25,44 @@ export function resolveConfig(defaults = {}, productOverrides = {}) {
   return { ...DEFAULT_CONFIG, ...defaults, ...productOverrides };
 }
 
+// Parse the raw `errors` column into a normalized list of records:
+//   { device_type, device_position, error_name, count }
+// The pipeline now stores a JSON array of these. Legacy rows stored a
+// { error_name: count } object; we up-convert those so the UI never crashes
+// before the DB is repopulated.
+export function parseErrors(raw) {
+  let parsed;
+  try {
+    parsed = JSON.parse(raw || "[]");
+  } catch {
+    return [];
+  }
+  if (Array.isArray(parsed)) return parsed;
+  if (parsed && typeof parsed === "object") {
+    return Object.entries(parsed).map(([error_name, count]) => ({
+      device_type: "",
+      device_position: "",
+      error_name,
+      count,
+    }));
+  }
+  return [];
+}
+
+// Stable ignore key for one error record. Scoped to
+// (device_type, device_position, error_name) so the same error on different
+// sensors of a node can be ignored independently.
+export function errorProblemKey(rec) {
+  return `error:${rec.device_type || ""}:${rec.device_position || ""}:${rec.error_name}`;
+}
+
+// "device_type [device_position]" for display; falls back to just the type.
+export function formatErrorLocation(rec) {
+  const type = rec.device_type || "";
+  const pos = rec.device_position || "";
+  return pos ? `${type} [${pos}]`.trim() : type;
+}
+
 // Derive the list of flagging "problems" for a monitoring entry, given the
 // effective config for that node's product. Mirrors the flagging logic in the
 // pipeline's data_analyzer.py. Each problem has a stable `key` used for ignores.
@@ -67,18 +105,13 @@ export function deriveProblems(entry, config = {}) {
     });
   }
 
-  let errorsObj = {};
-  try {
-    errorsObj = JSON.parse(entry.errors || "{}");
-  } catch {
-    errorsObj = {};
-  }
-  for (const [name, count] of Object.entries(errorsObj)) {
-    if (critical.includes(name) && count > 0) {
+  for (const rec of parseErrors(entry.errors)) {
+    if (critical.includes(rec.error_name) && rec.count > 0) {
+      const where = formatErrorLocation(rec) || "unknown sensor";
       problems.push({
-        key: `error:${name}`,
-        label: `Critical error: ${name}`,
-        detail: `${count} occurrence${count !== 1 ? "s" : ""}`,
+        key: errorProblemKey(rec),
+        label: `Critical error: ${rec.error_name} (${where})`,
+        detail: `${rec.count} occurrence${rec.count !== 1 ? "s" : ""}`,
         is_critical: true,
       });
     }

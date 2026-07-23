@@ -27,6 +27,21 @@ from .config import (
 )
 
 
+def _error_node_ids(error_df):
+    """Return the set of node_ids present in the error dataframe.
+
+    error_data_new is indexed by (node_id, device_type, device_position), so we
+    pull node_ids from the first level of the MultiIndex. Falls back to the raw
+    index for the (empty / no-error) case where no MultiIndex was built.
+    """
+    if error_df is None or not hasattr(error_df, "index"):
+        return set()
+    idx = error_df.index
+    if isinstance(idx, pd.MultiIndex):
+        return set(idx.get_level_values("node_id"))
+    return set(idx)
+
+
 def analyze_data(data):
     """
     Analyze formatted data and return notification-ready results.
@@ -40,18 +55,21 @@ def analyze_data(data):
 
     analyzed_data = {}
 
-    # Extract DataFrames
+    # Extract DataFrames. Errors now come from error_data_new, which is broken
+    # out per (node_id, device_type, device_position) instead of just node_id.
     battery_df = data.get("battery_data")
-    error_df = data.get("error_data")
+    error_df = data.get("error_data_new")
     system_df = data.get("system_current_data")
     humidity_df = data.get("inbox_humidity_data")
+
+    # node_ids present in the (MultiIndexed) error dataframe
+    error_node_ids = _error_node_ids(error_df)
 
     # Get all unique node_ids from all DataFrames
     all_node_ids = set()
     if battery_df is not None and hasattr(battery_df, "index"):
         all_node_ids.update(battery_df.index)
-    if error_df is not None and hasattr(error_df, "index"):
-        all_node_ids.update(error_df.index)
+    all_node_ids.update(error_node_ids)
     if system_df is not None and hasattr(system_df, "index"):
         all_node_ids.update(system_df.index)
     if humidity_df is not None and hasattr(humidity_df, "index"):
@@ -111,7 +129,7 @@ def analyze_data(data):
         battery_val = None
         system_val = None
         humidity_val = None
-        errors_dict = {}
+        errors_records = []
 
         # Get battery voltage
         if battery_df is not None and node_id in battery_df.index:
@@ -131,21 +149,25 @@ def analyze_data(data):
             if humidity_val > INBOX_HUMIDITY_MAX:
                 flagged = True
 
-        # Get errors
-        if error_df is not None and node_id in error_df.index:
-            error_row = error_df.loc[node_id]
-            # Convert to dict, excluding NaN values
-            errors_dict = {
-                col: int(val)
-                for col, val in error_row.items()
-                if not pd.isna(val) and val > 0
-            }
-
-            # Check for critical errors
-            for critical_error in CRITICAL_ERRORS:
-                if critical_error in errors_dict and errors_dict[critical_error] > 0:
-                    flagged = True
-                    break
+        # Get errors, broken out per (device_type, device_position, error_name).
+        # error_df.loc[node_id] drops the node_id level, leaving a frame indexed
+        # by (device_type, device_position) with one column per error name.
+        if error_df is not None and node_id in error_node_ids:
+            node_errors = error_df.loc[node_id]
+            for (device_type, device_position), row in node_errors.iterrows():
+                for error_name, count in row.items():
+                    if pd.isna(count) or count <= 0:
+                        continue
+                    errors_records.append(
+                        {
+                            "device_type": device_type,
+                            "device_position": device_position,
+                            "error_name": error_name,
+                            "count": int(count),
+                        }
+                    )
+                    if error_name in CRITICAL_ERRORS:
+                        flagged = True
 
         # Get timestamps
         battery_timestamp = None
@@ -182,7 +204,7 @@ def analyze_data(data):
             "battery": battery_val,
             "system": system_val,
             "humidity": humidity_val,
-            "errors": errors_dict,
+            "errors": errors_records,
             "battery_timestamp": battery_timestamp,
             "system_timestamp": system_timestamp,
             "humidity_timestamp": humidity_timestamp,

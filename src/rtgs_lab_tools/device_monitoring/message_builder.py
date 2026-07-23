@@ -48,6 +48,37 @@ load_dotenv()  # Load environment variables from .env file
 PARTICLE_ACCESS_TOKEN = os.getenv("PARTICLE_ACCESS_TOKEN")
 
 
+def _format_error_location(record):
+    """Human-readable "device_type [device_position]" for an error record."""
+    device_type = record.get("device_type") or ""
+    position = record.get("device_position") or ""
+    if position:
+        return f"{device_type} [{position}]".strip()
+    return device_type
+
+
+def _format_error_records(records):
+    """One-line summary of every error record, grouped by sensor location."""
+    parts = []
+    for record in records or []:
+        where = _format_error_location(record)
+        label = f"{record.get('error_name')} ({record.get('count')})"
+        parts.append(f"{where}: {label}" if where else label)
+    return "; ".join(parts)
+
+
+def _critical_error_labels(records):
+    """Labels for critical error records only, tagged with sensor location."""
+    labels = []
+    for record in records or []:
+        name = record.get("error_name")
+        count = record.get("count", 0)
+        if name in CRITICAL_ERRORS and count > 0:
+            where = _format_error_location(record)
+            labels.append(f"{name} ({where}: {count})" if where else f"{name} ({count})")
+    return labels
+
+
 def get_device_info(node_id):
     """Fetch device name and product_id from Particle API using node_id."""
     if not PARTICLE_ACCESS_TOKEN:
@@ -126,7 +157,7 @@ def generate_device_card_html(node_id, result, device_name, console_url):
     battery = result.get("battery")
     system = result.get("system")
     humidity = result.get("humidity")
-    errors = result.get("errors", {})
+    errors = result.get("errors", [])
     battery_timestamp = result.get("battery_timestamp")
     system_timestamp = result.get("system_timestamp")
     humidity_timestamp = result.get("humidity_timestamp")
@@ -207,10 +238,7 @@ def generate_device_card_html(node_id, result, device_name, console_url):
             )
 
         # Check for critical errors
-        critical_errors = []
-        for error_name, count in errors.items():
-            if error_name in CRITICAL_ERRORS and count > 0:
-                critical_errors.append(f"{error_name} ({count})")
+        critical_errors = _critical_error_labels(errors)
 
         if critical_errors:
             issues.append(f"Critical errors: {', '.join(critical_errors)}")
@@ -395,7 +423,7 @@ def _process_node(node_id, result, lines, add_spacing=False):
     battery = result.get("battery")
     system = result.get("system")
     humidity = result.get("humidity")
-    errors = result.get("errors", {})
+    errors = result.get("errors", [])
     battery_timestamp = result.get("battery_timestamp")
     system_timestamp = result.get("system_timestamp")
     humidity_timestamp = result.get("humidity_timestamp")
@@ -424,12 +452,12 @@ def _process_node(node_id, result, lines, add_spacing=False):
     )
     humidity_str = f"{humidity:.1f}%" if humidity is not None else UNKNOWN_VALUE_TEXT
 
-    metrics_line = f"  Battery: {battery_str} | System: {system_str} | Inbox RH: {humidity_str} | Errors: {len(errors)} types"
+    metrics_line = f"  Battery: {battery_str} | System: {system_str} | Inbox RH: {humidity_str} | Errors: {len(errors)}"
     lines.append(metrics_line)
 
     # Show errors if any
     if errors:
-        errors_line = f"  Error Details: {errors}"
+        errors_line = f"  Error Details: {_format_error_records(errors)}"
         lines.append(errors_line)
 
     # Check if this is a missing node
@@ -470,7 +498,7 @@ def _process_node(node_id, result, lines, add_spacing=False):
                         f"System: {system:.{SYSTEM_POWER_DECIMAL_PRECISION}f}{POWER_UNIT}"
                     )
                 if errors:
-                    metrics_parts.append(f"Errors: {errors}")
+                    metrics_parts.append(f"Errors: {_format_error_records(errors)}")
                 if metrics_parts:
                     message += f" with {', '.join(metrics_parts)}"
 
@@ -490,10 +518,7 @@ def _process_node(node_id, result, lines, add_spacing=False):
             )
 
         # Check for critical errors
-        critical_errors = []
-        for error_name, count in errors.items():
-            if error_name in CRITICAL_ERRORS and count > 0:
-                critical_errors.append(f"{error_name} ({count})")
+        critical_errors = _critical_error_labels(errors)
 
         if critical_errors:
             issues.append(f"Critical errors: {', '.join(critical_errors)}")

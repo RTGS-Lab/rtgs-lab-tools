@@ -60,7 +60,10 @@ class Monitoring(db.Model):
     battery = db.Column(db.Float, nullable=False)
     system = db.Column(db.Float, nullable=False)
     humidity = db.Column(db.Float, nullable=False)
-    errors = db.Column(db.String(1023), nullable=False)
+    # JSON-encoded list of error records, one per
+    # (device_type, device_position, error_name): see data_analyzer.py.
+    # Text (unbounded) because the per-sensor breakdown can be large.
+    errors = db.Column(db.Text, nullable=False)
     is_missing = db.Column(db.String(20), nullable=False)
     last_heard = db.Column(db.String(30), nullable=False) # "YYYY-MM-DD HH:MM:SS.SSS"
 
