@@ -37,7 +37,7 @@ def monitor(
     print(f"--Beginning data retrieval--")
     data_frame = get_data(start_date, end_date, project, node_ids)
     print(f"--Data retrieval complete--")
-
+    data_frame.to_csv('raw_data.csv')
     # Step 2: Format the data
     print(f"--Beginning data formatting--")
     formatted_data = format_data_with_parser(data_frame)
