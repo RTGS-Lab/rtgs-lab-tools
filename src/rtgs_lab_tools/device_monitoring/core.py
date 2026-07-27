@@ -43,7 +43,7 @@ def monitor(
     formatted_data = format_data_with_parser(data_frame)
     print(f"--Data formatting complete--")
 
-    formatted_data["error_data_new"].to_csv('parsed_new.csv')
+    formatted_data["parsed_data"].to_csv('parsed_data.csv')
 
     # Step 3: Analyze the data
     print(f"--Beginning data analysis--")
