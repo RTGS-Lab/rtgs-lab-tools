@@ -133,19 +133,34 @@ export function formatTimestamp(ts) {
   return ts.replace("T", " ").slice(0, 23);
 }
 
-export function getBatteryColor(val) {
-  if (val >= 3.6) return "#4ade80";
-  if (val >= 3.4) return "#facc15";
-  return "#ff0000";
+// Status colors come in pairs. `fill` is the bright hue, used for solid marks —
+// gauge bar fills, dots, accent rails — where a block of color reads fine on a
+// white page. `ink` is the darker companion in the same hue, used for text,
+// which needs ~4.5:1 contrast that the bright hue cannot reach on white.
+//
+// Always pick by role, never reuse a fill as text or vice versa.
+export const STATUS = {
+  good: { fill: "#4ade80", ink: "#15803d" },
+  warn: { fill: "#facc15", ink: "#a16207" },
+  bad: { fill: "#ef4444", ink: "#dc2626" },
+};
+
+// The metric getters return a level key into STATUS rather than a color, so the
+// call site decides whether it needs the fill or the ink.
+export function getBatteryLevel(val) {
+  if (val >= 3.6) return "good";
+  if (val >= 3.4) return "warn";
+  return "bad";
 }
 
-export function getSystemColor(val) {
-  if (val > 0.2) return "#facc15";
-  if (val >= 0.364) return "#ff0000";
-  return "#4ade80";
+export function getSystemLevel(val) {
+  // Order matters: `bad` must be tested first, since every value at or above
+  // the 0.364W limit is also above the 0.2W warning threshold.
+  if (val >= 0.364) return "bad";
+  if (val > 0.2) return "warn";
+  return "good";
 }
 
-export function getHumidityColor(val) {
-  if (val > 65) return "#facc15";
-  return "#4ade80";
+export function getHumidityLevel(val) {
+  return val > 65 ? "warn" : "good";
 }

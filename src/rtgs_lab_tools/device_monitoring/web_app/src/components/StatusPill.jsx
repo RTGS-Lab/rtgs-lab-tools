@@ -1,17 +1,22 @@
-export default function StatusPill({ value, trueLabel = "YES", falseLabel = "NO", trueColor = "#f87171", falseColor = "#4ade80" }) {
+import { font, size } from "../theme";
+import { STATUS } from "../utils";
+
+export default function StatusPill({ value, trueLabel = "YES", falseLabel = "NO", trueLevel = "bad", falseLevel = "good" }) {
   const isTrue = value === true || value === "true" || value === 1 || value === "1";
+  // Bright hue tints the chip, dark ink carries the label.
+  const { fill, ink } = STATUS[isTrue ? trueLevel : falseLevel];
   return (
     <span style={{
       display: "inline-block",
-      padding: "2px 10px",
+      padding: "3px 12px",
       borderRadius: 99,
-      fontSize: 12,
-      fontFamily: "'Space Mono', monospace",
-      fontWeight: 500,
-      letterSpacing: "0.1em",
-      background: isTrue ? `${trueColor}22` : `${falseColor}22`,
-      color: isTrue ? trueColor : falseColor,
-      border: `1px solid ${isTrue ? trueColor : falseColor}44`,
+      fontSize: size.sm,
+      fontFamily: font.mono,
+      fontWeight: 600,
+      letterSpacing: "0.09em",
+      background: `${fill}26`,
+      color: ink,
+      border: `1px solid ${fill}66`,
     }}>
       {isTrue ? trueLabel : falseLabel}
     </span>

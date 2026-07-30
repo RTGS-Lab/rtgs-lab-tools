@@ -1,26 +1,32 @@
+import { color, font, size } from "../theme";
+
 export function NodeSelector({ nodeIds, selectedNode, onChange, nodeIdToFieldName = {} }) {
   return (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      {nodeIds.map(id => (
-        <button
-          key={id}
-          onClick={() => onChange(id)}
-          style={{
-            padding: "6px 14px",
-            borderRadius: 4,
-            border: selectedNode === id ? "1px solid #8bbbf7" : "1px solid #a3a3a3",
-            background: selectedNode === id ? "#60a5fa18" : "#0d1520",
-            color: selectedNode === id ? "#8bbbf7" : "#a3a3a3",
-            fontFamily: "'Space Mono', monospace",
-            fontSize: 14,
-            cursor: "pointer",
-            transition: "all 0.2s",
-            letterSpacing: "0.05em",
-          }}
-        >
-          {nodeIdToFieldName[id] ?? id}
-        </button>
-      ))}
+      {nodeIds.map(id => {
+        const on = selectedNode === id;
+        return (
+          <button
+            key={id}
+            onClick={() => onChange(id)}
+            style={{
+              padding: "7px 15px",
+              borderRadius: 5,
+              border: `1px solid ${on ? color.accent : color.border}`,
+              background: on ? color.accentTint : color.surface,
+              color: on ? color.accent : color.textMuted,
+              fontFamily: font.mono,
+              fontSize: size.md,
+              fontWeight: on ? 600 : 400,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {nodeIdToFieldName[id] ?? id}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -30,27 +36,31 @@ export function TimestampSelector({ timestamps = [], selectedTs, onChange }) {
 
   return (
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-      {sorted.map(ts => (
-        <button
-          key={ts}
-          onClick={() => onChange(ts)}
-          style={{
-            padding: "5px 12px",
-            borderRadius: 4,
-            border: selectedTs === ts ? "1px solid #a78bfa" : "1px solid #a3a3a3",
-            background: selectedTs === ts ? "#a78bfa18" : "#0a1018",
-            color: selectedTs === ts ? "#a78bfa" : "#a3a3a3",
-            fontFamily: "'Space Mono', monospace",
-            fontSize: 14,
-            cursor: "pointer",
-            transition: "all 0.2s",
-            letterSpacing: "0.03em",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {ts.slice(0, 19)}
-        </button>
-      ))}
+      {sorted.map(ts => {
+        const on = selectedTs === ts;
+        return (
+          <button
+            key={ts}
+            onClick={() => onChange(ts)}
+            style={{
+              padding: "6px 13px",
+              borderRadius: 5,
+              border: `1px solid ${on ? color.violet : color.border}`,
+              background: on ? color.violetTint : color.surface,
+              color: on ? color.violet : color.textMuted,
+              fontFamily: font.mono,
+              fontSize: size.md,
+              fontWeight: on ? 600 : 400,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              letterSpacing: "0.02em",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {ts.slice(0, 19)}
+          </button>
+        );
+      })}
     </div>
   );
 }
