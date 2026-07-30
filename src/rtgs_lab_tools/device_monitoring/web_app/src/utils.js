@@ -133,6 +133,32 @@ export function formatTimestamp(ts) {
   return ts.replace("T", " ").slice(0, 23);
 }
 
+// The pipeline produces one report per day, so listing every monitoring
+// timestamp as a button gets unusable within a couple of months. Only the most
+// recent RECENT_DAYS calendar days stay on screen; the rest move to a dropdown.
+export const RECENT_DAYS = 7;
+
+// Start of the earliest day still counted as "recent" — today plus the
+// RECENT_DAYS-1 days before it. Anchoring to midnight rather than to
+// `now - 7*24h` means a whole calendar day is either in the window or out of
+// it, regardless of what time of day that day's report happened to run.
+export function recentCutoff(now = new Date(), days = RECENT_DAYS) {
+  const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  cutoff.setDate(cutoff.getDate() - (days - 1));
+  return cutoff.getTime();
+}
+
+// Split timestamps into { recent, older }, both newest-first.
+export function partitionTimestamps(timestamps = [], now = new Date()) {
+  const cutoff = recentCutoff(now);
+  const recent = [];
+  const older = [];
+  for (const ts of [...timestamps].sort((a, b) => Date.parse(b) - Date.parse(a))) {
+    (Date.parse(ts) >= cutoff ? recent : older).push(ts);
+  }
+  return { recent, older };
+}
+
 // Status colors come in pairs. `fill` is the bright hue, used for solid marks —
 // gauge bar fills, dots, accent rails — where a block of color reads fine on a
 // white page. `ink` is the darker companion in the same hue, used for text,
