@@ -19,7 +19,6 @@ import yagmail
 from dotenv import load_dotenv
 
 from .config import SMTP_TIMEOUT
-from .watchdog import StepTimeout
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -84,10 +83,6 @@ def _send_email(subject, body):
         yag = _connect()
         yag.send(to=GMAIL_RECIPIENTS, subject=subject, contents=body)
         print(f"\n📧 Notification email sent: {subject}")
-    except StepTimeout:
-        # The step watchdog fired: let it abort the run rather than be reported
-        # as an ordinary send failure.
-        raise
     except Exception as e:
         print(f"\n❌ Failed to send notification email: {e}")
 
@@ -100,8 +95,6 @@ def _send_email_html(subject, body_text, body_html):
         contents = [body_text, body_html]
         yag.send(to=GMAIL_RECIPIENTS, subject=subject, contents=contents)
         print(f"\n📧 HTML notification email sent: {subject}")
-    except StepTimeout:
-        raise
     except Exception as e:
         print(f"\n❌ Failed to send HTML notification email: {e}")
         # Fallback to text email

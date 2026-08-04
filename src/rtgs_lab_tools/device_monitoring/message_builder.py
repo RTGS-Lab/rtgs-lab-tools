@@ -31,6 +31,7 @@ from .config import (
     MISSING_NODES_HEADER,
     MISSING_NODES_SEPARATOR_LENGTH,
     PARTICLE_API_BASE_URL,
+    PARTICLE_API_TIMEOUT,
     PARTICLE_CONSOLE_BASE_URL,
     PARTICLE_DEVICE_ENDPOINT,
     PARTICLE_PRODUCT_ENDPOINT,
@@ -87,7 +88,7 @@ def get_device_info(node_id):
     try:
         url = PARTICLE_API_BASE_URL + PARTICLE_DEVICE_ENDPOINT.format(node_id=node_id)
         headers = {"Authorization": f"Bearer {PARTICLE_ACCESS_TOKEN}"}
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=PARTICLE_API_TIMEOUT)
 
         if response.status_code == HTTP_SUCCESS_CODE:
             device_data = response.json()
@@ -110,7 +111,7 @@ def get_product_slug(product_id):
             product_id=product_id
         )
         headers = {"Authorization": f"Bearer {PARTICLE_ACCESS_TOKEN}"}
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=PARTICLE_API_TIMEOUT)
 
         if response.status_code == HTTP_SUCCESS_CODE:
             response_data = response.json()
@@ -131,7 +132,7 @@ def get_product_name(product_id):
             product_id=product_id
         )
         headers = {"Authorization": f"Bearer {PARTICLE_ACCESS_TOKEN}"}
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=PARTICLE_API_TIMEOUT)
 
         if response.status_code == HTTP_SUCCESS_CODE:
             response_data = response.json()

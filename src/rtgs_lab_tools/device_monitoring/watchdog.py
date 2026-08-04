@@ -24,8 +24,16 @@ from contextlib import contextmanager
 _SIGALRM_AVAILABLE = hasattr(signal, "SIGALRM") and hasattr(signal, "setitimer")
 
 
-class StepTimeout(Exception):
-    """Raised when a pipeline step exceeds its allotted wall-clock time."""
+class StepTimeout(BaseException):
+    """Raised when a pipeline step exceeds its allotted wall-clock time.
+
+    Deliberately derived from BaseException, not Exception, for the same reason
+    KeyboardInterrupt is: the pipeline is full of `except Exception` handlers
+    that turn a per-node failure into a fallback value and carry on. One of
+    those would swallow the watchdog, and because the timer is one-shot it
+    would never fire again -- leaving the step unbounded, which is exactly the
+    situation the watchdog exists to prevent.
+    """
 
 
 @contextmanager

@@ -43,6 +43,12 @@ PARTICLE_API_BASE_URL = "https://api.particle.io/v1"
 PARTICLE_CONSOLE_BASE_URL = "https://console.particle.io"
 HTTP_SUCCESS_CODE = 200
 
+# Timeout for each Particle API call, as (connect, read) seconds. requests has
+# no default timeout, so without this a single unresponsive call blocks forever.
+# The report makes a few of these per node, so keep it short: a slow lookup
+# should degrade to a missing device name, not stall the whole run.
+PARTICLE_API_TIMEOUT = (10, 20)
+
 # API endpoints (format strings)
 PARTICLE_DEVICE_ENDPOINT = "/devices/{node_id}"
 PARTICLE_PRODUCT_ENDPOINT = "/products/{product_id}"
