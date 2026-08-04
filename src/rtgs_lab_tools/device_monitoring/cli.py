@@ -8,7 +8,14 @@ arguments:
     project: str
 """
 import sys
-sys.stdout.reconfigure(encoding='utf-8')
+
+# line_buffering=True matters as much as the encoding here. When stdout is
+# redirected to a file (as it is under cron) Python block-buffers it, so if the
+# process is killed or hangs, every progress message still sitting in the buffer
+# is lost -- which is why a stalled run produced a log that looked like the
+# pipeline never started. Line buffering flushes each print as it happens, so
+# the log always shows how far the run actually got.
+sys.stdout.reconfigure(encoding='utf-8', line_buffering=True)
 
 from datetime import datetime, timedelta
 from pathlib import Path

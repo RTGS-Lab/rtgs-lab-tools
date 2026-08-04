@@ -18,6 +18,9 @@ import os
 import yagmail
 from dotenv import load_dotenv
 
+from .config import SMTP_TIMEOUT
+from .watchdog import StepTimeout
+
 load_dotenv()  # Load environment variables from .env file
 
 GMAIL_USER = os.getenv("GMAIL_USER")
@@ -59,14 +62,32 @@ def notify(message_dict, no_email=False):
             _send_email(subject, body_text)
 
 
+def _connect():
+    """Open an SMTP connection with an explicit socket timeout.
+
+    Without `timeout`, smtplib uses socket._GLOBAL_DEFAULT_TIMEOUT, which means
+    "block forever". A Gmail connection that stalls mid-handshake then hangs the
+    whole monitoring run instead of failing it.
+    """
+    return yagmail.SMTP(
+        user=GMAIL_USER,
+        password=GMAIL_APP_PASSWORD,
+        oauth2_file=None,
+        # Forwarded through yagmail's **kwargs to smtplib.SMTP.
+        timeout=SMTP_TIMEOUT,
+    )
+
+
 def _send_email(subject, body):
     """Send plain text email notification."""
     try:
-        yag = yagmail.SMTP(
-            user=GMAIL_USER, password=GMAIL_APP_PASSWORD, oauth2_file=None
-        )
+        yag = _connect()
         yag.send(to=GMAIL_RECIPIENTS, subject=subject, contents=body)
         print(f"\n📧 Notification email sent: {subject}")
+    except StepTimeout:
+        # The step watchdog fired: let it abort the run rather than be reported
+        # as an ordinary send failure.
+        raise
     except Exception as e:
         print(f"\n❌ Failed to send notification email: {e}")
 
@@ -74,13 +95,13 @@ def _send_email(subject, body):
 def _send_email_html(subject, body_text, body_html):
     """Send HTML email notification with text fallback."""
     try:
-        yag = yagmail.SMTP(
-            user=GMAIL_USER, password=GMAIL_APP_PASSWORD, oauth2_file=None
-        )
+        yag = _connect()
         # Send both text and HTML versions
         contents = [body_text, body_html]
         yag.send(to=GMAIL_RECIPIENTS, subject=subject, contents=contents)
         print(f"\n📧 HTML notification email sent: {subject}")
+    except StepTimeout:
+        raise
     except Exception as e:
         print(f"\n❌ Failed to send HTML notification email: {e}")
         # Fallback to text email

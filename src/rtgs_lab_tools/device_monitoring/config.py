@@ -54,3 +54,23 @@ SUMMARY_HEADER = "📊 SUMMARY:"
 
 # Email settings
 EMAIL_SUBJECT_PREFIX = "Device Monitoring Report"
+
+# Per-step watchdog limits (seconds). None disables the watchdog for a step.
+# None of the clients the pipeline uses (the GEMS engine, the Cloud SQL
+# connector, smtplib) set a socket timeout of their own, so without these a
+# stalled remote leaves the daily run hanging indefinitely instead of failing
+# and being retried. Values are generous multiples of a healthy run, which
+# takes roughly 80 seconds end to end.
+STEP_TIMEOUT_DATA_RETRIEVAL = 900  # GEMS query for the analysis window
+STEP_TIMEOUT_DATA_FORMATTING = 900  # local parsing, no network
+STEP_TIMEOUT_DATA_ANALYSIS = 300  # local analysis, no network
+STEP_TIMEOUT_DATABASE_WRITE = 600  # Cloud SQL connect + commits
+STEP_TIMEOUT_MESSAGE_BUILD = 600  # includes Particle API lookups
+STEP_TIMEOUT_NOTIFY = 300  # SMTP handshake + send
+
+# Socket timeout for the outgoing SMTP connection (seconds).
+SMTP_TIMEOUT = 60
+
+# The Cloud SQL connect timeout lives in web_app/models.py as the
+# DEVICEMON_DB_CONNECT_TIMEOUT environment variable, because that module is
+# deployed to Cloud Run in an image that cannot import this file.

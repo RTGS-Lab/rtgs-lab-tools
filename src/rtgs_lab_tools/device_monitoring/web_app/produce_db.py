@@ -37,8 +37,20 @@ def build_app_config():
     except Exception as e:
         db.session.rollback()
         print(f"Unable to commit app config: {e}")
+        raise
 
-def build_db(analyzed_data_dict):
+def build_db(analyzed_data_dict, monitoring_timestamp=None):
+    """Write one Monitoring row per node, all filed under the same timestamp.
+
+    `monitoring_timestamp` is passed in (rather than read from the clock here)
+    so that a retried run reuses the timestamp of the attempt it is replacing.
+    Combined with merge(), that makes the write idempotent: a retry after a
+    partial failure updates the rows the failed attempt managed to commit
+    instead of creating a second set under a new timestamp.
+    """
+    if monitoring_timestamp is None:
+        monitoring_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
     for node_id, data in analyzed_data_dict.items():
         print(data)
         monitor = Monitoring(
@@ -51,16 +63,21 @@ def build_db(analyzed_data_dict):
             device_timestamp = (data.get("battery_timestamp") or
                             data.get("system_timestamp") or
                             data.get("humidity_timestamp")).strftime("%Y-%m-%d %H:%M"),
-            monitoring_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M"),
+            monitoring_timestamp = monitoring_timestamp,
             is_missing = data.get("is_missing", False),
             last_heard = data.get("last_heard")
         )
-        db.session.add(monitor)
+        db.session.merge(monitor)
     try:
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         print(f'Unable to commit session: {e}')
+        # Re-raised (this used to be swallowed) so a failed write reaches the
+        # caller and the run can be retried. Swallowing it meant the pipeline
+        # carried on to send the email and exited 0, leaving nothing for the
+        # scheduler to retry on.
+        raise
 
 def build_logger_info(analyzed_data_dict):
     active_node_ids = set(analyzed_data_dict.keys())
@@ -90,3 +107,4 @@ def build_logger_info(analyzed_data_dict):
     except Exception as e:
         db.session.rollback()
         print(f'Unable to commit session: {e}')
+        raise

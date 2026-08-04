@@ -24,6 +24,10 @@ def configure_database(flask_app):
 
         connector = Connector()
 
+        # Read from the environment rather than ..config: this module is also
+        # deployed to Cloud Run in an image that cannot import config.py.
+        connect_timeout = int(os.getenv("DEVICEMON_DB_CONNECT_TIMEOUT", "60"))
+
         def getconn():
             return connector.connect(
                 instance_connection_name,
@@ -32,6 +36,9 @@ def configure_database(flask_app):
                 password=os.getenv("DEVICEMON_DB_PASSWORD"),
                 db=os.getenv("DEVICEMON_DB_NAME", "device_monitoring"),
                 ip_type=IPTypes.PUBLIC,
+                # Bounds the connect attempt so a stalled handshake raises
+                # instead of blocking the caller indefinitely.
+                timeout=connect_timeout,
             )
 
         flask_app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+pg8000://"
