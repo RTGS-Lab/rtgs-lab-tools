@@ -22,9 +22,16 @@ PROJECT="${4:-ALL}"
 
 # Retry policy. A healthy run takes about 80 seconds, so the per-attempt limit
 # is deliberately loose: it exists to catch a hang, not to police a slow day.
+#
+# IMPORTANT: under scrontab this script runs as a SLURM job, and SLURM kills the
+# entire job step -- this script and its children together, with no chance to
+# log anything -- the moment #SCRON --time is reached. The worst case below is
+# MAX_ATTEMPTS*ATTEMPT_TIMEOUT + (MAX_ATTEMPTS-1)*RETRY_DELAY = 34 minutes, so
+# --time must be comfortably above that (01:00:00 is the intended pairing).
+# Raising these values without raising --time makes the retries unreachable.
 MAX_ATTEMPTS="${DEVICEMON_MAX_ATTEMPTS:-3}"
-ATTEMPT_TIMEOUT="${DEVICEMON_ATTEMPT_TIMEOUT:-1800}"
-RETRY_DELAY="${DEVICEMON_RETRY_DELAY:-300}"
+ATTEMPT_TIMEOUT="${DEVICEMON_ATTEMPT_TIMEOUT:-600}"
+RETRY_DELAY="${DEVICEMON_RETRY_DELAY:-120}"
 
 # Set up working directory and log file
 WORK_DIR="$HOME/rtgs-lab-tools-cron"
@@ -67,7 +74,19 @@ log "Starting daily device monitoring"
 log "Work directory: $WORK_DIR"
 log "Log directory: $LOG_DIR"
 log "Parameters: start_date=$START_DATE, end_date=$END_DATE, node_ids=$NODE_IDS, project=$PROJECT"
-log "Retry policy: up to $MAX_ATTEMPTS attempts, ${ATTEMPT_TIMEOUT}s limit each, ${RETRY_DELAY}s between"
+RETRY_BUDGET=$(( MAX_ATTEMPTS * ATTEMPT_TIMEOUT + (MAX_ATTEMPTS - 1) * RETRY_DELAY ))
+log "Retry policy: up to $MAX_ATTEMPTS attempts, ${ATTEMPT_TIMEOUT}s limit each, ${RETRY_DELAY}s between (worst case ${RETRY_BUDGET}s)"
+
+# Under SLURM, say up front how much room we actually have. A job time limit
+# below the retry budget means later attempts can never run, and the kill
+# arrives as a SIGKILL that leaves no trace in this log.
+if [ -n "$SLURM_JOB_ID" ]; then
+    log "Running as SLURM job $SLURM_JOB_ID"
+    if command -v squeue &> /dev/null; then
+        SLURM_TIMELIMIT="$(squeue -h -j "$SLURM_JOB_ID" -o %l 2>/dev/null || true)"
+        log "SLURM time limit for this job: ${SLURM_TIMELIMIT:-unknown} (retry budget needs ${RETRY_BUDGET}s)"
+    fi
+fi
 
 # Refuse to start if yesterday's run is somehow still alive. Two concurrent
 # runs would write competing rows for the same nodes, and a hung run holding
