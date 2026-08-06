@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchAllEntries } from "../api";
-import { formatTimestamp, parseUtcTimestamp, getBatteryLevel, getSystemLevel, getHumidityLevel, STATUS, computeEffectiveFlagged, deriveProblems, parseErrors, formatErrorLocation, DEFAULT_CONFIG } from "../utils";
+import { formatTimestamp, formatTimestampShort, parseUtcTimestamp, getBatteryLevel, getSystemLevel, getHumidityLevel, STATUS, computeEffectiveFlagged, deriveProblems, parseErrors, formatErrorLocation, DEFAULT_CONFIG } from "../utils";
 import { GaugeBarBattery, GaugeBarSystem, GaugeBarHumidity } from "./GaugeBars";
 import StatusPill from "./StatusPill";
 import { SectionCard, DataRow } from "./Layout";
@@ -202,7 +202,7 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
               <GaugeBarBattery value={entry.battery} level={getBatteryLevel(entry.battery)} label="Battery" />
               <GaugeBarSystem value={entry.system} level={getSystemLevel(entry.system)} label="System Load" />
               <GaugeBarHumidity value={entry.humidity} level={getHumidityLevel(entry.humidity)} label="Humidity" />
-              <DataRow label="Last Connected" value={formatTimestamp(entry.time_of_last_device_connection)} />
+              <DataRow label="Last Connected" value={formatTimestampShort(entry.time_of_last_device_connection)} />
             </SectionCard>
 
             {/* Status */}

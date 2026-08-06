@@ -1,4 +1,4 @@
-import { formatTimestamp, getBatteryLevel, STATUS } from "../utils";
+import { formatTimestampShort, getBatteryLevel, STATUS } from "../utils";
 import StatusPill from "./StatusPill";
 import { color, font, size, cardShadow } from "../theme";
 
@@ -165,7 +165,7 @@ export default function FieldSelector({ productName, fields, onSelect, onBack })
                       fontSize: size.base,
                       color: color.accent,
                     }}>
-                      {formatTimestamp(field.device_timestamp)}
+                      {formatTimestampShort(field.device_timestamp)}
                     </span>
                   </div>
 

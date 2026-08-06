@@ -169,6 +169,19 @@ export function formatTimestamp(ts) {
   return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} ${parts.timeZoneName}`;
 }
 
+// Same, minus the seconds. monitoring_timestamp and device_timestamp are both
+// written at minute resolution, so ":00" is noise that only costs width in the
+// timestamp buttons and the narrow DataRow value column.
+export function formatTimestampShort(ts) {
+  if (!ts) return "—";
+  const date = parseUtcTimestamp(ts);
+  if (!date) return String(ts);
+  const parts = Object.fromEntries(
+    DISPLAY_FORMAT.formatToParts(date).map(p => [p.type, p.value])
+  );
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute} ${parts.timeZoneName}`;
+}
+
 // The pipeline produces one report per day, so listing every monitoring
 // timestamp as a button gets unusable within a couple of months. Only the most
 // recent RECENT_DAYS calendar days stay on screen; the rest move to a dropdown.

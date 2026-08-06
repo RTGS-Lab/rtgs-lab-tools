@@ -60,8 +60,8 @@ export function DataRow({ label, value, mono = true }) {
         fontSize: mono ? size.md : size.base,
         color: color.text,
         textAlign: "right",
-        wordBreak: "break-all",
-        maxWidth: "60%",
+        overflowWrap: "anywhere",
+        maxWidth: "65%",
       }}>
         {value || "—"}
       </span>

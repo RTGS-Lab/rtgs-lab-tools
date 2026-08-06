@@ -1,5 +1,5 @@
 import { color, font, size } from "../theme";
-import { partitionTimestamps, RECENT_DAYS } from "../utils";
+import { partitionTimestamps, formatTimestampShort, RECENT_DAYS } from "../utils";
 
 export function NodeSelector({ nodeIds, selectedNode, onChange, nodeIdToFieldName = {} }) {
   return (
@@ -63,7 +63,7 @@ export function TimestampSelector({ timestamps = [], selectedTs, onChange }) {
                   whiteSpace: "nowrap",
                 }}
               >
-                {ts.slice(0, 19)}
+                {formatTimestampShort(ts)}
               </button>
             );
           })}
@@ -108,7 +108,7 @@ export function TimestampSelector({ timestamps = [], selectedTs, onChange }) {
           >
             <option value="">Select a report ({older.length})</option>
             {older.map(ts => (
-              <option key={ts} value={ts}>{ts.slice(0, 19)}</option>
+              <option key={ts} value={ts}>{formatTimestampShort(ts)}</option>
             ))}
           </select>
         </div>
