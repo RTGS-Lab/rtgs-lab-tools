@@ -19,6 +19,12 @@ CRITICAL_ERRORS = [
     "FRAM_OVERRUN",
 ]
 
+# Timezone handling. GEMS `raw.publish_time` -- the source of every device
+# timestamp in the pipeline -- is UTC, so the pipeline computes and stores
+# everything in UTC. DISPLAY_TIMEZONE is applied only at the edges, when
+# rendering for people (the email, the terminal output, the web app).
+DISPLAY_TIMEZONE = "America/Chicago"
+
 # Historic monitoring thresholds
 MISSING_NODE_THRESHOLD_HOURS = 24  # Hours since last contact to mark node as missing
 DATA_COLLECTION_WINDOW_DAYS = 3  # Days of historical data to analyze

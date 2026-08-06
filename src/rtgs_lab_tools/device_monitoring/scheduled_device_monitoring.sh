@@ -45,7 +45,7 @@ mkdir -p "$LOG_DIR"
 
 # Function to log messages
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S %Z')] $1" | tee -a "$LOG_FILE"
 }
 
 # Simple cleanup function - just deactivate venv
@@ -203,8 +203,11 @@ fi
 # Pin one timestamp for the whole day and keep it across retries, so a retried
 # report replaces the rows of the attempt it is repeating rather than adding a
 # second near-identical entry to the web app's list of monitoring timestamps.
-export DEVICEMON_RUN_TIMESTAMP="$(date '+%Y-%m-%d %H:%M')"
-log "Monitoring run timestamp: $DEVICEMON_RUN_TIMESTAMP"
+# -u because the pipeline stores UTC throughout: device timestamps come from
+# GEMS publish_time (UTC), and mixing in the cluster's local Central time is
+# what made "last connected" read five hours ahead of the report that found it.
+export DEVICEMON_RUN_TIMESTAMP="$(date -u '+%Y-%m-%d %H:%M')"
+log "Monitoring run timestamp: $DEVICEMON_RUN_TIMESTAMP UTC"
 
 # Cap each attempt so a hang becomes a failure the retry loop can act on.
 # --kill-after sends SIGKILL if the process ignores the initial SIGTERM.

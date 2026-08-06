@@ -28,6 +28,7 @@ from .data_formatter import format_data_with_parser
 from .data_getter import get_data
 from .message_builder import build_message
 from .notification_system import notify
+from .timezones import now_utc, utc_stamp
 from .watchdog import step_timeout
 
 from .web_app.models import app
@@ -42,16 +43,17 @@ def _run_timestamp():
     rows left by the failed attempt instead of adding a second, near-duplicate
     entry to the web app's timestamp list. Falls back to the current time when
     run by hand.
+
+    UTC, like every other timestamp the pipeline stores -- the shell exports it
+    with `date -u` for the same reason.
     """
-    return os.getenv("DEVICEMON_RUN_TIMESTAMP") or datetime.now().strftime(
-        "%Y-%m-%d %H:%M"
-    )
+    return os.getenv("DEVICEMON_RUN_TIMESTAMP") or utc_stamp()
 
 def monitor(
-    start_date=(datetime.now() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime(
+    start_date=(now_utc() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime(
         "%Y-%m-%d"
     ),
-    end_date=datetime.now().strftime("%Y-%m-%d"),
+    end_date=now_utc().strftime("%Y-%m-%d"),
     node_ids=None,
     project="ALL",
     no_email=False,

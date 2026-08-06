@@ -1,7 +1,7 @@
 import hmac
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
@@ -203,7 +203,8 @@ def add_ignored_problem():
     ignore = IgnoredProblem(
         node_id=node_id,
         problem_key=problem_key,
-        ignored_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        # UTC, like every other timestamp stored by this system.
+        ignored_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
         ignored_by=ignored_by,
     )
     db.session.merge(ignore)  # upsert on the composite primary key

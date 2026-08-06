@@ -14,7 +14,6 @@ Outputs:
 """
 
 import os
-from datetime import datetime
 
 import requests
 from dotenv import load_dotenv
@@ -43,6 +42,7 @@ from .config import (
     UNKNOWN_VALUE_TEXT,
     VOLTAGE_UNIT,
 )
+from .timezones import as_utc, format_display, now_utc
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -167,10 +167,8 @@ def generate_device_card_html(node_id, result, device_name, console_url):
     timestamp = system_timestamp or battery_timestamp or humidity_timestamp
     timestamp_str = UNKNOWN_VALUE_TEXT
     if timestamp is not None:
-        if hasattr(timestamp, "strftime"):
-            timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            timestamp_str = str(timestamp)
+        # Stored UTC, shown in DISPLAY_TIMEZONE with an explicit zone label.
+        timestamp_str = format_display(timestamp) or str(timestamp)
 
     # Format device name
     if device_name:
@@ -321,7 +319,7 @@ def generate_html_email(analysis_results):
             normal_count += 1
 
     # Get current timestamp
-    current_time = datetime.now().strftime("%Y-%m-%d at %H:%M:%S")
+    current_time = format_display(now_utc(), "%Y-%m-%d at %H:%M:%S")
 
     return f"""<!DOCTYPE html>
 <html>
@@ -433,10 +431,7 @@ def _process_node(node_id, result, lines, add_spacing=False):
     timestamp = system_timestamp or battery_timestamp or humidity_timestamp
     timestamp_str = ""
     if timestamp is not None:
-        if hasattr(timestamp, "strftime"):
-            timestamp_str = f" [{timestamp.strftime('%Y-%m-%d %H:%M:%S')}]"
-        else:
-            timestamp_str = f" [{timestamp}]"
+        timestamp_str = f" [{format_display(timestamp) or timestamp}]"
 
     lines.append(f"\nNode: {node_display} - {status_icon}{timestamp_str}")
 
@@ -469,7 +464,9 @@ def _process_node(node_id, result, lines, add_spacing=False):
     if is_missing:
         # Handle missing node alert
         if last_heard:
-            time_diff = datetime.now() - last_heard
+            # UTC on both sides: local `now` minus a UTC device timestamp
+            # understated every "hasn't written in N hours" figure by 5 hours.
+            time_diff = now_utc() - as_utc(last_heard)
             if time_diff.days > 0:
                 time_str = f"{time_diff.days} days"
             else:
@@ -480,11 +477,7 @@ def _process_node(node_id, result, lines, add_spacing=False):
 
         message = f"  ⚠️ MISSING: Node hasn't written to database in {time_str}"
         if last_heard:
-            last_heard_str = (
-                last_heard.strftime("%Y-%m-%d %H:%M:%S")
-                if hasattr(last_heard, "strftime")
-                else str(last_heard)
-            )
+            last_heard_str = format_display(last_heard) or str(last_heard)
             message += f". Last heard from {last_heard_str}"
 
             # Include last known metrics

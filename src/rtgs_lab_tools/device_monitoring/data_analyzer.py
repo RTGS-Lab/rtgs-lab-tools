@@ -14,9 +14,11 @@ Output:
             - count as value
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pandas as pd
+
+from .timezones import as_utc, now_utc
 
 from .config import (
     BATTERY_VOLTAGE_MIN,
@@ -75,8 +77,12 @@ def analyze_data(data):
     if humidity_df is not None and hasattr(humidity_df, "index"):
         all_node_ids.update(humidity_df.index)
 
-    # Identify nodes that haven't been heard from in the last X hours
-    cutoff_time = datetime.now() - timedelta(hours=MISSING_NODE_THRESHOLD_HOURS)
+    # Identify nodes that haven't been heard from in the last X hours.
+    # Both sides of this comparison must be UTC: device timestamps come from
+    # GEMS publish_time (UTC), so using local time here made every node look
+    # five hours more recent than it was and pushed the effective missing
+    # threshold out to ~29 hours.
+    cutoff_time = now_utc() - timedelta(hours=MISSING_NODE_THRESHOLD_HOURS)
     recent_node_ids = set()
 
     # Check which nodes have recent data (within 24 hours)
@@ -121,6 +127,7 @@ def analyze_data(data):
                     most_recent_timestamp = inbox_timestamp
 
         # If node has data within last 24 hours, it's considered "recent"
+        most_recent_timestamp = as_utc(most_recent_timestamp)
         if most_recent_timestamp and most_recent_timestamp > cutoff_time:
             recent_node_ids.add(node_id)
 
@@ -199,15 +206,19 @@ def analyze_data(data):
             else:
                 last_heard = most_recent_timestamp
 
+        # Every timestamp leaving this module is aware UTC, so downstream
+        # arithmetic and storage never have to guess what clock it is on.
+        last_heard = as_utc(last_heard)
+
         analyzed_data[node_id] = {
             "flagged": flagged or is_missing_node,  # Flag missing nodes
             "battery": battery_val,
             "system": system_val,
             "humidity": humidity_val,
             "errors": errors_records,
-            "battery_timestamp": battery_timestamp,
-            "system_timestamp": system_timestamp,
-            "humidity_timestamp": humidity_timestamp,
+            "battery_timestamp": as_utc(battery_timestamp),
+            "system_timestamp": as_utc(system_timestamp),
+            "humidity_timestamp": as_utc(humidity_timestamp),
             "is_missing": is_missing_node,
             "last_heard": last_heard,
         }

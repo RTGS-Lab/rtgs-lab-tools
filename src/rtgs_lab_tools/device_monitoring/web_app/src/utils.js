@@ -128,9 +128,45 @@ export function computeEffectiveFlagged(problems, ignoredKeys = []) {
   return problems.some(p => !ignoredKeys.includes(p.key));
 }
 
+// Everything the pipeline writes is UTC: device timestamps come from GEMS
+// publish_time, and monitoring_timestamp is generated with `date -u`. The
+// strings carry no offset suffix ("2026-08-04 14:22"), and a bare
+// `new Date(...)` on that format is interpreted as *local* time by browsers,
+// which silently reintroduces the very skew this replaced. Parse explicitly.
+export const DISPLAY_TIMEZONE = "America/Chicago";
+
+export function parseUtcTimestamp(ts) {
+  if (!ts) return null;
+  const normalized = String(ts).trim().replace(" ", "T");
+  // Append Z unless the string already states an offset.
+  const iso = /(Z|[+-]\d{2}:?\d{2})$/.test(normalized) ? normalized : `${normalized}Z`;
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+const DISPLAY_FORMAT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: DISPLAY_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+  timeZoneName: "short",
+});
+
+// Renders a stored UTC timestamp in DISPLAY_TIMEZONE, always labelled with the
+// zone. The label is load-bearing: without it there is no way to tell a Central
+// reading from the UTC value in the database.
 export function formatTimestamp(ts) {
   if (!ts) return "—";
-  return ts.replace("T", " ").slice(0, 23);
+  const date = parseUtcTimestamp(ts);
+  if (!date) return String(ts);
+  const parts = Object.fromEntries(
+    DISPLAY_FORMAT.formatToParts(date).map(p => [p.type, p.value])
+  );
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} ${parts.timeZoneName}`;
 }
 
 // The pipeline produces one report per day, so listing every monitoring
@@ -138,23 +174,48 @@ export function formatTimestamp(ts) {
 // recent RECENT_DAYS calendar days stay on screen; the rest move to a dropdown.
 export const RECENT_DAYS = 7;
 
-// Start of the earliest day still counted as "recent" — today plus the
-// RECENT_DAYS-1 days before it. Anchoring to midnight rather than to
-// `now - 7*24h` means a whole calendar day is either in the window or out of
-// it, regardless of what time of day that day's report happened to run.
-export function recentCutoff(now = new Date(), days = RECENT_DAYS) {
-  const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  cutoff.setDate(cutoff.getDate() - (days - 1));
-  return cutoff.getTime();
+const DATE_ONLY_FORMAT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: DISPLAY_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+// The DISPLAY_TIMEZONE calendar date ("YYYY-MM-DD") an instant falls on.
+// "Which day was this report from" has to be answered in the timezone people
+// read, not in UTC — a report that runs at 04:27 Central is stored as 09:27
+// UTC, so asking UTC would put it on the right day, but a late-evening run
+// would not be.
+export function displayDate(date) {
+  return DATE_ONLY_FORMAT.format(date);
+}
+
+// Earliest DISPLAY_TIMEZONE calendar day still counted as "recent" — today
+// plus the RECENT_DAYS-1 days before it. Comparing whole calendar days rather
+// than `now - 7*24h` means a day is either wholly in the window or wholly out,
+// regardless of what time that day's report happened to run.
+export function recentCutoffDate(now = new Date(), days = RECENT_DAYS) {
+  const [y, m, d] = displayDate(now).split("-").map(Number);
+  // Anchored at UTC noon so subtracting whole days cannot slip across a
+  // boundary on a DST transition day.
+  const anchor = new Date(Date.UTC(y, m - 1, d, 12));
+  anchor.setUTCDate(anchor.getUTCDate() - (days - 1));
+  return anchor.toISOString().slice(0, 10);
 }
 
 // Split timestamps into { recent, older }, both newest-first.
 export function partitionTimestamps(timestamps = [], now = new Date()) {
-  const cutoff = recentCutoff(now);
+  const cutoff = recentCutoffDate(now);
   const recent = [];
   const older = [];
-  for (const ts of [...timestamps].sort((a, b) => Date.parse(b) - Date.parse(a))) {
-    (Date.parse(ts) >= cutoff ? recent : older).push(ts);
+  const byNewest = [...timestamps].sort(
+    (a, b) =>
+      (parseUtcTimestamp(b)?.getTime() ?? 0) - (parseUtcTimestamp(a)?.getTime() ?? 0)
+  );
+  for (const ts of byNewest) {
+    const parsed = parseUtcTimestamp(ts);
+    const day = parsed ? displayDate(parsed) : "";
+    (day >= cutoff ? recent : older).push(ts);
   }
   return { recent, older };
 }

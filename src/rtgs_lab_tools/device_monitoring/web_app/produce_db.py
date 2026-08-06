@@ -10,6 +10,7 @@ from ..config import (
     SYSTEM_POWER_MAX,
 )
 from ..message_builder import get_device_info, get_product_slug, get_product_name, get_console_url
+from ..timezones import utc_stamp
 
 def init_db():
     db.create_all()
@@ -49,7 +50,7 @@ def build_db(analyzed_data_dict, monitoring_timestamp=None):
     instead of creating a second set under a new timestamp.
     """
     if monitoring_timestamp is None:
-        monitoring_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+        monitoring_timestamp = utc_stamp()
 
     for node_id, data in analyzed_data_dict.items():
         print(data)
@@ -60,12 +61,15 @@ def build_db(analyzed_data_dict, monitoring_timestamp=None):
             system = data.get("system"),
             humidity = data.get("humidity"),
             errors = json.dumps(data.get("errors", [])),
-            device_timestamp = (data.get("battery_timestamp") or
+            # Both of these are written as UTC strings with no offset suffix.
+            # The web app parses them as UTC and renders DISPLAY_TIMEZONE; if
+            # the format here changes, utils.js parseUtcTimestamp must follow.
+            device_timestamp = utc_stamp(data.get("battery_timestamp") or
                             data.get("system_timestamp") or
-                            data.get("humidity_timestamp")).strftime("%Y-%m-%d %H:%M"),
+                            data.get("humidity_timestamp")),
             monitoring_timestamp = monitoring_timestamp,
             is_missing = data.get("is_missing", False),
-            last_heard = data.get("last_heard")
+            last_heard = utc_stamp(data.get("last_heard"), "%Y-%m-%d %H:%M:%S")
         )
         db.session.merge(monitor)
     try:

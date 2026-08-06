@@ -29,6 +29,7 @@ from ..core.cli_utils import (
 )
 from .config import DATA_COLLECTION_WINDOW_DAYS
 from .core import monitor
+from .timezones import now_utc
 
 
 @click.group()
@@ -73,14 +74,15 @@ def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
     start_date_str = (
         start_date.strftime("%Y-%m-%d")
         if start_date
-        else (datetime.now() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime(
+        # UTC: these bound a query against GEMS publish_time, which is UTC.
+        else (now_utc() - timedelta(days=DATA_COLLECTION_WINDOW_DAYS)).strftime(
             "%Y-%m-%d"
         )
     )
     end_date_str = (
         end_date.strftime("%Y-%m-%d")
         if end_date
-        else datetime.now().strftime("%Y-%m-%d")
+        else now_utc().strftime("%Y-%m-%d")
     )
 
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchAllEntries } from "../api";
-import { formatTimestamp, getBatteryLevel, getSystemLevel, getHumidityLevel, STATUS, computeEffectiveFlagged, deriveProblems, parseErrors, formatErrorLocation, DEFAULT_CONFIG } from "../utils";
+import { formatTimestamp, parseUtcTimestamp, getBatteryLevel, getSystemLevel, getHumidityLevel, STATUS, computeEffectiveFlagged, deriveProblems, parseErrors, formatErrorLocation, DEFAULT_CONFIG } from "../utils";
 import { GaugeBarBattery, GaugeBarSystem, GaugeBarHumidity } from "./GaugeBars";
 import StatusPill from "./StatusPill";
 import { SectionCard, DataRow } from "./Layout";
@@ -53,7 +53,7 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
         const ts = filtered
           .filter(e => e.node_id === startNode)
           .map(e => e.monitoring_timestamp)
-          .sort((a, b) => Date.parse(b) - Date.parse(a))[0] || null;
+          .sort((a, b) => (parseUtcTimestamp(b)?.getTime() ?? 0) - (parseUtcTimestamp(a)?.getTime() ?? 0))[0] || null;
         setSelectedTs(ts);
       }
     });
@@ -68,7 +68,7 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
   const timestampsForNode = allEntries
     .filter(e => e.node_id === selectedNode)
     .map(e => e.monitoring_timestamp)
-    .sort((a, b) => Date.parse(b) - Date.parse(a));
+    .sort((a, b) => (parseUtcTimestamp(b)?.getTime() ?? 0) - (parseUtcTimestamp(a)?.getTime() ?? 0));
 
   const entry = allEntries.find(
     e => e.node_id === selectedNode && e.monitoring_timestamp === selectedTs
@@ -79,7 +79,7 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
     const ts = allEntries
       .filter(e => e.node_id === id)
       .map(e => e.monitoring_timestamp)
-      .sort((a, b) => Date.parse(b) - Date.parse(a))[0] || null;
+      .sort((a, b) => (parseUtcTimestamp(b)?.getTime() ?? 0) - (parseUtcTimestamp(a)?.getTime() ?? 0))[0] || null;
     setSelectedTs(ts);
   }, [allEntries]);
 
@@ -422,7 +422,7 @@ export default function NodeMonitorDashboard({ allowedNodeIds, nodeIdToFieldName
           NODE MONITOR v1.0
         </span>
         <span style={{ fontFamily: font.mono, fontSize: size.tiny, color: color.textFaint, letterSpacing: "0.09em" }}>
-          {new Date().toISOString().slice(0, 19).replace("T", " ")} UTC
+          {formatTimestamp(new Date().toISOString())}
         </span>
       </div>
 
