@@ -50,14 +50,20 @@ def _to_utc_string(local_string, zone):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument(
         "--cutover",
         required=True,
+        # No literal '%' in this text: argparse runs help strings through
+        # %-formatting, so spelling out STAMP_FORMAT here raises
+        # "badly formed help string" on Python 3.14.
         help=(
             "Only rows with monitoring_timestamp <= this value are migrated. "
-            "Set it to the moment the UTC-writing pipeline first ran, in the "
-            f"old local format ({STAMP_FORMAT})."
+            "Give it on the old local clock, as 'YYYY-MM-DD HH:MM' - the stored "
+            "values it is compared against are still local-time strings."
         ),
     )
     parser.add_argument(
