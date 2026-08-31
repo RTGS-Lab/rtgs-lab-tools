@@ -1,0 +1,293 @@
+Loaded 50000 raw rows from raw_data.csv
+Dropped 7932 exact duplicate rows -> 42068
+
+==============================================================================
+STEP 1  family detection
+==============================================================================
+                               rows  nodes
+event         family                      
+CSV           gems_csv          160      2
+              zentra_csv        785      7
+Data          gems_csv          522     12
+              headerless_csv     87      1
+data/v2       NaN              2491     24
+diagnostic/v2 NaN              4574     24
+error/v2      NaN              1883     24
+json          campbell_json   31030     15
+metadata/v2   NaN               536     24 
+
+==============================================================================
+STEP 2  parse to normalized measurements
+==============================================================================
+packets parsed : 32584
+packets skipped: 9484  {'diagnostic/v2': 4574, 'data/v2': 2491, 'error/v2': 1883, 'metadata/v2': 536}
+packets failed : 0
+by family      : {'gems_csv': 682, 'zentra_csv': 785, 'campbell_json': 31030, 'headerless_csv': 87}
+measurements   : 72903 kept of 459964 seen (15.8%)
+parse time     : 26.7s
+
+  !! headerless packets - no schema available, NOT parsed:
+     e00fce68963fa0b8f3fc6ece: 87 packets
+
+--- sample normalized rows, one per family ---
+
+[gems_csv]
+                 node_id device_family  device_type device_position measurement_name       value unit
+e00fce68f7c617443044280d      gems_csv ParticleTime             [0]             TIME  1784848806 None
+e00fce68f7c617443044280d      gems_csv        SHTC3             [0]         HUMIDITY   28.184509 None
+e00fce68f7c617443044280d      gems_csv      PAC1720             [0]        VOLTAGE_2    3.808594 None
+e00fce68f7c617443044280d      gems_csv      PAC1720             [0]        CURRENT_2  200.830276 None
+
+[zentra_csv]
+ node_id device_family device_type device_position   measurement_name         value unit
+z6-34014    zentra_csv      Logger            None      timestamp_utc  1784851200.0 None
+z6-34014    zentra_csv     Battery             [7]    Battery Percent         100.0    %
+z6-34014    zentra_csv     Battery             [7]    Battery Voltage        8079.0   mV
+z6-34014    zentra_csv   Barometer             [8] Logger Temperature          98.4   °F
+
+[campbell_json]
+         node_id device_family    device_type device_position  measurement_name               value  unit
+      mda_becker campbell_json CampbellLogger            None BATT_hourly_min_V               13.41   vdc
+      mda_becker campbell_json CampbellLogger            None         TIMESTAMP 2026-07-23 18:00:00  None
+      mda_becker campbell_json CampbellLogger            None            RECORD               47232  None
+wcroc_campbell_1 campbell_json CampbellLogger            None         BattV_Avg            13.58387 Volts
+
+[headerless_csv]
+                 node_id  device_family device_type device_position measurement_name value unit
+e00fce68963fa0b8f3fc6ece headerless_csv     Unknown            None  __unparseable__  None None
+e00fce68963fa0b8f3fc6ece headerless_csv     Unknown            None  __unparseable__  None None
+e00fce68963fa0b8f3fc6ece headerless_csv     Unknown            None  __unparseable__  None None
+e00fce68963fa0b8f3fc6ece headerless_csv     Unknown            None  __unparseable__  None None
+
+==============================================================================
+STEP 3  collapse to one monitoring record per node
+==============================================================================
+
+mda_becker  [Campbell Scientific]  23 packets / 1 schema(s)
+  device clock : 2026-07-24 16:00:00
+  Battery                 13.39  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              47254.0        <- RECORD(RN)
+
+mda_clarissa  [Campbell Scientific]  23 packets / 1 schema(s)
+  device clock : 2026-07-24 16:00:00
+  Battery                 13.53  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              58415.0        <- RECORD(RN)
+
+mda_hubbard  [Campbell Scientific]  30 packets / 1 schema(s)
+  device clock : 2026-07-24 15:00:00
+  Battery                 13.42  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              59856.0        <- RECORD(RN)
+
+mda_little_falls  [Campbell Scientific]  22 packets / 1 schema(s)
+  device clock : 2026-07-24 15:00:00
+  Battery                 13.48  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              58686.0        <- RECORD(RN)
+
+mda_otter_tail  [Campbell Scientific]  21 packets / 1 schema(s)
+  device clock : 2026-07-24 15:00:00
+  Battery                 13.46  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              55297.0        <- RECORD(RN)
+
+mda_parkers_prairie  [Campbell Scientific]  22 packets / 1 schema(s)
+  device clock : 2026-07-24 15:00:00
+  Battery                 13.36  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              55302.0        <- RECORD(RN)
+
+mda_perham  [Campbell Scientific]  30285 packets / 2 schema(s)
+  device clock : 2026-07-24 16:00:00
+  Battery                 13.45  V     <- BATT_Min(unitless)  gated by battery_voltage_min
+  Record #             192304.0        <- RECORD(RN)
+
+mda_pine_point  [Campbell Scientific]  23 packets / 1 schema(s)
+  device clock : 2026-07-24 16:00:00
+  Battery                 13.46  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              36752.0        <- RECORD(RN)
+
+mda_rice  [Campbell Scientific]  22 packets / 1 schema(s)
+  device clock : 2026-07-24 14:00:00
+  Battery                  13.9  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              58680.0        <- RECORD(RN)
+
+mda_staples  [Campbell Scientific]  23 packets / 1 schema(s)
+  device clock : 2026-07-24 16:00:00
+  Battery                 13.46  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              58400.0        <- RECORD(RN)
+
+mda_wadena  [Campbell Scientific]  23 packets / 1 schema(s)
+  device clock : 2026-07-24 16:00:00
+  Battery                 13.31  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              55304.0        <- RECORD(RN)
+
+mda_westport  [Campbell Scientific]  22 packets / 1 schema(s)
+  device clock : 2026-07-24 15:00:00
+  Battery                 13.38  V     <- BATT_hourly_min_V(vdc)  gated by battery_voltage_min
+  Record #              46398.0        <- RECORD(RN)
+
+nwroc_campbell_1  [Campbell Scientific]  202 packets / 2 schema(s)
+  device clock : 2026-07-24 22:00:00
+  Battery                 13.51  V     <- BattV_Avg(Volts)  gated by battery_voltage_min
+  Record #              18527.0        <- RECORD(RN)
+
+rroc_campbell_1  [Campbell Scientific]  201 packets / 2 schema(s)
+  device clock : 2026-07-24 22:00:00
+  Battery                 13.59  V     <- BattV_Avg(Volts)  gated by battery_voltage_min
+  Record #              18536.0        <- RECORD(RN)
+
+wcroc_campbell_1  [Campbell Scientific]  88 packets / 1 schema(s)
+  device clock : 2026-07-24 21:45:00
+  Battery               13.5027  V     <- BattV_Avg(Volts)  gated by battery_voltage_min
+  Panel temp            27.5296  C     <- PTemp_C_Avg(Deg C)
+  Record #             167330.0        <- RECORD(RN)
+
+e00fce6818edcccfdf639718  [GEMS v3 (CSV)]  88 packets / 1 schema(s)
+  device clock : 2026-07-24 21:26:48
+  Battery                3.9258  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current       125.812  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        28.8513  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce681f09d908f69a8c26  [GEMS v3 (CSV)]  88 packets / 1 schema(s)
+  device clock : 2026-07-24 21:25:33
+  Battery                4.0625  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current      100.8059  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        29.4144  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce683130d013246034f3  [GEMS v3 (CSV)]  80 packets / 1 schema(s)
+  device clock : 2026-07-24 21:49:48
+  Battery                4.1797  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current        33.602  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        99.9985  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce6838e177a52f4d6c93  [GEMS v3 (CSV)]  88 packets / 1 schema(s)
+  device clock : 2026-07-24 21:26:20
+  Battery                3.9648  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current      113.3089  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        33.2474  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce683e5ae3a32bfbda48  [GEMS v3 (CSV)]  87 packets / 1 schema(s)
+  device clock : 2026-07-24 21:55:33
+  Battery                3.9062  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current      122.6862  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        30.6961  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce684b197e6f48ddf33d  [GEMS v3 (CSV)]  80 packets / 1 schema(s)
+  device clock : 2026-07-24 21:20:28
+  Battery                4.1797  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current       44.5421  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        65.3976  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+  error        : SENSOR_772 on Hedorah-NDIR [0]  count=240  cols=3
+
+e00fce685a43aea637a43233  [GEMS v3 (CSV)]  88 packets / 1 schema(s)
+  device clock : 2026-07-24 22:01:52
+  Battery                4.1602  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current      119.5604  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        30.0964  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce6875cb37f1dcac0bf3  [GEMS v3 (CSV)]  84 packets / 1 schema(s)
+  device clock : 2026-07-24 21:29:45
+  Battery                3.8867  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current      104.7131  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        27.4643  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce689412be3def2e1c4d  [GEMS v3 (CSV)]  88 packets / 1 schema(s)
+  device clock : 2026-07-24 21:10:11
+  Battery                3.9648  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current      119.5604  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity         28.952  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce68b2fde1259d4df343  [GEMS v3 (CSV)]  85 packets / 1 schema(s)
+  device clock : 2026-07-24 22:03:32
+  Battery                4.1211  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current      192.2344  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        25.4486  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce68c5d8d053cbdcd58a  [GEMS v3 (CSV)]  88 packets / 1 schema(s)
+  device clock : 2026-07-24 21:39:51
+  Battery                4.0039  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current      125.0305  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        37.3642  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce68ca7638ac52af8092  [GEMS v3 (CSV)]  88 packets / 1 schema(s)
+  device clock : 2026-07-24 21:57:37
+  Battery                3.9453  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current       118.779  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        27.2079  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce68f7c617443044280d  [GEMS v3 (CSV)]  88 packets / 1 schema(s)
+  device clock : 2026-07-24 21:23:01
+  Battery                3.8086  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current      200.8303  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        28.5767  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce68fb147ccfb4834e01  [GEMS v3 (CSV)]  75 packets / 1 schema(s)
+  device clock : 2026-07-24 19:30:43
+  Battery                3.7305  V     <- PAC1720.0.VOLTAGE_2  gated by battery_voltage_min
+  Battery current       55.4823  mA    <- PAC1720.0.CURRENT_2
+  Inbox humidity        28.9352  %     <- SHTC3.0.HUMIDITY  gated by inbox_humidity_max
+
+e00fce68963fa0b8f3fc6ece  [Unknown schema (headerless CSV)]  87 packets / 1 schema(s)
+  device clock : (none)
+  metrics      : NONE -> staleness-only monitoring
+
+z6-07819  [METER ZL6 / ATMOS 41]  260 packets / 1 schema(s)
+  device clock : 2026-07-24 21:10:00
+  Battery                 8.428  V     <- Battery Voltage (mV) Battery P7  gated by battery_voltage_min
+  Battery %               100.0  %     <- Battery Percent (%) Battery P7  gated by battery_percent_min
+  Logger temp              86.0  F     <- Logger Temperature (°F) Barometer P8
+
+z6-07820  [METER ZL6 / ATMOS 41]  86 packets / 1 schema(s)
+  device clock : 2026-07-24 21:00:00
+  Battery                 8.459  V     <- Battery Voltage (mV) Battery P7  gated by battery_voltage_min
+  Battery %               100.0  %     <- Battery Percent (%) Battery P7  gated by battery_percent_min
+  Logger temp              83.0  F     <- Logger Temperature (°F) Barometer P8
+
+z6-31983  [METER ZL6 / ATMOS 41]  91 packets / 2 schema(s)
+  device clock : 2026-07-24 21:30:00
+  Battery                 7.951  V     <- Battery Voltage (mV) Battery P7  gated by battery_voltage_min
+  Battery %               100.0  %     <- Battery Percent (%) Battery P7  gated by battery_percent_min
+  Logger temp              90.4  F     <- Logger Temperature (°F) Barometer P8
+  Tilt                      2.0  deg   <- Tilt Angle (°) ATMOS 41 G2 P1  gated by tilt_angle_max
+
+z6-31984  [METER ZL6 / ATMOS 41]  85 packets / 1 schema(s)
+  device clock : 2026-07-24 21:00:00
+  Battery                 8.382  V     <- Battery Voltage (mV) Battery P7  gated by battery_voltage_min
+  Battery %               100.0  %     <- Battery Percent (%) Battery P7  gated by battery_percent_min
+  Logger temp              84.6  F     <- Logger Temperature (°F) Barometer P8
+  Tilt                      0.3  deg   <- Tilt Angle (°) ATMOS 41 G2 P1  gated by tilt_angle_max
+
+z6-34014  [METER ZL6 / ATMOS 41]  86 packets / 1 schema(s)
+  device clock : 2026-07-24 21:00:00
+  Battery                 8.122  V     <- Battery Voltage (mV) Battery P7  gated by battery_voltage_min
+  Battery %               100.0  %     <- Battery Percent (%) Battery P7  gated by battery_percent_min
+  Logger temp             117.0  F     <- Logger Temperature (°F) Barometer P8
+  Tilt                      0.7  deg   <- Tilt Angle (°) ATMOS 41 G2 P1  gated by tilt_angle_max
+
+z6-34015  [METER ZL6 / ATMOS 41]  87 packets / 1 schema(s)
+  device clock : 2026-07-24 21:30:00
+  Battery                 8.393  V     <- Battery Voltage (mV) Battery P7  gated by battery_voltage_min
+  Battery %               100.0  %     <- Battery Percent (%) Battery P7  gated by battery_percent_min
+  Logger temp              93.1  F     <- Logger Temperature (°F) Barometer P8
+  Tilt                      1.4  deg   <- Tilt Angle (°) ATMOS 41 G2 P1  gated by tilt_angle_max
+
+z6-37100  [METER ZL6 / ATMOS 41]  90 packets / 2 schema(s)
+  device clock : 2026-07-24 22:00:00
+  Battery                 8.132  V     <- Battery Voltage (mV) Battery P7  gated by battery_voltage_min
+  Battery %               100.0  %     <- Battery Percent (%) Battery P7  gated by battery_percent_min
+  Logger temp              87.9  F     <- Logger Temperature (°F) Barometer P8
+  Tilt                      1.0  deg   <- Tilt Angle (°) ATMOS 41 G2 P1  gated by tilt_angle_max
+
+==============================================================================
+STEP 4  what a Monitoring row would look like (Option B)
+==============================================================================
+  node_id         z6-07819
+  device_family   zentra_csv
+  metrics         [{"key": "battery_voltage", "label": "Battery", "value": 8.428, "unit": "V", "threshold_key": "battery_voltage_min", "source": "Battery Voltage (mV) Battery P7", "packets_ago": 0, "measured_at": "2026-07-24T21:10:00", "stale_seconds": 0}, {"key": "battery_percent", "label": "Battery %", "value": 100.0, "unit": "%", "threshold_key": "battery_percent_min", "source": "Battery Percent (%) Battery P7", "packets_ago": 0, "measured_at": "2026-07-24T21:10:00", "stale_seconds": 0}, {"key": "logger_temperature", "label": "Logger temp", "value": 86.0, "unit": "F", "threshold_key": null, "source": "Logger Temperature (\u00b0F) Barometer P8", "packets_ago": 0, "measured_at": "2026-07-24T21:10:00", "stale_seconds": 0}]
+  errors          []
+
+==============================================================================
+COVERAGE SUMMARY
+==============================================================================
+  nodes in file          : 61
+  nodes with a record    : 37
+  nodes with any metric  : 36
+  nodes with battery     : 36
+  staleness-only nodes   : 1
