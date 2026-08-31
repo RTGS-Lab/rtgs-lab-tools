@@ -1,0 +1,56 @@
+{
+  "project": "Winter Turf - v3",
+  "days_back": 7,
+  "resample": "15min",
+  "fig_w": 13,
+  "fig_h": 5,
+  "ctrl_device": "WinterTurf_Type_A_65",
+  "cleaning": {
+    "iqr_filter": true,
+    "iqr_multiplier": 3.0
+  },
+  "nodes": [
+    {
+      "node_id": "e00fce681e37a01973a2a02e",
+      "device_name": "WinterTurf_Type_A_40",
+      "nickname": "Node 40 (V3)",
+      "color": "#9467bd"
+    },
+    {
+      "node_id": "e00fce6803efd010cc6e2a8e",
+      "device_name": "WinterTurf_Type_A_64",
+      "nickname": "Node 64 (V3)",
+      "color": "#8c564b"
+    },
+    {
+      "node_id": "e00fce68cf4d968d5f0bb856",
+      "device_name": "WinterTurf_Type_A_65",
+      "nickname": "Node 65 (Control)",
+      "color": "#1f77b4"
+    },
+    {
+      "node_id": "e00fce681c40100f788039b6",
+      "device_name": "WinterTurf_Type_A_88",
+      "nickname": "Node 88 (V1)",
+      "color": "#ff7f0e"
+    },
+    {
+      "node_id": "e00fce68d7ecce60cbfa0453",
+      "device_name": "WinterTurf_Type_A_89",
+      "nickname": "Node 89 (V2)",
+      "color": "#2ca02c"
+    },
+    {
+      "node_id": "e00fce68ad44d478e2adcbeb",
+      "device_name": "WinterTurf_Type_A_38",
+      "nickname": "Node 38 (V3.1)",
+      "color": "#ff0008"
+    },
+    {
+      "node_id": "e00fce6835dd88f4dae03f61",
+      "device_name": "Device_Node_45_V3.1",
+      "nickname": "Node 45 (V3.1)",
+      "color": "#4af0b0"
+    }
+  ]
+}
