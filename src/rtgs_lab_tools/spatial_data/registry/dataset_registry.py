@@ -181,6 +181,290 @@ MN_GEOSPATIAL_DATASETS = {
         },
         "crosswalk_rows": [34],
     },
+    # ------------------------------------------------------------------
+    # Added 2026-09-21 from Meaghan Dietrich's easement-scoring-to-registry
+    # crosswalk. Every download_url below returned HTTP 200 on 2026-09-21.
+    # ------------------------------------------------------------------
+    "state_administered_lands": {
+        "description": (
+            "State Administered Lands - DNR Management Units. Lands acquired, "
+            "administered or managed by MN DNR: WMAs, SNAs, AMAs, State Forests, "
+            "State Parks and Waysides in one layer."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gisdata.mn.gov/dataset/bdry-dnr-managed-areas",
+        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/bdry_dnr_managed_areas/gpkg_bdry_dnr_managed_areas.zip",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "yearly",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "last_updated": "2026-09-20",
+        # Crosswalk rows 5, 6, 9 propose collapsing wildlife_areas,
+        # scientific_and_natural_areas and aquatic_areas into this one layer.
+        # Added alongside them, not in place of them: those three carry
+        # expected_features integrity checks that would be lost on deletion.
+        "consolidates": ["wildlife_areas", "scientific_and_natural_areas", "aquatic_areas"],
+        "consolidation_status": "candidate - verify feature-type coverage before retiring the three",
+        "crosswalk_rows": [5, 6, 9],
+    },
+    "regionally_significant_ecological_areas": {
+        "description": (
+            "Regionally Significant Ecological Areas - Imagine 2050. Terrestrial and "
+            "wetland ecological areas in and around the 7-county Twin Cities metro, "
+            "built to support Met Council comprehensive planning."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gisdata.mn.gov/dataset/us-mn-state-metc-plan-img2050-significantecoareas",
+        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_metc/plan_img2050_significantecoareas/gpkg_plan_img2050_significantecoareas.zip",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "data_source": "Metropolitan Council",
+        "published": "2025-08-11",
+        "last_updated": "2026-05-13",
+        # ------------------------------------------------------------------
+        # IMPORTANT. Crosswalk row 10 asks to "Remove all MLCCS / replace with
+        # Imagine 2050". This layer is NOT a replacement for land_cover (MLCCS).
+        # It is DOWNSTREAM of it. Met Council's own FGDC metadata lists the
+        # lineage below, and DNR's RSEA page states "2008: Updated assessment
+        # using MLCCS data". A public layer named "MLCCS Regionally Significant
+        # Ecological Areas 2008" exists on the Commons.
+        #
+        # It also does not carry M_34X (the MLCCS native plant community quality
+        # grade), which is what rows 10, 15 and 17 actually score on.
+        # ------------------------------------------------------------------
+        "derived_from_external": [
+            "DNR RSEA 2008",
+            "DNR RSEA 2014",
+            "MLCCS (2011 Natural Land Cover Dataset used only where MLCCS unavailable)",
+            "National Wetlands Inventory 2019",
+            "Met Council Generalized Land Use 2020 (development mask)",
+            "Regional Planned Land Use 2025",
+        ],
+        "not_a_replacement_for": "land_cover",
+        "crosswalk_rows": [10],
+    },
+    "mlccs_npc_prediction": {
+        "description": (
+            "MLCCS/NPC model prediction layer - Random Forest prediction of MLCCS / "
+            "Native Plant Community class for the 7-county metro."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gisdata.mn.gov/dataset/biota-mlccs-npc-model-results",
+        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/biota_mlccs_npc_model_results/gpkg_biota_mlccs_npc_model_results.zip",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "last_updated": "2026-09-16",
+        # Proposed at crosswalk rows 15 and 17 as the "MLCCS substitute". Note it
+        # is itself an MLCCS product - a prediction of MLCCS classes - so it does
+        # not support row 10's "remove all MLCCS".
+        "relates_to": "land_cover",
+        "crosswalk_rows": [15, 17],
+    },
+    "swap_habitats": {
+        "description": (
+            "State Wildlife Action Plan Habitats - statewide coverage of habitats for "
+            "Species in Greatest Conservation Need, supporting the 2025-2035 Minnesota "
+            "Wildlife Action Plan."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gisdata.mn.gov/dataset/env-swap-habitats",
+        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/env_swap_habitats/gpkg_env_swap_habitats.zip",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "last_updated": "2026-05-13",
+        # Proposed at crosswalk row 13 as an MLCCS substitute for habitat quality
+        # ranking. Its own lineage is DNR Native Plant Communities, stream routes,
+        # shallow lakes, lake basin morphology, NWI and the USFWS Midwest
+        # Terrestrial Habitat System - it carries no M_34X-equivalent quality grade.
+        "crosswalk_rows": [13],
+    },
+    "conservation_opportunity_areas": {
+        "description": (
+            "State Wildlife Action Plan - Conservation Opportunity Areas (COAs). "
+            "Priority areas for implementing Minnesota's Wildlife Action Plan "
+            "2025-2035, where high biodiversity and active partnerships overlap."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gisdata.mn.gov/dataset/env-swap-coa",
+        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/env_swap_coa/gpkg_env_swap_coa.zip",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "last_updated": "2026-09-16",
+        # NOT the same as the older SNA/Marxan "MNDNR SNA Conservation Opportunity
+        # Areas" layer (env-sna-conserv-opportunity-area), which targets SNA
+        # acquisition and is also still live. Do not conflate the two.
+        "not_to_be_confused_with": "env-sna-conserv-opportunity-area (SNA/Marxan acquisition layer)",
+        "crosswalk_rows": [37],
+    },
+    "public_waters_basins_watercourses": {
+        "description": (
+            "DNR Public Waters (PW) Basin and Watercourse Delineations - regulatory "
+            "delineations digitized from the scanned Public Waters Inventory (PWI) "
+            "maps, including shoreland classifications."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gisdata.mn.gov/dataset/water-mn-public-waters",
+        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/water_mn_public_waters/gpkg_water_mn_public_waters.zip",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "continuous",
+        "spatial_type": "multipolygon",
+        "model_critical": True,
+        "coordinate_system": "EPSG:26915",
+        "last_updated": "2026-09-20",
+        # One dataset serving three crosswalk rows: 27 (Risk of Conversion
+        # exclusion), 30 (shoreland buffer from watercourses), 31 (shoreland
+        # buffer from basins). It is the missing INPUT behind shoreland_buffers.
+        "feeds": ["shoreland_buffers"],
+        "open_question": (
+            "Meaghan flags that PWI basins include public-water wetlands that are "
+            "largely redundant with NWI; a de-duplication rule is still needed."
+        ),
+        "crosswalk_rows": [27, 30, 31],
+    },
+    "nwi_wetlands": {
+        "description": (
+            "USFWS National Wetlands Inventory - seamless wetlands and deepwater "
+            "habitat data, Minnesota state extract."
+        ),
+        "source_type": "direct_download",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://www.fws.gov/program/national-wetlands-inventory/download-state-wetlands-data",
+        "download_url": "https://documentst.ecosphere.fws.gov/wetlands/data/State-Downloads/MN_geopackage_wetlands.zip",
+        "download_url_gdb": "https://documentst.ecosphere.fws.gov/wetlands/data/State-Downloads/MN_geodatabase_wetlands.zip",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "unknown",  # determine during extraction
+        "data_source": "U.S. Fish and Wildlife Service",
+        # Crosswalk row 26 asks to "replace by the regular NWI - include
+        # everything". Registered as ADDITIVE to hennepin_wetland_inventory: HCWI's
+        # LEGEND field distinguishes "Probable Wetland - HCWI" from "Probable
+        # Wetland - NWI", so a straight swap discards Hennepin's own delineation.
+        "additive_to": "hennepin_wetland_inventory",
+        "crosswalk_rows": [26],
+    },
+    "pad_us": {
+        "description": (
+            "USGS PAD-US 4.1 - Protected Areas Database of the United States, "
+            "Minnesota state extract. National inventory of terrestrial and marine "
+            "protected areas."
+        ),
+        "source_type": "direct_download",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://www.sciencebase.gov/catalog/item/6759abcfd34edfeb8710a004",
+        "download_url": "https://sciencebase.usgs.gov/manager/download/cm8rlfcwt001w0uphfpod8hzi",
+        "access_method": "download",
+        "file_format": "filegdb",  # PADUS4_1_State_MN_GDB_KMZ.zip, ~213.6 MB
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "unknown",  # determine during extraction
+        "data_source": "U.S. Geological Survey Gap Analysis Project",
+        "version": "4.1",
+        "last_updated": "2025-03-27",
+        # Crosswalk rows 29 and 39. CAVEAT: PAD-US aggregates public and NGO
+        # holdings from the same state sources already registered. It does NOT
+        # contain Hennepin County, Minnesota Land Trust or BWSR conservation
+        # easements, so it does not substitute for the row 2 delivery.
+        "does_not_cover": "Hennepin County / MLT / BWSR conservation easements (crosswalk row 2)",
+        "crosswalk_rows": [29, 39],
+    },
+    "usfws_national_realty_boundaries": {
+        "description": (
+            "USFWS National Realty Boundaries - external boundary of all FWS "
+            "administered lands and waters: National Wildlife Refuges, fish "
+            "hatcheries, administrative sites and other conservation areas."
+        ),
+        "source_type": "rest_api",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis-fws.opendata.arcgis.com/datasets/fws::fws-national-realty-boundaries",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:4326",  # determine during extraction
+        "data_source": "U.S. Fish and Wildlife Service",
+        # Crosswalk row 3 replaces the dead 2020 link
+        # (fws.gov/gis/data/CadastralDB/links_cadastral.html) with this. No single
+        # static download URL: it is an ArcGIS Hub item exported on demand.
+        "service_url": None,  # [NEEDS CONFIRM] exact FeatureServer endpoint
+        "notes": (
+            "Hub item confirmed live 2026-09-21; the specific FeatureServer layer id "
+            "and whether any refuge unit intersects Hennepin County are unconfirmed."
+        ),
+        "crosswalk_rows": [3],
+    },
+    "tnc_resilient_lands": {
+        "description": (
+            "TNC Resilient and Connected Network (customized detailed) - modelled "
+            "climate-resilience and connectivity network. Distinct from TNC_lands, "
+            "which is ownership."
+        ),
+        "source_type": "rest_api",
+        "extractor_class": "MNGeospatialExtractor",
+        "service_url": "https://tiles.arcgis.com/tiles/F7DSX1DSNSiWmOqh/arcgis/rest/services/Resilient_and_Connected_Network_TNC_Customized_Detailed/MapServer",
+        "access_method": "rest_api",
+        "file_format": "mapserver",
+        "update_frequency": "periodic",
+        "spatial_type": "raster",
+        "model_critical": False,
+        "coordinate_system": "EPSG:3857",  # determine during extraction
+        "data_source": "The Nature Conservancy",
+        # Service URL supplied by Hennepin in crosswalk row 38 and used as given.
+        "url_provenance": "crosswalk row 38 (Meaghan Dietrich), not independently discovered",
+        "crosswalk_rows": [38],
+    },
+    "midwest_conservation_blueprint": {
+        "description": (
+            "Midwest Conservation Blueprint 2026 - basemap of priority lands and "
+            "waters for conservation in the Midwest, combining 20+ social and "
+            "environmental values."
+        ),
+        "source_type": "rest_api",
+        "extractor_class": "MNGeospatialExtractor",
+        "service_url": "https://tiledimageservices.arcgis.com/QVENGdaPbd4LUkLV/arcgis/services/Midwest_Conservation_Blueprint_2026/ImageServer",
+        "access_method": "rest_api",
+        "file_format": "imageserver",
+        "update_frequency": "periodic",
+        "spatial_type": "raster",
+        "model_critical": False,
+        "coordinate_system": "unknown",  # determine during extraction
+        "version": "2026",
+        # Service URL supplied by Hennepin in crosswalk row 40 and used as given.
+        # Hennepin has not decided whether this is a model input or a toggleable
+        # display layer; registered either way.
+        "url_provenance": "crosswalk row 40 (Meaghan Dietrich), not independently discovered",
+        "usage_undecided": "model input vs interactive-map display layer (crosswalk row 40)",
+        "crosswalk_rows": [40],
+    },
 }
 
 # Hennepin County File Geodatabase (FGDB) datasets
