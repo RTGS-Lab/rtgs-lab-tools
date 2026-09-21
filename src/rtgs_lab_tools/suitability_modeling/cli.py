@@ -313,12 +313,23 @@ def _load_datasets(path_str: str) -> Dict[str, "gpd.GeoDataFrame"]:
     type=click.Choice(["geoparquet", "shapefile", "geojson", "csv"]),
     help="Override output format from config",
 )
+@click.option(
+    "--id-column",
+    "-i",
+    default=None,
+    help=(
+        "Identifier column to carry into the output (e.g. CTU_NAME). "
+        "Overrides id_column from config. Without it the output is unnamed "
+        "polygons, which is rarely what you want."
+    ),
+)
 @click.pass_context
 def run_config_command(
     ctx,
     config_file: str,
     output_dir: Optional[str],
     output_format: Optional[str],
+    id_column: Optional[str],
 ):
     """Run suitability analysis from a YAML configuration file.
 
@@ -328,6 +339,7 @@ def run_config_command(
       model_spec_path: path/to/model.yaml  (or inline model_spec)
       output_dir: ./results
       output_format: geoparquet
+      id_column: CTU_NAME          # optional; keeps names on the output rows
       grid:
         cell_size: 100
         max_cells: 50000
@@ -341,7 +353,7 @@ def run_config_command(
         with open(config_file, "r") as f:
             config = yaml.safe_load(f)
 
-        _run_config_pipeline(config, output_dir, output_format)
+        _run_config_pipeline(config, output_dir, output_format, id_column)
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
@@ -353,6 +365,7 @@ def _run_config_pipeline(
     config: dict,
     output_dir_override: Optional[str],
     output_format_override: Optional[str],
+    id_column_override: Optional[str] = None,
 ) -> None:
     """Run the suitability pipeline from a config dict."""
     from ..spatial_data.core.extractor import extract_from_path
@@ -402,8 +415,14 @@ def _run_config_pipeline(
     # Execute
     final_output_dir = output_dir_override or config.get("output_dir", "./results")
     final_output_format = output_format_override or config.get("output_format", "geoparquet")
+    # Without this the output is unnamed polygons: execute_model has always
+    # accepted id_column, but run-config never passed it, so the identifier was
+    # silently dropped and had to be joined back on afterwards.
+    final_id_column = id_column_override or config.get("id_column")
 
     click.echo("Executing model...")
+    if final_id_column:
+        click.echo(f"  Identifier column: {final_id_column}")
     results = execute_model(
         model_spec=model_spec,
         datasets=datasets,
@@ -411,6 +430,7 @@ def _run_config_pipeline(
         analysis_units=analysis_units,
         output_dir=final_output_dir,
         output_format=final_output_format,
+        id_column=final_id_column,
     )
 
     click.echo()

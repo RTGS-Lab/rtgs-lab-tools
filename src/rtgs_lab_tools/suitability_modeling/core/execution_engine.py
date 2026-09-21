@@ -242,10 +242,8 @@ class SuitabilityEngine:
                 f"Analysis unit type '{analysis_config.type}' requires a dataset name"
             )
 
-        if dataset_name not in self.datasets:
-            raise ValueError(
-                f"Analysis units dataset '{dataset_name}' not found in loaded datasets"
-            )
+        # Tolerates the FGDB's _ANALYSIS suffix; raises with the available names.
+        dataset_name = self._resolve_dataset_name(dataset_name)
 
         units_gdf = self.datasets[dataset_name].copy()
 
@@ -269,6 +267,45 @@ class SuitabilityEngine:
         logger.info(f"  Using {len(units_gdf)} analysis units from {dataset_name}")
         return units_gdf
 
+    @staticmethod
+    def _normalize_dataset_name(name: str) -> str:
+        """Fold the naming conventions that mean the same layer."""
+        return name.lower().removesuffix("_analysis")
+
+    def _resolve_dataset_name(self, name: str) -> str:
+        """Resolve a model-spec dataset name to an actual key in self.datasets.
+
+        Model specifications use bare names (`protected_areas`, `MBS`), but the
+        Hennepin FGDB delivers the same layers with an `_ANALYSIS` suffix and
+        different capitalisation (`Protected_Areas_ANALYSIS`, `MBS_ANALYSIS`).
+        Pointing the CLI at a raw `.gdb` therefore raised a bare `KeyError` that
+        named no alternatives, which is a slow thing to debug.
+
+        Resolution order: exact match, then a case-insensitive match ignoring an
+        `_ANALYSIS` suffix on either side. An ambiguous match is an error rather
+        than a silent pick.
+        """
+        if name in self.datasets:
+            return name
+
+        target = self._normalize_dataset_name(name)
+        matches = [k for k in self.datasets if self._normalize_dataset_name(k) == target]
+
+        if len(matches) == 1:
+            logger.info(f"  Resolved dataset '{name}' -> '{matches[0]}'")
+            return matches[0]
+
+        if len(matches) > 1:
+            raise ValueError(
+                f"Dataset name '{name}' is ambiguous - it matches "
+                f"{sorted(matches)}. Rename the layers or use an exact name."
+            )
+
+        raise ValueError(
+            f"Dataset '{name}' not found in loaded datasets. "
+            f"Available: {sorted(self.datasets)}"
+        )
+
     def _calculate_criterion_score(
         self, study_area: gpd.GeoDataFrame, criterion: "ModelCriterion"
     ) -> np.ndarray:
@@ -281,7 +318,7 @@ class SuitabilityEngine:
         Returns:
             Array of scores (0-10 scale)
         """
-        dataset = self.datasets[criterion.dataset_name]
+        dataset = self.datasets[self._resolve_dataset_name(criterion.dataset_name)]
         scoring_func = criterion.scoring_function
 
         logger.info(f"  Scoring: {criterion.criterion_name}")
