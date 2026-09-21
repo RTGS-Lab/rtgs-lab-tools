@@ -7,6 +7,17 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+# Model used for model-specification design.
+#
+# Was hardcoded inline as "claude-sonnet-4-20250514", which is deprecated
+# (retirement date TBD) — a live dependency on a model on its way out, and an
+# awkward thing to discover mid-demo. Current Sonnet is "claude-sonnet-5";
+# current model IDs carry no date suffix.
+#
+# Override per-run with RTGS_CLAUDE_MODEL without touching the source, which is
+# the fast path if a model is retired or a different tier is wanted.
+DEFAULT_MODEL = os.environ.get("RTGS_CLAUDE_MODEL", "claude-sonnet-5")
+
 
 def _add_additional_properties_false(schema: dict) -> dict:
     """Recursively add 'additionalProperties': false to all object types in a JSON schema.
@@ -109,10 +120,7 @@ class ClaudeClient:
         json_schema = _add_additional_properties_false(json_schema)
 
         response = self.client.messages.create(
-            model="claude-sonnet-4-20250514",
-            # Use cheaper model
-            # Haiku 3.5(?)
-            # DeepSeek maybe?? Smaller model??
+            model=DEFAULT_MODEL,
             max_tokens=4000,
             messages=[{"role": "user", "content": prompt}],
             tools=[{
