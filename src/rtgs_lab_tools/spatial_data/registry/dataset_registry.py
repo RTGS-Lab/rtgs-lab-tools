@@ -70,6 +70,19 @@ MN_GEOSPATIAL_DATASETS = {
         "model_critical": True,
         "coordinate_system": "EPSG:4326",  # Will be determined during extraction
         "expected_features": 383,  # Actual count from test
+        # Crosswalk rows 7 and 8, reviewed 2026-09-21, KEPT AS IS.
+        # Row 7 proposes https://services.arcgis.com/F7DSX1DSNSiWmOqh/arcgis/rest/
+        # services/TNC_Lands_Public_Layer/FeatureServer. The service pinned above is
+        # narrower and better: MN/ND/SD-scoped, vintage-stamped 2024, and matched to
+        # the expected_features check. Kept the registry's.
+        # Row 8 ("TNC Lands (Transferred)"): the separate transferred-lands layer used
+        # by the 2020 model is not distinguished here. Meaghan's read that it is
+        # folded into the broader layer is plausible but unverified.
+        "transferred_lands_status": (
+            "[NEEDS CONFIRM] which attribute marks lands transferred to public "
+            "entities; needed only if the model scored them differently (row 8)"
+        ),
+        "crosswalk_rows": [7, 8],
     },
     "aquatic_areas": {
         "description": "DNR Fisheries Acquisition - Aquatic Management Areas",
@@ -186,6 +199,12 @@ MN_GEOSPATIAL_DATASETS = {
             "values": ["PRIVATE CEMETERIES", "PUBLIC CEMETERIES"],
             "match_type": "any"  # Match if ANY column contains ANY of the values
         },
+        # Crosswalk row 28, reviewed 2026-09-21: NO CHANGE NEEDED. The sheet says
+        # "Can't find a substitute or updated dataset", but nothing is required --
+        # this entry already reproduces the full XUSECLASS1-4 cemetery filter,
+        # enumerates all seven county parcel layers, and the underlying regional
+        # parcels dataset is itself refreshed quarterly. Row closed.
+        "crosswalk_rows": [28],
     },
     "watersheds": {
         "description": "DNR Level 9 Watersheds - Hydrologic Unit Boundaries",
@@ -806,6 +825,221 @@ FGDB_DATASETS = {
         "crosswalk_rows": [21],
     },
 }
+
+
+# ============================================================================
+# Datasets the model needs that CANNOT be acquired yet.
+#
+# These are deliberately kept out of MN_GEOSPATIAL_DATASETS and FGDB_DATASETS so
+# that list_available_datasets() never offers something that cannot be fetched.
+# They are recorded rather than dropped because each one is a live ask with a
+# named owner, and a spreadsheet cell is not a durable place to keep that.
+#
+# Every field below is taken verbatim from Meaghan Dietrich's
+# easement-scoring-to-registry crosswalk (2026-09-16). Nothing is inferred: where
+# the sheet does not say, the value is None.
+# ============================================================================
+
+PENDING_HENNEPIN_DATASETS = {
+    "established_conservation_easements": {
+        "description": "Hennepin County established conservation easements",
+        "owner": "Meaghan Dietrich, Hennepin County",
+        "storage_location": "GIS warehouse",
+        "layer_query": None,
+        "status": "awaiting_delivery",
+        "blocking": ["protected_areas_hc"],
+        "note": (
+            "Compiled database of Hennepin County, Minnesota Land Trust and BWSR "
+            "easements. PAD-US does NOT contain these - it is the one gap no public "
+            "dataset closes. Sheet says 'Need to update regularly'."
+        ),
+        "crosswalk_rows": [2],
+    },
+    "parks_natural_resource_significance": {
+        "description": "Hennepin County Parks of Natural Resource Significance",
+        "owner": "Hennepin County GIS (Meaghan to ask Alex how the layer is generated)",
+        "storage_location": "File network",
+        "layer_query": "NaturalResources_Category <> 'Amenities'",
+        "status": "awaiting_delivery",
+        "blocking": ["protected_areas_hc"],
+        "note": (
+            "Built on the HC parks layer; Kristine identified regionally significant "
+            "parks using standard criteria."
+        ),
+        "crosswalk_rows": [4],
+    },
+    "potential_easements": {
+        "description": "Hennepin County potential easements - the candidate sites the model scores",
+        "owner": "Meaghan Dietrich, Hennepin County",
+        "storage_location": "File network",
+        "layer_query": "Status IN ('Current Applicant', 'On-Hold', 'Selected')",
+        "status": "awaiting_delivery",
+        "blocking": ["the model's analysis units"],
+        "note": (
+            "Highest priority of the pending deliveries: this is the candidate-site "
+            "layer the whole suitability model scores against."
+        ),
+        "crosswalk_rows": [12],
+    },
+    "analysis_easements": {
+        "description": "Hennepin County analysis easements - used for Relative and Absolute Size scoring",
+        "owner": "Meaghan Dietrich, Hennepin County",
+        "storage_location": "Public Works Env. SDE",
+        "layer_query": None,
+        "status": "awaiting_delivery",
+        "blocking": ["Relative Size criterion", "Absolute Size criterion"],
+        "note": (
+            "Sheet names this separately from rows 2 and 12 and stores it in a "
+            "different place (Public Works Env. SDE vs GIS warehouse). Confirm whether "
+            "these are three views of one delivery or three files."
+        ),
+        "crosswalk_rows": [18, 19],
+    },
+    "nhis_rare_features": {
+        "description": "DNR Natural Heritage Information System (NHIS) rare features polygons",
+        "owner": "Minnesota DNR (restricted; Hennepin plans to meet DNR)",
+        "storage_location": "GIS warehouse (restricted)",
+        "layer_query": {
+            "0-1 mile": "name_cat NOT IN ('Other (Ecological)')",
+            "1-3 mile": "name_cat NOT IN ('Other (Ecological)', 'Vascular Plant')",
+        },
+        "status": "access_unresolved",
+        "blocking": ["NHIS Occurrence criterion (both distance bands)"],
+        "note": (
+            "Restricted data by direct request, so no public registry entry is "
+            "possible. Open question: does Hennepin GIS process NHIS into a shareable "
+            "derived product, or does the lab need its own DNR licence? Public viewer "
+            "only: https://osaportal.gisdata.mn.gov/public-map"
+        ),
+        "crosswalk_rows": [20],
+    },
+    "pollinator_suitability": {
+        "description": "Replacement for the Ryan Noe bee pollination habitat layer",
+        "owner": "[NEEDS CONFIRM] Bryan Runck - Meaghan asks directly whether he holds this",
+        "storage_location": None,
+        "layer_query": None,
+        "status": "unresolved",
+        "blocking": ["bee_habitat"],
+        "note": (
+            "Sheet: 'RPBB high potential zones/pollinator suitability analysis (Bryan "
+            "you have this?) abandon unless we can find an equivalent for pollinator "
+            "suitability OR take the bee data as it stands but update to remove any "
+            "land use that is no longer compatible'."
+        ),
+        "crosswalk_rows": [23],
+    },
+    "risk_of_development_inputs": {
+        "description": "Ryan Noe risk-of-development methodology inputs",
+        "owner": "Meaghan Dietrich, Hennepin County",
+        "storage_location": None,
+        "layer_query": None,
+        "status": "awaiting_delivery",
+        "blocking": ["risk_of_development"],
+        "note": (
+            "Sheet: 'Buffer utilities and roads. Sewers etc. -- other simple metrics "
+            "derived from literature.' Inputs are not itemised anywhere in the registry."
+        ),
+        "crosswalk_rows": [24],
+    },
+}
+
+FORTHCOMING_DATASETS = {
+    "conservation_action_network": {
+        "description": (
+            "Conservation Action Network (CAN) - the 2025-2035 Minnesota SWAP "
+            "successor to the 2015 Wildlife Action Network. Adds plants as Species in "
+            "Greatest Conservation Need and rescores cores and connectivity."
+        ),
+        "would_supersede": ["WAN", "wildlife_action_network"],
+        "status": "not_published",
+        "checked": "2026-09-21",
+        "evidence": (
+            "Full-text search of the Minnesota Geospatial Commons / ArcGIS catalog for "
+            "'Conservation Action Network' returns no CAN item. DNR's Wildlife Action "
+            "Plan 2025-2035 page describes CAN conceptually as a spatial prioritization "
+            "tool but gives no availability date. The layer it would replace "
+            "(env-mnwap-wildlife-action-netwrk) was refreshed 2026-09-16 and is not "
+            "retired."
+        ),
+        "shipped_siblings": ["conservation_opportunity_areas", "swap_habitats"],
+        "crosswalk_rows": [21, 42],
+    },
+    "audubon_umrb_dataset": {
+        "description": (
+            "Forthcoming Upper Mississippi River Basin Audubon Chapter dataset; "
+            "Hennepin to obtain it from Audubon on release."
+        ),
+        "would_supersede": [],
+        "status": "not_published",
+        "checked": "2026-09-21",
+        "evidence": (
+            "Sheet says only 'This new dataset is soon to be released by the Audubon "
+            "Society'. Note the Gap Notes text on this row actually describes the CAN, "
+            "not this dataset - a paste slip in the sheet."
+        ),
+        "crosswalk_rows": [41],
+    },
+    "generalized_land_use_2025": {
+        "description": "Met Council Generalized Land Use 2025 (Spring 2025 imagery)",
+        "would_supersede": ["land_use"],
+        "status": "catalogued_not_downloadable",
+        "checked": "2026-09-21",
+        "evidence": (
+            "ArcGIS Hub item c0bca5584e704731880b81c646d5e271 exists, created "
+            "2026-07-24, but carries no download links; the bulk path "
+            "plan_generl_lnduse2025 returns 404. plan_generl_lnduse2020 remains the "
+            "newest downloadable release. Also confirm the product: 'Generalized Land "
+            "Use' (existing use, carries LUSE_DESC) differs from 'Regional Planned "
+            "Land Use' (planned use)."
+        ),
+        "crosswalk_rows": [25],
+    },
+}
+
+
+def get_pending_datasets() -> Dict[str, Dict[str, Any]]:
+    """Datasets the model needs that Hennepin or DNR still has to supply.
+
+    These are NOT acquirable and are deliberately excluded from
+    list_available_datasets(). Each entry names an owner and what it blocks.
+    """
+    return PENDING_HENNEPIN_DATASETS
+
+
+def get_forthcoming_datasets() -> Dict[str, Dict[str, Any]]:
+    """Datasets announced or expected but not yet published anywhere.
+
+    Kept separate from PENDING_HENNEPIN_DATASETS: nobody can send these, they
+    simply do not exist yet. Re-check the `evidence` field's claims periodically.
+    """
+    return FORTHCOMING_DATASETS
+
+
+def format_gaps_for_llm() -> str:
+    """Human-readable summary of what the registry knows it is missing."""
+    output = ["## Awaiting delivery (Hennepin County / DNR)", ""]
+    for name, info in sorted(PENDING_HENNEPIN_DATASETS.items()):
+        output.append(f"- **{name}**: {info['description']}")
+        output.append(f"  - Owner: {info['owner']}")
+        output.append(f"  - Status: {info['status']}")
+        if info.get("layer_query"):
+            output.append(f"  - Query: {info['layer_query']}")
+        if info.get("blocking"):
+            output.append(f"  - Blocks: {', '.join(info['blocking'])}")
+    output.append("")
+    output.append("## Not yet published anywhere")
+    output.append("")
+    for name, info in sorted(FORTHCOMING_DATASETS.items()):
+        output.append(f"- **{name}**: {info['description']}")
+        output.append(f"  - Status: {info['status']} (checked {info['checked']})")
+        if info.get("would_supersede"):
+            output.append(f"  - Would supersede: {', '.join(info['would_supersede'])}")
+    output.append("")
+    output.append(
+        f"**Pending: {len(PENDING_HENNEPIN_DATASETS)} · "
+        f"Forthcoming: {len(FORTHCOMING_DATASETS)}**"
+    )
+    return "\n".join(output)
 
 
 def get_dataset_config(dataset_name: str) -> Optional[Dict[str, Any]]:

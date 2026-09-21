@@ -1,3 +1,25 @@
+# REVIEW NOTE added 2026-09-21 with the easement-scoring-to-registry crosswalk.
+#
+# Two things to settle before this spec is run again. Neither is changed here,
+# because both are Bryan's call, not a bookkeeping fix.
+#
+# 1. The MBS criterion below uses column `Bio_Sig_Sc` with numeric categories
+#    1-4. The sibling spec hennepin_county_conservation_suitability.yaml uses
+#    `biodiv_sig` with Outstanding/High/Moderate/Below, and the registry records
+#    the FGDB score column as `Bio_Sig_Score`. Three names for what should be one
+#    attribute. Which is correct cannot be checked from here: the FGDB is not
+#    available on this machine (RTGS_FGDB_PATH unset). Whichever it is, the
+#    crosswalk (rows 14, 16) says the selection should be
+#    biodiv_sig IN ('Outstanding','High','Moderate') -- so if the numeric coding
+#    is 1=Below, the category '1' mapping below should score 0.0, not 2.0.
+#
+# 2. The `natural_spaces` criterion is the Ecologically Significant Areas layer,
+#    which is a query over MLCCS (registry: natural_spaces.derived_from =
+#    land_cover). Crosswalk row 10 argues it should NOT be a model input,
+#    because it is the kind of output the model is meant to produce -- scoring on
+#    it is close to circular. That argument looks right, but removing a 30%-weight
+#    criterion is a modelling decision. Flagged, not made.
+#
 model_id: hennepin_conservation_suitability
 model_type: weighted_overlay
 objective: Identify suitable areas for natural resource conservation in Hennepin County

@@ -67,8 +67,15 @@ criteria:
         score: 7.0
       - category: Moderate
         score: 4.0
+      # 'Below' scored 0.0, was 1.0. The easement-scoring crosswalk (rows 14 and
+      # 16) records the 2020 model's MBS selection as
+      #   biodiv_sig IN ('Outstanding', 'High', 'Moderate')
+      # i.e. sites of Below biodiversity significance are excluded, not scored
+      # low. Kept as an explicit 0.0 rather than deleted so the intent is visible
+      # and so unmatched-category behaviour does not change silently.
+      # Now mirrored in the registry as MBS_sites.attribute_filter.
       - category: Below
-        score: 1.0
+        score: 0.0
     output_range:
     - 0.0
     - 10.0
