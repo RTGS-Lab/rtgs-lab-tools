@@ -35,8 +35,12 @@ MN_GEOSPATIAL_DATASETS = {
         "model_critical": True,
         "coordinate_system": "unknown",  # Will be determined during extraction
         "data_source": "U.S. Geological Survey",
+        "published_by": "Minnesota Pollution Control Agency (gisdata org path us_mn_state_pca)",
         "temporal_coverage": "1996-2010",
         "units": "inches/year",
+        # Crosswalk row 35 offers an "updated link"; it resolves to this same
+        # dataset. Authored by USGS, published on the Commons under MPCA.
+        "crosswalk_rows": [35],
     },
     "scientific_and_natural_areas": {
         "description": "DNR Scientific and Natural Areas",
@@ -115,6 +119,16 @@ MN_GEOSPATIAL_DATASETS = {
         "spatial_type": "multipolygon",
         "model_critical": True,
         "coordinate_system": "EPSG:26915",
+        "last_updated": "2026-09-16",
+        # Crosswalk row 21 says WAN "can be replaced with CAN". Not yet possible.
+        # The Conservation Action Network is the 2025-2035 SWAP successor to the
+        # 2015 WAN, but as of 2026-09-21 no CAN layer is published on the
+        # Minnesota Geospatial Commons (catalog full-text search returns no CAN
+        # item; DNR's WAP 2025-2035 page describes it without an availability
+        # date). WAN itself is still live and was refreshed 2026-09-16.
+        # Keep scoring on WAN. See FORTHCOMING_DATASETS["conservation_action_network"].
+        "successor_status": "CAN expected, not published as of 2026-09-21 - do not retire",
+        "crosswalk_rows": [21],
     },
     "land_use": {
         "description": "Generalized Land Use 2020 - Metropolitan Council Regional Land Use",
@@ -129,6 +143,20 @@ MN_GEOSPATIAL_DATASETS = {
         "model_critical": True,
         "coordinate_system": "EPSG:26915",
         "temporal_coverage": "2020",
+        # Vintage history for crosswalk row 25. The xlsx records the 2020 model as
+        # having used Generalized Land Use 2016; this registry was already ahead
+        # of the sheet at 2020. Meaghan asks for 2025 -- deliberately NOT done:
+        # a catalog item exists (ArcGIS Hub c0bca5584e704731880b81c646d5e271,
+        # created 2026-07-24) but it carries no download links and the bulk path
+        # plan_generl_lnduse2025 returns 404. 2020 is the newest downloadable
+        # release. Also confirm which product is meant: "Generalized Land Use"
+        # (existing use) and "Regional Planned Land Use" (planned use) differ, and
+        # only the former carries LUSE_DESC.
+        "vintage_history": {
+            "2016": "cited by the xlsx as the layer the 2020 model used",
+            "2020": "CURRENT - plan_generl_lnduse2020",
+            "2025": "catalogued 2026-07-24 but not downloadable as of 2026-09-21",
+        },
         # Easement-scoring crosswalk row 25: the model uses Generalized Land Use only
         # to pick out land that is still undeveloped.
         "attribute_filter": {
@@ -481,6 +509,15 @@ FGDB_DATASETS = {
         "expected_features": 2,
         "score_column": "Bee_Habitat_SCORE",
         "model_critical": True,
+        # Crosswalk row 23. Two features for a county-wide pollinator layer means
+        # this is a DISSOLVED SCORE SURFACE, not a habitat inventory: it cannot be
+        # re-derived, re-weighted or updated from what is in the FGDB. That is the
+        # structural problem, independent of whether the Ryan Noe methodology is
+        # still defensible. Meaghan asks Bryan directly whether he holds the RPBB
+        # high-potential-zones / pollinator suitability analysis. Unresolved.
+        "layer_shape": "dissolved score surface - inputs not recoverable from the FGDB",
+        "replacement_status": "[NEEDS CONFIRM] pending Bryan on RPBB / pollinator suitability",
+        "crosswalk_rows": [23],
     },
     "floodplains": {
         "description": "Floodplain Analysis - Hennepin County floodplain scoring",
@@ -561,6 +598,13 @@ FGDB_DATASETS = {
         "coordinate_system": "EPSG:26915",
         "expected_features": 6,
         "model_critical": True,
+        # Crosswalk row 22: the 2019 layer came to Hennepin by direct request to
+        # Audubon. A public feature service now exists, which removes a standing
+        # dependency on Audubon staff. Verified live 2026-09-21.
+        "public_source_agency": "National Audubon Society",
+        "public_service_url": "https://services1.arcgis.com/lDFzr3JyGEn5Eymu/arcgis/rest/services/iba_polygons_public/FeatureServer",
+        "public_service_item_id": "087b591fd12d4dc482a4d9a3e2b60246",
+        "crosswalk_rows": [22],
     },
     "mbs_sites": {
         "description": "Minnesota Biological Survey Sites - Sites of biodiversity significance",
@@ -656,6 +700,17 @@ FGDB_DATASETS = {
         "coordinate_system": "EPSG:26915",
         "expected_features": 1,
         "model_critical": True,
+        # Crosswalk row 29. One feature: this is a dissolved composite of the
+        # protected-areas inputs, and those inputs were never registered
+        # individually. It cannot be recomputed or reweighted when one input
+        # changes, which is why rows 2, 3 and 4 all read MISSING.
+        "layer_shape": "dissolved composite - constituent inputs not individually registered",
+        "missing_inputs": [
+            "Hennepin established conservation easements (row 2)",
+            "USFWS refuge boundaries (row 3) - now usfws_national_realty_boundaries",
+            "Parks of Natural Resource Significance (row 4)",
+        ],
+        "crosswalk_rows": [29],
     },
     "quality_community": {
         "description": "Quality Community Analysis - Community quality metrics composite",
@@ -686,6 +741,14 @@ FGDB_DATASETS = {
         "expected_features": 3,
         "score_column": "Risk_of_Development_Score",
         "model_critical": True,
+        # Crosswalk row 24. Three features -- same dissolved-surface problem as
+        # bee_habitat. The Ryan Noe methodology inputs (utility and road buffers,
+        # sewer service areas) are not itemised anywhere in the registry, and
+        # Meaghan holds the source dataset. Note the sheet's bee-habitat note
+        # landed on this row by mistake.
+        "layer_shape": "dissolved score surface - Noe methodology inputs not itemised",
+        "pending_source": "Ryan Noe risk-of-development inputs (Meaghan to email)",
+        "crosswalk_rows": [24],
     },
     "shoreland_buffers": {
         "description": "Shoreland Buffer Areas - Lake and stream buffer zones",
@@ -696,6 +759,11 @@ FGDB_DATASETS = {
         "coordinate_system": "EPSG:26915",
         "expected_features": 1,
         "model_critical": True,
+        # Crosswalk rows 30 and 31: the buffer OUTPUT was registered, the PWI
+        # watercourses and basins it was computed from were not. Now they are.
+        "layer_shape": "dissolved buffer output",
+        "computed_from": "public_waters_basins_watercourses",
+        "crosswalk_rows": [30, 31],
     },
     "groundwater_susceptibility": {
         "description": "Groundwater Contamination Susceptibility - Aquifer vulnerability zones",
@@ -707,6 +775,19 @@ FGDB_DATASETS = {
         "expected_features": 976,
         "score_column": "Code_Score",
         "model_critical": True,
+        # Crosswalk row 36. The MGS geological sensitivity source URL was never
+        # recorded. Meaghan proposes "Minnesota Water Table Aquifer Vulnerability"
+        # -- which is NOT obviously the same product: it is published by the MN
+        # Department of Agriculture (gisdata water-aquifer-vulnerability, org path
+        # us_mn_state_mda, refreshed 2026-09-17), built on MN Geological Survey and
+        # UMD geomorphology data via a 2011 MDH/MDA/DNR workgroup. Related
+        # lineage, different agency, different product. Code_Score's class mapping
+        # depends on which one it came from.
+        "source_agency_recorded": "Minnesota Geological Survey (geological sensitivity)",
+        "candidate_public_url": "https://gisdata.mn.gov/dataset/water-aquifer-vulnerability",
+        "candidate_public_agency": "Minnesota Department of Agriculture",
+        "candidate_status": "[NEEDS CONFIRM] same product as MGS geological sensitivity, or a successor?",
+        "crosswalk_rows": [36],
     },
     "wildlife_action_network": {
         "description": "Wildlife Action Network Analysis - Wildlife corridor ranking",
@@ -718,6 +799,11 @@ FGDB_DATASETS = {
         "expected_features": 1564,
         "score_column": "RankNum_Model",
         "model_critical": True,
+        # Crosswalk row 21. Even once CAN publishes, this entry is what the 2020
+        # scoring actually ran against and RankNum_Model has no guaranteed CAN
+        # equivalent. Retire only after the score mapping is re-derived.
+        "successor_status": "CAN expected, not published as of 2026-09-21 - do not retire",
+        "crosswalk_rows": [21],
     },
 }
 
