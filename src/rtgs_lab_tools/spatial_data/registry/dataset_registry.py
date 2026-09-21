@@ -298,6 +298,36 @@ FGDB_DATASETS = {
         "coordinate_system": "EPSG:26915",
         "expected_features": 46745,
         "model_critical": True,
+        # ------------------------------------------------------------------
+        # PROVENANCE. MLCCS is not a new dataset and has not recently changed.
+        #
+        #  - Created 2004 by MN DNR Metro Region. Five-level hierarchical system
+        #    classifying urban/built-up land by COVER rather than USE; hybrid of the
+        #    National Vegetation Classification System, MN Natural Heritage native
+        #    plant community types, and a cultural classification.
+        #    https://www.dnr.state.mn.us/mlccs/index.html
+        #  - Code set last revised 2023. Bart Richardson (MNIT, on behalf of DNR) to
+        #    Kristine Maurer, 2025-02-04: "Attached is the latest version of the MLCCS
+        #    codes. Nothing has changed since our final meeting in 2023." Forwarded to
+        #    Bryan Runck 2026-07-31, mail thread:0000000000035b11, attachment
+        #    "mlccs-npc_natural_codes - level details - top row.xlsx".
+        #  - Public record: https://gisdata.mn.gov/dataset/biota-landcover-mlccs
+        #
+        # DO NOT treat the Imagine 2050 RSEA layer as a newer replacement for this.
+        # RSEA is DOWNSTREAM of MLCCS, not a successor to it -- see the
+        # "regionally_significant_ecological_areas" entry in MN_GEOSPATIAL_DATASETS.
+        # ------------------------------------------------------------------
+        "vintage": "2004 system; Hennepin County edited; code set frozen since 2023",
+        "public_source_url": "https://gisdata.mn.gov/dataset/biota-landcover-mlccs",
+        "public_source_agency": "Minnesota DNR (Metro Region) / Hennepin County edits",
+        "superseded_by": None,  # explicitly: nothing
+        "key_attributes": {
+            "C_NUM": "numeric MLCCS cover code; >= 30000 is natural/semi-natural",
+            "C_ALPHA": "alphanumeric cover code; '.nAT.' marks altered/non-native",
+            "M_34X": "native plant community quality grade, A (best) to D",
+        },
+        "downstream_selections": ["natural_spaces", "quality_community", "habitat_diversity"],
+        "crosswalk_rows": [10, 13, 15, 17],
     },
     "groundwater_recharge_hc": {
         "description": "Mean Groundwater Recharge 1996-2010 - Hennepin County recharge rates",
