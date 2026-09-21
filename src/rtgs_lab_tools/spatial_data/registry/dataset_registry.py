@@ -92,6 +92,16 @@ MN_GEOSPATIAL_DATASETS = {
         "spatial_type": "multipolygon",
         "model_critical": True,
         "coordinate_system": "EPSG:26915",
+        # Easement-scoring crosswalk rows 14 & 16: the 2020 model selects only the
+        # three highest biodiversity-significance classes. Filter was carried in the
+        # xlsx but never in the registry.
+        "attribute_filter": {
+            "description": "Sites of Outstanding, High or Moderate biodiversity significance",
+            "columns": ["biodiv_sig"],
+            "values": ["Outstanding", "High", "Moderate"],
+            "match_type": "any",
+        },
+        "crosswalk_rows": [14, 16],
     },
     "WAN": {
         "description": "WAN (Wildlife Action Network) - Minnesota Wildlife Action Plan Network",
@@ -119,6 +129,15 @@ MN_GEOSPATIAL_DATASETS = {
         "model_critical": True,
         "coordinate_system": "EPSG:26915",
         "temporal_coverage": "2020",
+        # Easement-scoring crosswalk row 25: the model uses Generalized Land Use only
+        # to pick out land that is still undeveloped.
+        "attribute_filter": {
+            "description": "Undeveloped land only",
+            "columns": ["LUSE_DESC"],
+            "values": ["Undeveloped"],
+            "match_type": "any",
+        },
+        "crosswalk_rows": [25],
     },
     "cemeteries": {
         "description": "Cemeteries - Regional Parcels Dataset (filtered)",
@@ -152,6 +171,15 @@ MN_GEOSPATIAL_DATASETS = {
         "spatial_type": "multipolygon",
         "model_critical": True,
         "coordinate_system": "EPSG:26915",
+        # Easement-scoring crosswalk row 34: the Headwater Area criterion uses only the
+        # Level 9 auto-catchments positioned at the head of their drainage network.
+        "attribute_filter": {
+            "description": "Level 9 auto-catchments in headwater position",
+            "columns": ["CATCH_POS"],
+            "values": ["HEADWATER"],
+            "match_type": "any",
+        },
+        "crosswalk_rows": [34],
     },
 }
 
@@ -180,6 +208,16 @@ FGDB_DATASETS = {
         "expected_features": 2,
         "score_column": "Floodplain_Score",
         "model_critical": True,
+        # Easement-scoring crosswalk row 32. Public source is the FEMA National Flood
+        # Hazard Layer; the two flood bands are separate queries over it.
+        "public_source_agency": "Federal Emergency Management Agency (FEMA)",
+        "public_source_url": "https://www.fema.gov/flood-maps/national-flood-hazard-layer",
+        "derived_selections": {
+            "100_year": "FLD_ZONE <> 'X' AND FLD_ZONE <> 'AREA NOT INCLUDED'",
+            "500_year": "ZONE_SUBTY = '0.2 PCT ANNUAL CHANCE FLOOD HAZARD'",
+        },
+        "update_frequency": "periodic",  # FEMA restudies the metro every 5-7 years
+        "crosswalk_rows": [32],
     },
     "hennepin_wetland_inventory": {
         "description": "Hennepin County Wetland Inventory (HCWI) - Comprehensive wetland mapping",
@@ -190,6 +228,15 @@ FGDB_DATASETS = {
         "coordinate_system": "EPSG:26915",
         "expected_features": 56018,
         "model_critical": True,
+        # Easement-scoring crosswalk rows 26 & 33: both the Risk-of-Development and the
+        # NWI Area criteria select only probable-wetland polygons.
+        "attribute_filter": {
+            "description": "Probable wetland polygons only (HCWI or NWI provenance)",
+            "columns": ["LEGEND"],
+            "values": ["Probable Wetland - HCWI", "Probable Wetland - NWI"],
+            "match_type": "any",
+        },
+        "crosswalk_rows": [26, 33],
     },
     "habitat_diversity": {
         "description": "Habitat Diversity Level 3 Analysis - Ecosystem diversity scoring",
@@ -200,6 +247,16 @@ FGDB_DATASETS = {
         "coordinate_system": "EPSG:26915",
         "expected_features": 51,
         "model_critical": True,
+        # Easement-scoring crosswalk row 17: Gini-Simpson diversity is computed over
+        # MLCCS level-3 boundaries restricted to natural/semi-natural cover.
+        "derived_from": "land_cover",
+        "source_query": 'CNUM > 30000',
+        "source_query_note": (
+            "MLCCS codes >= 30000 are the natural/semi-natural cover types; the query is "
+            "baked into the delivered ANALYSIS layer and cannot be re-run without the "
+            "MLCCS source."
+        ),
+        "crosswalk_rows": [17],
     },
     "headwaters": {
         "description": "Headwaters Analysis - Stream headwater catchment areas",
@@ -262,6 +319,19 @@ FGDB_DATASETS = {
         "coordinate_system": "EPSG:26915",
         "expected_features": 1,
         "model_critical": True,
+        # Easement-scoring crosswalk row 10 (Ecologically Significant Areas). The ESA
+        # selection is an MLCCS query, not a separate dataset.
+        "derived_from": "land_cover",
+        "source_query": (
+            "(C_NUM >= 30000 AND C_ALPHA NOT LIKE '%.nAT.%') "
+            "AND (M_34X = 'A' OR M_34X = 'B' OR M_34X = 'C')"
+        ),
+        "source_query_note": (
+            "Natural/semi-natural MLCCS cover (C_NUM >= 30000), excluding non-native "
+            "altered communities (.nAT.), graded A/B/C on quality. Hennepin's "
+            "'Ecologically Significant Areas' layer IS this query over MLCCS."
+        ),
+        "crosswalk_rows": [10],
     },
     "protected_areas_hc": {
         "description": "Protected Areas Analysis - Hennepin County protected lands composite",
@@ -282,6 +352,15 @@ FGDB_DATASETS = {
         "coordinate_system": "EPSG:26915",
         "expected_features": 1,
         "model_critical": True,
+        # Easement-scoring crosswalk row 15: "quality community" means an MLCCS polygon
+        # graded A or B on the M_34X quality field.
+        "derived_from": "land_cover",
+        "source_query": "M_34X = 'A' OR M_34X = 'B'",
+        "source_query_note": (
+            "M_34X is the MLCCS native-plant-community quality grade (A best - D worst). "
+            "No published replacement layer carries this attribute; see land_cover."
+        ),
+        "crosswalk_rows": [15],
     },
     "risk_of_development": {
         "description": "Risk of Development Analysis - Development pressure scoring",
