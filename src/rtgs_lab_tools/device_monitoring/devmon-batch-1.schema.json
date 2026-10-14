@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "devmon-batch/1",
+  "title": "One device-monitoring run, published by the MSI cron to device-monitoring-ingest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "batch_id",
+    "run_timestamp",
+    "window",
+    "full_fleet",
+    "producer",
+    "monitoring",
+    "logger_info",
+    "app_config"
+  ],
+  "properties": {
+    "schema": {
+      "const": "devmon-batch/1"
+    },
+    "batch_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 of the canonical JSON of every other field"
+    },
+    "run_timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$",
+      "description": "UTC; becomes Monitoring.monitoring_timestamp"
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date"
+        },
+        "end": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "full_fleet": {
+      "type": "boolean",
+      "description": "true = every node was analysed; loggers absent from the batch are marked inactive"
+    },
+    "producer": {
+      "type": "object",
+      "required": [
+        "host",
+        "release"
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "release": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "lab_tools_commit": {
+          "type": "string",
+          "maxLength": 64
+        }
+      }
+    },
+    "monitoring": {
+      "type": "array",
+      "maxItems": 5000,
+      "items": {
+        "$ref": "#/$defs/monitoring"
+      }
+    },
+    "logger_info": {
+      "type": "array",
+      "maxItems": 5000,
+      "items": {
+        "$ref": "#/$defs/logger_info"
+      }
+    },
+    "app_config": {
+      "type": "object",
+      "maxProperties": 50
+    }
+  },
+  "$defs": {
+    "stamp": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 30
+    },
+    "flag": {
+      "type": [
+        "boolean",
+        "string"
+      ]
+    },
+    "metric": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "monitoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_id",
+        "device_timestamp",
+        "flagged",
+        "battery",
+        "system",
+        "humidity",
+        "errors",
+        "is_missing",
+        "last_heard"
+      ],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "device_timestamp": {
+          "$ref": "#/$defs/stamp"
+        },
+        "flagged": {
+          "$ref": "#/$defs/flag"
+        },
+        "battery": {
+          "$ref": "#/$defs/metric"
+        },
+        "system": {
+          "$ref": "#/$defs/metric"
+        },
+        "humidity": {
+          "$ref": "#/$defs/metric"
+        },
+        "errors": {
+          "type": "array"
+        },
+        "is_missing": {
+          "$ref": "#/$defs/flag"
+        },
+        "last_heard": {
+          "$ref": "#/$defs/stamp"
+        }
+      }
+    },
+    "logger_info": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_id",
+        "field_name",
+        "product_name",
+        "particle_url"
+      ],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "field_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 50
+        },
+        "product_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 50
+        },
+        "particle_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        }
+      }
+    }
+  }
+}

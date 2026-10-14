@@ -96,5 +96,14 @@ def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
     )
 
 
+@device_monitoring_cli.command("publish")
+@click.argument("batch_file", type=click.Path(exists=True, dir_okay=False))
+def publish_cmd(batch_file):
+    """Re-send a saved batch file to the ingest service (a stored batch is a no-op)."""
+    from .publisher import publish_file
+
+    publish_file(batch_file)
+
+
 if __name__ == "__main__":
     device_monitoring_cli()
