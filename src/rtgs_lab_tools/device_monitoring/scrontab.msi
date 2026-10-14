@@ -1,0 +1,8 @@
+# Versioned scrontab for the MSI device-monitoring cron (rtgs-lab-tools).
+# A change here is a PR; it reaches MSI when the cron's account re-installs it:
+#   scrontab ~/rtgs-lab-tools-cron/rtgs-lab-tools/src/rtgs_lab_tools/device_monitoring/scrontab.msi
+# (replaces that account's whole scrontab -- merge by hand if it holds other jobs).
+# --time must exceed the script's retry budget (3 x 600 s + 2 x 120 s = 34 min).
+#SCRON --time=01:00:00
+#SCRON --job-name=devmon-publish
+27 4 * * 1-5 $HOME/rtgs-lab-tools-cron/rtgs-lab-tools/src/rtgs_lab_tools/device_monitoring/scheduled_device_monitoring.sh

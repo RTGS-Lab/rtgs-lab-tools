@@ -14,6 +14,9 @@ export PYTHONUNBUFFERED=1	# flush python output to the log as it happens, so a r
 
 set -e  # Exit on any error
 
+# Fingerprint of the copy now running; see the release pin below.
+SELF_SHA="$(sha1sum < "${BASH_SOURCE[0]}")"
+
 # Parse command line arguments
 START_DATE="${1:-}"
 END_DATE="${2:-}"
@@ -115,23 +118,83 @@ else
     log "Module command not found, assuming modules are already available"
 fi
 
-# Setup repository - clone once, then just update
-REPO_DIR="$WORK_DIR/rtgs-lab-tools"
-if [ -d "$REPO_DIR" ]; then
-    log "Repository exists, updating with git pull..."
-    cd "$REPO_DIR"
-    git pull || {
-        log "Git pull failed, repository may be corrupted. Removing and re-cloning..."
-        cd "$WORK_DIR"
-        rm -rf rtgs-lab-tools
-        git clone https://github.com/RTGS-Lab/rtgs-lab-tools.git
-        cd rtgs-lab-tools
-    }
+# Source RTGS credentials: the main file (if any), then every drop-in in ~/.rtgs_creds.d/
+# (devmon.env holds the publish target; written by the devmon-msi-install script).
+CREDS_LOADED=0
+if [ -f "$HOME/.rtgs_credentials" ]; then
+    source "$HOME/.rtgs_credentials"; CREDS_LOADED=1
+    log "Loaded credentials from $HOME/.rtgs_credentials"
+elif [ -f "$HOME/.rtgs_creds" ]; then
+    source "$HOME/.rtgs_creds"; CREDS_LOADED=1
+    log "Loaded credentials from $HOME/.rtgs_creds"
+fi
+for f in "$HOME"/.rtgs_creds.d/*.env; do
+    [ -f "$f" ] || continue
+    source "$f"; CREDS_LOADED=1
+    log "Loaded credentials from $f"
+done
+if [ "$CREDS_LOADED" -eq 0 ]; then
+    log "ERROR: No credentials found: expected ~/.rtgs_credentials, ~/.rtgs_creds or ~/.rtgs_creds.d/*.env"
+    exit 1
+fi
+
+# Where the results go. Publishing to device-monitoring-ingest is the supported path; the direct
+# Cloud SQL write (DEVICEMON_INSTANCE_CONNECTION_NAME + a service-account key) is deprecated, and
+# with neither set the pipeline would silently write a SQLite file inside this clone.
+if [ -n "${DEVICEMON_INGEST_URL:-}" ] && [ -n "${DEVICEMON_INGEST_TOKEN:-}" ]; then
+    log "Results go to the ingest service: $DEVICEMON_INGEST_URL"
+elif [ -n "${DEVICEMON_INSTANCE_CONNECTION_NAME:-}" ]; then
+    log "WARNING: DEVICEMON_INGEST_URL/TOKEN unset; writing Cloud SQL directly (deprecated)"
 else
+    log "ERROR: set DEVICEMON_INGEST_URL and DEVICEMON_INGEST_TOKEN in ~/.rtgs_creds"
+    exit 1
+fi
+
+# Setup repository and pin the release. The cron runs a tagged release, never a moving branch.
+# DEVICEMON_RELEASE (in ~/.rtgs_creds):
+#   devmon-v0.1.0      pinned: editing this one line on MSI is the deploy
+#   track:devmon-v*    newest tag matching the glob, fetched every run: pushing a tag is the deploy
+#   (unset)            stay on the current checkout, unpinned, with a warning
+REPO_DIR="$WORK_DIR/rtgs-lab-tools"
+if [ ! -d "$REPO_DIR/.git" ]; then
     log "Repository doesn't exist, cloning..."
-    cd "$WORK_DIR"
-    git clone https://github.com/RTGS-Lab/rtgs-lab-tools.git
-    cd rtgs-lab-tools
+    rm -rf "$REPO_DIR"
+    git clone https://github.com/RTGS-Lab/rtgs-lab-tools.git "$REPO_DIR"
+fi
+cd "$REPO_DIR"
+
+select_release() {
+    if ! git fetch --quiet --tags --force origin; then
+        log "WARNING: git fetch failed; staying on $(git describe --tags --always)"
+        return 0
+    fi
+    local want="${DEVICEMON_RELEASE:-}"
+    if [ -z "$want" ]; then
+        log "WARNING: DEVICEMON_RELEASE unset; running $(git describe --tags --always) unpinned"
+        return 0
+    fi
+    if [[ $want == track:* ]]; then
+        want="$(git tag -l "${want#track:}" --sort=-v:refname | head -n 1)"
+        [ -n "$want" ] || { log "ERROR: no tag matches ${DEVICEMON_RELEASE#track:}"; return 1; }
+    fi
+    git rev-parse -q --verify "refs/tags/$want" >/dev/null \
+        || { log "ERROR: release tag $want not found"; return 1; }
+    if [ "$(git rev-parse HEAD)" != "$(git rev-parse "refs/tags/$want^{commit}")" ]; then
+        git checkout --quiet --detach "refs/tags/$want"
+        log "Checked out release $want"
+    else
+        log "Release $want already checked out"
+    fi
+    export DEVICEMON_RELEASE="$want"
+}
+select_release || exit 1
+
+# If the release carries a different version of this script, run that one instead (once).
+NEW_SELF="$REPO_DIR/src/rtgs_lab_tools/device_monitoring/scheduled_device_monitoring.sh"
+if [ -z "${DEVICEMON_REEXEC:-}" ] && [ -f "$NEW_SELF" ] \
+        && [ "$(sha1sum < "$NEW_SELF")" != "$SELF_SHA" ]; then
+    log "Script differs in ${DEVICEMON_RELEASE:-this checkout}; re-running that copy"
+    exec env DEVICEMON_REEXEC=1 bash "$NEW_SELF" "$@"
 fi
 
 # Only run installation if venv doesn't exist or if it's a fresh clone
@@ -162,16 +225,16 @@ else
     exit 1
 fi
 
-# Source RTGS credentials (use generic path)
-if [ -f "$HOME/.rtgs_credentials" ]; then
-    source "$HOME/.rtgs_credentials"
-    log "Loaded credentials from $HOME/.rtgs_credentials"
-elif [ -f "$HOME/.rtgs_creds" ]; then
-    source "$HOME/.rtgs_creds"
-    log "Loaded credentials from $HOME/.rtgs_creds"
-else
-    log "ERROR: No credentials file found. Expected $HOME/.rtgs_credentials or $HOME/.rtgs_creds"
-    exit 1
+
+# A new release may bring new dependencies: refresh the editable install once per release.
+STAMP="venv/.devmon-installed-release"
+if [ "$(cat "$STAMP" 2>/dev/null)" != "${DEVICEMON_RELEASE:-unpinned}" ]; then
+    log "Installing rtgs-lab-tools for release ${DEVICEMON_RELEASE:-unpinned}"
+    if command -v uv &> /dev/null; then
+        uv pip install --quiet -e . && echo "${DEVICEMON_RELEASE:-unpinned}" > "$STAMP"
+    else
+        pip install --quiet -e . && echo "${DEVICEMON_RELEASE:-unpinned}" > "$STAMP"
+    fi
 fi
 
 # Verify rtgs command is available
@@ -185,15 +248,15 @@ MONITOR_CMD="rtgs device-monitoring monitor"
 
 # Add optional parameters if provided
 if [ -n "$START_DATE" ]; then
-    MONITOR_CMD="$MONITOR_CMD --start_date=$START_DATE"
+    MONITOR_CMD="$MONITOR_CMD --start-date=$START_DATE"
 fi
 
 if [ -n "$END_DATE" ]; then
-    MONITOR_CMD="$MONITOR_CMD --end_date=$END_DATE"
+    MONITOR_CMD="$MONITOR_CMD --end-date=$END_DATE"
 fi
 
 if [ -n "$NODE_IDS" ]; then
-    MONITOR_CMD="$MONITOR_CMD --node_ids=$NODE_IDS"
+    MONITOR_CMD="$MONITOR_CMD --node-ids=$NODE_IDS"
 fi
 
 if [ "$PROJECT" != "ALL" ]; then

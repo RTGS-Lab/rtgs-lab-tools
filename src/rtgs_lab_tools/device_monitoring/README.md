@@ -37,7 +37,8 @@ The device monitoring system runs automatically on MSI (Minnesota Supercomputing
 scrontab -e
 
 # Add this line to run monitoring daily at 4:27 AM
-27 4 * * 1-5 /home/$USER/code/scripts/scheduled_device_monitoring.sh
+# The line lives in scrontab.msi (versioned); install it with
+scrontab ~/rtgs-lab-tools-cron/rtgs-lab-tools/src/rtgs_lab_tools/device_monitoring/scrontab.msi
 ```
 
 #### Script Location and Setup
@@ -87,10 +88,12 @@ export LOGGING_DB_USER=your_logging_username
 export LOGGING_DB_PASSWORD=your_logging_password
 
 # Device Monitoring Database (Cloud SQL Postgres - backs the web dashboard)
-export DEVICEMON_INSTANCE_CONNECTION_NAME=sustained-edge-501900-p8:us-central1:device-monitoring-database
-export DEVICEMON_DB_NAME=device_monitoring
-export DEVICEMON_DB_USER=devicemon_app
-export DEVICEMON_DB_PASSWORD=your_devicemon_db_password
+# Publish target (rtgs-infrastructure device-monitoring-ingest-prod; URL from its
+# deploy run summary, token from Secret Manager devicemon-ingest-token)
+export DEVICEMON_INGEST_URL=https://device-monitoring-ingest-prod-....run.app
+export DEVICEMON_INGEST_TOKEN=your_ingest_token
+# The rtgs-lab-tools tag the cron runs (or track:devmon-v* for newest)
+export DEVICEMON_RELEASE=devmon-v0.1.0
 # Path to a service account key with only the `roles/cloudsql.client` role,
 # used to authenticate the Cloud SQL connector from MSI (which has no gcloud
 # login of its own). Get this from whoever manages the GCP project.
