@@ -58,11 +58,39 @@ def test_bad_request_is_not_retried(monkeypatch):
     assert len(calls) == 1
 
 
-def test_needs_url_and_token(monkeypatch):
+def test_needs_url(monkeypatch):
     monkeypatch.delenv("DEVICEMON_INGEST_URL", raising=False)
     monkeypatch.delenv("DEVICEMON_INGEST_TOKEN", raising=False)
-    with pytest.raises(publisher.PublishError):
+    with pytest.raises(publisher.PublishError, match="DEVICEMON_INGEST_URL"):
         publisher.publish(sample())
+
+
+def test_no_token_source_fails_closed(monkeypatch, tmp_path):
+    monkeypatch.delenv("DEVICEMON_INGEST_TOKEN", raising=False)
+    monkeypatch.setenv("DEVICEMON_SA_KEY", str(tmp_path / "missing.json"))
+    monkeypatch.setattr(publisher.requests, "post", lambda *a, **k: pytest.fail("posted"))
+    with pytest.raises(publisher.PublishError, match="not found"):
+        publisher.publish(sample(), url="https://device-monitoring-ingest-test-685278787484"
+                                        ".us-central1.run.app")
+
+
+def test_token_never_sent_to_unknown_host(monkeypatch):
+    monkeypatch.delenv("DEVICEMON_INGEST_TOKEN", raising=False)
+    monkeypatch.setattr(publisher.requests, "post", lambda *a, **k: pytest.fail("posted"))
+    with pytest.raises(publisher.PublishError, match="refusing"):
+        publisher.publish(sample(), url="https://evil.example.run.app")
+
+
+def test_save_batch_is_exclusive_and_ignores_planted_symlink(tmp_path):
+    b = sample()
+    target = tmp_path / "victim"
+    target.write_text("keep")
+    stamp = b["run_timestamp"].replace(" ", "T").replace(":", "")
+    (tmp_path / f"{stamp}Z-{b['batch_id'][:12]}.json").symlink_to(target)
+    p = publisher.save_batch(b, tmp_path)
+    assert target.read_text() == "keep"
+    assert p.name.endswith("-1.json") and json.loads(p.read_text())["batch_id"] == b["batch_id"]
+    assert "Bearer" not in p.read_text()
 
 
 def test_cron_uses_the_cli_flag_names():

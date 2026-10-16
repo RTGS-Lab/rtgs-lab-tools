@@ -3,15 +3,16 @@ Overview:
     - Publishes one monitoring run to device-monitoring-ingest (rtgs-infrastructure,
       services/device-monitoring-ingest) instead of writing Cloud SQL directly.
     - Why: GEMS is reachable only from UMN/MSI, so the cron on MSI stays the puller and the
-      cloud side only receives. MSI holds a bearer token for one endpoint instead of a
-      service-account key and the database password.
+      cloud side only receives. The bearer token is fetched from Secret Manager each run
+      (ingest_token.py) and held in memory only; MSI holds a key that can read that one secret.
 Payload:
     - devmon-batch/1, defined by devmon-batch-1.schema.json next to this file. It is a copy of
       rtgs-infrastructure services/device-monitoring-ingest/schema/devmon-batch-1.schema.json;
       change both together.
 Environment:
     DEVICEMON_INGEST_URL      base URL of the ingest service (deploy run summary)
-    DEVICEMON_INGEST_TOKEN    bearer token (Secret Manager devicemon-ingest-token)
+    DEVICEMON_SA_KEY / DEVICEMON_TOKEN_SECRET   see ingest_token.py (token source)
+    DEVICEMON_INGEST_TOKEN    test override only; normally unset (token from Secret Manager)
     DEVICEMON_BATCH_DIR       where each batch is saved before sending
                               (default ~/logs/device-monitoring-batches)
     DEVICEMON_RELEASE         release tag the cron checked out (recorded in the batch)
@@ -28,6 +29,8 @@ import time
 from pathlib import Path
 
 import requests
+
+from . import ingest_token
 
 SCHEMA_ID = "devmon-batch/1"
 SCHEMA_PATH = Path(__file__).resolve().parent / "devmon-batch-1.schema.json"
@@ -101,9 +104,20 @@ def save_batch(batch, directory=None):
              or Path.home() / "logs" / "device-monitoring-batches")
     d.mkdir(parents=True, exist_ok=True)
     stamp = batch["run_timestamp"].replace(" ", "T").replace(":", "")
-    path = d / f"{stamp}Z-{batch['batch_id'][:12]}.json"
-    path.write_text(canonical(batch))
-    return path
+    data = canonical(batch).encode("utf-8")
+    # The batch dir is group-writable on MSI: create the file exclusively and never follow a
+    # symlink someone else planted under the expected name.
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    for n in range(100):
+        path = d / f"{stamp}Z-{batch['batch_id'][:12]}{'' if n == 0 else f'-{n}'}.json"
+        try:
+            fd = os.open(path, flags, 0o640)
+        except FileExistsError:
+            continue
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        return path
+    raise PublishError(f"could not create a batch file in {d}")
 
 
 def publish(batch, url=None, token=None, attempts=None, backoff=None, sleep=time.sleep):
@@ -113,9 +127,15 @@ def publish(batch, url=None, token=None, attempts=None, backoff=None, sleep=time
     so it raises at once. Re-sending an already-stored batch returns "duplicate" (no-op).
     """
     url = (url or os.getenv("DEVICEMON_INGEST_URL") or "").rstrip("/")
-    token = token or os.getenv("DEVICEMON_INGEST_TOKEN")
-    if not url or not token:
-        raise PublishError("DEVICEMON_INGEST_URL and DEVICEMON_INGEST_TOKEN must both be set")
+    if not url:
+        raise PublishError("DEVICEMON_INGEST_URL must be set")
+    if not token:
+        try:
+            if not os.getenv("DEVICEMON_INGEST_TOKEN"):
+                url = ingest_token.check_ingest_url(url)[0]
+            token = ingest_token.load_token(url)
+        except ingest_token.TokenError as e:
+            raise PublishError(f"no ingest token: {e}") from None
     attempts = int(attempts or os.getenv("DEVICEMON_PUBLISH_ATTEMPTS", "5"))
     backoff = float(backoff or os.getenv("DEVICEMON_PUBLISH_BACKOFF", "15"))
     body = canonical(batch).encode("utf-8")
