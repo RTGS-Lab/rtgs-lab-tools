@@ -79,6 +79,7 @@ STEP_TIMEOUT_DATA_ANALYSIS = 300  # local analysis, no network
 STEP_TIMEOUT_DATABASE_WRITE = 600  # Cloud SQL connect + commits
 STEP_TIMEOUT_MESSAGE_BUILD = 600  # includes Particle API lookups
 STEP_TIMEOUT_NOTIFY = 300  # SMTP handshake + send
+STEP_TIMEOUT_PUBLISH = 540  # POST to device-monitoring-ingest, retries included
 
 # Socket timeout for the outgoing SMTP connection (seconds).
 SMTP_TIMEOUT = 60

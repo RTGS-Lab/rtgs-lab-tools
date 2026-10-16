@@ -96,5 +96,55 @@ def monitor_cmd(ctx, start_date, end_date, node_ids, project, no_email):
     )
 
 
+@device_monitoring_cli.command("publish")
+@click.argument("batch_file", type=click.Path(exists=True, dir_okay=False))
+def publish_cmd(batch_file):
+    """Re-send a saved batch file to the ingest service (a stored batch is a no-op)."""
+    from .publisher import publish_file
+
+    publish_file(batch_file)
+
+
+@device_monitoring_cli.command("check-ingest")
+def check_ingest_cmd():
+    """Fetch the ingest token from Secret Manager and call /health and /v1/status.
+
+    Prints the secret version used and the HTTP statuses, never the token. Exit 0 ok,
+    2 setup is wrong (key file, IAM, URL), 3 transient (network, 5xx): worth a retry.
+    """
+    import os
+
+    import requests
+
+    from . import ingest_token
+
+    url = os.getenv("DEVICEMON_INGEST_URL", "")
+    try:
+        base, _ = ingest_token.check_ingest_url(url)
+        secret = ingest_token.secret_for(base)
+        token, version = ingest_token.fetch_from_secret_manager(secret)
+    except ingest_token.TokenError as e:
+        click.echo(f"check-ingest: FAILED: {e}", err=True)
+        sys.exit(3 if e.transient else 2)
+    click.echo(f"check-ingest: token from {version}")
+    try:
+        h = requests.get(f"{base}/health", timeout=(10, 30))
+        s = requests.get(f"{base}/v1/status", timeout=(10, 30),
+                         headers={"Authorization": f"Bearer {token}"})
+    except requests.RequestException as e:
+        click.echo(f"check-ingest: FAILED: {base} unreachable: {type(e).__name__}", err=True)
+        sys.exit(3)
+    finally:
+        del token
+    click.echo(f"check-ingest: {base}/health HTTP {h.status_code}; /v1/status HTTP "
+               f"{s.status_code} {s.text[:200] if s.status_code == 200 else ''}".rstrip())
+    if s.status_code == 401:
+        click.echo("check-ingest: FAILED: the service rejects this token (it pins secret "
+                   "versions; redeploy it after adding a version)", err=True)
+        sys.exit(2)
+    if h.status_code != 200 or s.status_code != 200:
+        sys.exit(3 if max(h.status_code, s.status_code) >= 500 else 2)
+
+
 if __name__ == "__main__":
     device_monitoring_cli()

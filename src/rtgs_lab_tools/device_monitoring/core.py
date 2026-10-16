@@ -22,6 +22,7 @@ from .config import (
     STEP_TIMEOUT_DATA_RETRIEVAL,
     STEP_TIMEOUT_MESSAGE_BUILD,
     STEP_TIMEOUT_NOTIFY,
+    STEP_TIMEOUT_PUBLISH,
 )
 from .data_analyzer import analyze_data
 from .data_formatter import format_data_with_parser
@@ -32,7 +33,11 @@ from .timezones import now_utc, utc_stamp
 from .watchdog import step_timeout
 
 from .web_app.models import app
-from .web_app.produce_db import init_db, build_db, build_logger_info, build_app_config
+from .web_app.produce_db import (
+    init_db, build_db, build_logger_info, build_app_config,
+    monitoring_records, logger_info_records, app_config_defaults,
+)
+from .publisher import build_batch, publish, save_batch
 
 
 def _run_timestamp():
@@ -83,15 +88,34 @@ def monitor(
         analysis_dict = analyze_data(formatted_data)
     print(f"--Data analysis complete--")
 
-    # Step 3.5: Add data to SQLite database
-    print(f"--Beginning adding data to SQLite database--")
-    with step_timeout(STEP_TIMEOUT_DATABASE_WRITE, "Database write"):
-        with app.app_context():
-            init_db()
-            build_db(analysis_dict, monitoring_timestamp)
-            build_logger_info(analysis_dict)
-            build_app_config()
-    print(f"--Addition to SQLite database complete--")
+    # Step 3.5: Store the results. On MSI they are published to device-monitoring-ingest
+    # (rtgs-infrastructure); the direct database write remains for local use.
+    if os.getenv("DEVICEMON_INGEST_URL"):
+        print("--Beginning batch build (Particle lookups)--")
+        with step_timeout(STEP_TIMEOUT_DATABASE_WRITE, "Batch build"):
+            batch = build_batch(
+                monitoring_records(analysis_dict),
+                logger_info_records(analysis_dict),
+                app_config_defaults(),
+                monitoring_timestamp,
+                start_date,
+                end_date,
+                full_fleet=node_ids is None,
+            )
+            batch_path = save_batch(batch)
+        print(f"--Batch saved: {batch_path}--")
+        with step_timeout(STEP_TIMEOUT_PUBLISH, "Publish"):
+            publish(batch)
+        print("--Publish complete--")
+    else:
+        print(f"--Beginning adding data to SQLite database--")
+        with step_timeout(STEP_TIMEOUT_DATABASE_WRITE, "Database write"):
+            with app.app_context():
+                init_db()
+                build_db(analysis_dict, monitoring_timestamp)
+                build_logger_info(analysis_dict)
+                build_app_config()
+        print(f"--Addition to SQLite database complete--")
 
     # Step 4: Build notification messages
     print(f"--Beginning message building--")

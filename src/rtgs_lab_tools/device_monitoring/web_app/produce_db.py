@@ -12,6 +12,56 @@ from ..config import (
 from ..message_builder import get_device_info, get_product_slug, get_product_name, get_console_url
 from ..timezones import utc_stamp
 
+def monitoring_records(analyzed_data_dict):
+    """One dict per node with the Monitoring columns except monitoring_timestamp (the run's).
+
+    Shared by build_db (direct write) and the publisher (devmon-batch/1), so both paths store
+    exactly the same values.
+    """
+    records = []
+    for node_id, data in analyzed_data_dict.items():
+        records.append({
+            "node_id": node_id,
+            "flagged": data.get("flagged", False),
+            "battery": data.get("battery"),
+            "system": data.get("system"),
+            "humidity": data.get("humidity"),
+            "errors": data.get("errors", []),
+            # Both written as UTC strings with no offset suffix; see build_db.
+            "device_timestamp": utc_stamp(data.get("battery_timestamp") or
+                                          data.get("system_timestamp") or
+                                          data.get("humidity_timestamp")),
+            "is_missing": data.get("is_missing", False),
+            "last_heard": utc_stamp(data.get("last_heard"), "%Y-%m-%d %H:%M:%S"),
+        })
+    return records
+
+
+def logger_info_records(analyzed_data_dict):
+    """One dict per node with the LoggerInfo columns (Particle API lookups happen here)."""
+    records = []
+    for node_id in analyzed_data_dict:
+        field_name, product_id = get_device_info(node_id)
+        product_slug = get_product_slug(product_id)
+        records.append({
+            "node_id": node_id,
+            "field_name": field_name,
+            "product_name": get_product_name(product_id),
+            "particle_url": get_console_url(node_id, product_id, product_slug),
+        })
+    return records
+
+
+def app_config_defaults():
+    """The config.py defaults the web app serves at /api/config."""
+    return {
+        "battery_voltage_min": BATTERY_VOLTAGE_MIN,
+        "system_power_max": SYSTEM_POWER_MAX,
+        "inbox_humidity_max": INBOX_HUMIDITY_MAX,
+        "critical_errors": CRITICAL_ERRORS,
+    }
+
+
 def init_db():
     db.create_all()
 
