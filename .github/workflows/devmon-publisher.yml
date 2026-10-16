@@ -35,9 +35,10 @@ jobs:
           pip install -e . pytest pytest-cov jsonschema
 
       - name: Publisher tests
-        run: pytest -q tests/device_monitoring/test_publisher.py
+        run: pytest -q --no-cov tests/device_monitoring
 
       - name: CLI takes the flags the cron passes
         run: |
           rtgs device-monitoring monitor --help | grep -q -- '--start-date'
           rtgs device-monitoring publish --help >/dev/null
+          rtgs device-monitoring check-ingest --help >/dev/null

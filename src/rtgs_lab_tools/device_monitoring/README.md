@@ -43,123 +43,94 @@ scrontab /projects/standard/runck014/shared/device_monitoring/rtgs-lab-tools-cro
 
 #### Script Location and Setup
 
-The monitoring script is located at:
+The monitoring script runs from the lab's shared workspace on Bryan's scrontab:
 ```
 /projects/standard/runck014/shared/device_monitoring/scripts/scheduled_device_monitoring.sh
-(the lab's shared workspace; runs from Bryan's scrontab. Paths are overridable:
-DEVICEMON_BASE_DIR, DEVICEMON_WORK_DIR, DEVICEMON_LOG_DIR, DEVICEMON_CREDS_FILE)
+```
+Paths are overridable from the scrontab environment (never from the credentials file):
+DEVICEMON_BASE_DIR, DEVICEMON_WORK_DIR, DEVICEMON_LOG_DIR, DEVICEMON_CREDS_FILE,
+DEVICEMON_RELEASE_FILE, DEVICEMON_SA_KEY, DEVICEMON_TOKEN_SECRET.
+
+Ownership (the script refuses to run if the code side is group- or world-writable):
+```
+scripts/, rtgs-lab-tools-cron/ (checkout + venv)   Bryan, 2750 dirs, 640/750 files
+logs/, logs/batches/                               Bryan, group runck014, 2770 (the one
+                                                   group-writable place)
+credentials/.rtgs_credentials                      660, group runck014 -- data, never sourced
+~/.config/devmon/ (700): sa.json (600), release (600)    Bryan's home, not shared
 ```
 
-This script automatically:
-- Loads required MSI modules (Python, Git)
-- Clones/updates the rtgs-lab-tools repository
-- Sets up the virtual environment
-- Loads credentials from the shared credentials file
-- Runs the device monitoring
-- Logs all activities to `/projects/standard/runck014/shared/device_monitoring/logs/` (batches in `logs/batches/`)
+Each run:
+- loads MSI modules (Python, Git)
+- parses the credentials file against an allowlist (no `source`)
+- checks out the release pinned in `~/.config/devmon/release` (`<tag> <commit sha>`; both
+  checked; git runs with hooks disabled; an existing tag is never force-moved)
+- fetches the ingest token from Secret Manager with `~/.config/devmon/sa.json`
+  (`rtgs device-monitoring check-ingest` preflight), runs the monitor, publishes the batch
+- logs to `logs/device_monitoring_<stamp>_<random>.log`; the lock is in `~/.cache/devmon/`
 
 ### MSI Credentials Configuration
 
-#### Credentials File Setup
+#### Shared credentials file (data only)
 
-The shared credentials file (mode 660, group runck014; per-user `~/.rtgs_credentials` or
-`~/.rtgs_creds` are fallbacks):
-
-```bash
-# Create credentials file with restricted permissions
-touch /projects/standard/runck014/shared/device_monitoring/credentials/.rtgs_credentials
-chmod 660 /projects/standard/runck014/shared/device_monitoring/credentials/.rtgs_credentials
-chgrp runck014 /projects/standard/runck014/shared/device_monitoring/credentials/.rtgs_credentials
-```
-
-#### Required Credentials
-
-Edit `credentials/.rtgs_credentials` with the actual credentials:
+`credentials/.rtgs_credentials` holds KEY=VALUE lines (an `export ` prefix and one pair of
+outer quotes are accepted; `$(...)` and `$VAR` are taken literally). Accepted names:
+DEVICEMON_INGEST_URL, PARTICLE_ACCESS_TOKEN, DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD,
+LOGGING_DB_HOST, LOGGING_DB_PORT, LOGGING_DB_NAME, LOGGING_DB_USER, LOGGING_DB_PASSWORD,
+POSTGRES_LOGGING_STATUS, GMAIL_USER, GMAIL_APP_PASSWORD, GMAIL_RECIPIENT. Everything else is
+ignored and named in the log -- in particular DEVICEMON_INGEST_TOKEN (now from Secret
+Manager), DEVICEMON_RELEASE, *_DIR, *_FILE, PATH, LD_*, PYTHON*, GOOGLE_*.
 
 ```bash
 # GEMS Database Configuration
-export DB_HOST=sensing-0.msi.umn.edu
-export DB_PORT=5433
-export DB_NAME=gems
-export DB_USER=your_username
-export DB_PASSWORD=your_password
+DB_HOST=sensing-0.msi.umn.edu
+DB_PORT=5433
+DB_NAME=gems
+DB_USER=your_username
+DB_PASSWORD=your_password
 
-# Logging Database (optional)
-export LOGGING_DB_HOST=34.170.80.6
-export LOGGING_DB_PORT=5432
-export LOGGING_DB_NAME=logs
-export LOGGING_DB_USER=your_logging_username
-export LOGGING_DB_PASSWORD=your_logging_password
-
-# Device Monitoring Database (Cloud SQL Postgres - backs the web dashboard)
-# Publish target (rtgs-infrastructure device-monitoring-ingest-prod; URL from its
-# deploy run summary, token from Secret Manager devicemon-ingest-token)
-export DEVICEMON_INGEST_URL=https://device-monitoring-ingest-prod-....run.app
-export DEVICEMON_INGEST_TOKEN=your_ingest_token
-# The rtgs-lab-tools tag the cron runs (or track:devmon-v* for newest)
-export DEVICEMON_RELEASE=devmon-v0.1.0
+# Publish target: device-monitoring-ingest-prod (or -test). The token is NOT here.
+DEVICEMON_INGEST_URL=https://device-monitoring-ingest-prod-685278787484.us-central1.run.app
 
 # Particle Cloud API
-export PARTICLE_ACCESS_TOKEN=your_particle_token
+PARTICLE_ACCESS_TOKEN=your_particle_token
 
 # Email Notifications (optional)
-export GMAIL_USER=your_email@gmail.com
-export GMAIL_APP_PASSWORD="your_gmail_app_password"
-export GMAIL_RECIPIENT=notification_recipient@umn.edu
+GMAIL_USER=your_email@gmail.com
+GMAIL_APP_PASSWORD="your_gmail_app_password"
+GMAIL_RECIPIENT=notification_recipient@umn.edu
 ```
 
-#### Security Notes
-
-- **File permissions**: The credentials file has `660` permissions (owner + group runck014)
-- **No VPN required**: MSI infrastructure has direct access to the database
-- **Secure storage**: Credentials are stored locally on MSI, not in version control
-- **Alternative names**: The script falls back to `~/.rtgs_credentials`, then `~/.rtgs_creds`
-
-### MSI Monitoring Workflow
-
-#### Daily Execution Process
-
-1. **Before 5:00 AM daily**: SLURM crontab triggers the monitoring script
-2. **Environment setup**: Script loads Python and Git modules
-3. **Code update**: The pinned release tag (`DEVICEMON_RELEASE`) is checked out
-4. **Credential loading**: Credentials are loaded from `credentials/.rtgs_credentials`
-5. **Monitoring execution**: Device monitoring runs across all projects
-6. **Logging**: Results and logs are saved to `logs/` in the shared workspace
-7. **Cleanup**: Virtual environment is properly deactivated
-
-#### Log File Management
-
-Monitoring logs are stored in:
-```
-~/logs/device-monitoring-logs/device_monitoring_YYYYMMDD_HHMMSS.log
+Check what a run would accept (names and value lengths only, never values):
+```bash
+scripts/scheduled_device_monitoring.sh --check-creds credentials/.rtgs_credentials
 ```
 
-Each log file contains:
-- Execution timestamps
-- Git repository updates
-- Credential loading status
-- Monitoring command output
-- Error messages and debugging information
-- Cleanup status
+#### Ingest token (Secret Manager)
+
+The token is read each run from `devicemon-ingest-token` (prod URL) or
+`devicemon-ingest-token-test` (test URL) in project rtgslab, as the service account
+`device-monitoring-msi@rtgslab.iam.gserviceaccount.com`, whose only grant is
+secretAccessor on those two secrets. Its key is `~/.config/devmon/sa.json`, owned by the
+running user, mode 600 -- anything else is refused. The token is sent only to the known
+ingest hosts and is never logged or written to disk.
+
+#### Release pin
+
+`~/.config/devmon/release`, one line: `devmon-v0.1.0 <40-hex commit sha of that tag>`.
+Changing this line is the deploy.
+
+### Log File Management
+
+Logs: `logs/device_monitoring_YYYYMMDD_HHMMSS_<random>.log`; batches:
+`logs/batches/<run>Z-<batch id>.json` (contain no credentials).
 
 #### Manual Execution
 
-You can also run monitoring manually on MSI:
-
 ```bash
-# Load required modules
-module load python
-module load git
-
-# Run the monitoring script directly
 /projects/standard/runck014/shared/device_monitoring/scripts/scheduled_device_monitoring.sh
-(the lab's shared workspace; runs from Bryan's scrontab. Paths are overridable:
-DEVICEMON_BASE_DIR, DEVICEMON_WORK_DIR, DEVICEMON_LOG_DIR, DEVICEMON_CREDS_FILE)
-
-# Or run specific monitoring with parameters
-/projects/standard/runck014/shared/device_monitoring/scripts/scheduled_device_monitoring.sh
-(the lab's shared workspace; runs from Bryan's scrontab. Paths are overridable:
-DEVICEMON_BASE_DIR, DEVICEMON_WORK_DIR, DEVICEMON_LOG_DIR, DEVICEMON_CREDS_FILE) 2024-01-01 2024-01-31 "e00fce68c7f2c2b634bb4b7d" LCCMR
+# or with parameters
+.../scripts/scheduled_device_monitoring.sh 2024-01-01 2024-01-31 "e00fce68c7f2c2b634bb4b7d" LCCMR
 ```
 
 ## Python API Usage

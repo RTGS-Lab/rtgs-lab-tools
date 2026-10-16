@@ -3,6 +3,7 @@
 # re-installed:  scrontab <this file>   (replaces the account's whole scrontab -- merge by hand
 # if it holds other jobs). scripts/scheduled_device_monitoring.sh may be a stale copy: the
 # script re-runs the pinned release's own copy when they differ.
+# Needs ~/.config/devmon/release and ~/.config/devmon/sa.json (600) in the account's home.
 # --time must exceed the script's retry budget (3 x 600 s + 2 x 120 s = 34 min).
 #SCRON --time=01:00:00
 #SCRON --job-name=devmon-publish
