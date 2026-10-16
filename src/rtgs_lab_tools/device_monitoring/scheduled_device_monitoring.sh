@@ -11,6 +11,14 @@ export PYTHONUNBUFFERED=1	# flush python output to the log as it happens, so a r
 #   DEVICEMON_MAX_ATTEMPTS     how many times to run the report before giving up (default 3)
 #   DEVICEMON_ATTEMPT_TIMEOUT  hard wall-clock limit per attempt, seconds (default 1800)
 #   DEVICEMON_RETRY_DELAY      pause between attempts, seconds (default 300)
+#
+# Paths (defaults = the lab's shared MSI workspace, run from Bryan's scrontab):
+#   DEVICEMON_BASE_DIR    /projects/standard/runck014/shared/device_monitoring
+#   DEVICEMON_WORK_DIR    $DEVICEMON_BASE_DIR/rtgs-lab-tools-cron   (clone + venv live here)
+#   DEVICEMON_LOG_DIR     $DEVICEMON_BASE_DIR/logs
+#   DEVICEMON_CREDS_FILE  $DEVICEMON_BASE_DIR/credentials/.rtgs_credentials
+#                         (mode 660, group runck014; holds DEVICEMON_INGEST_URL/TOKEN)
+#   DEVICEMON_BATCH_DIR   $DEVICEMON_LOG_DIR/batches   (each batch saved before it is sent)
 
 set -e  # Exit on any error
 
@@ -36,9 +44,14 @@ MAX_ATTEMPTS="${DEVICEMON_MAX_ATTEMPTS:-3}"
 ATTEMPT_TIMEOUT="${DEVICEMON_ATTEMPT_TIMEOUT:-600}"
 RETRY_DELAY="${DEVICEMON_RETRY_DELAY:-120}"
 
-# Set up working directory and log file
-WORK_DIR="$HOME/rtgs-lab-tools-cron"
-LOG_DIR="$HOME/logs/device-monitoring-logs"
+# Set up working directory and log file. Group-shared workspace: files stay group-readable,
+# never world-readable.
+umask 007
+BASE_DIR="${DEVICEMON_BASE_DIR:-/projects/standard/runck014/shared/device_monitoring}"
+WORK_DIR="${DEVICEMON_WORK_DIR:-$BASE_DIR/rtgs-lab-tools-cron}"
+LOG_DIR="${DEVICEMON_LOG_DIR:-$BASE_DIR/logs}"
+CREDS_FILE="${DEVICEMON_CREDS_FILE:-$BASE_DIR/credentials/.rtgs_credentials}"
+export DEVICEMON_BATCH_DIR="${DEVICEMON_BATCH_DIR:-$LOG_DIR/batches}"
 LOG_FILE="$LOG_DIR/device_monitoring_$(date +%Y%m%d_%H%M%S).log"
 LOCK_FILE="$WORK_DIR/device_monitoring.lock"
 
@@ -118,23 +131,17 @@ else
     log "Module command not found, assuming modules are already available"
 fi
 
-# Source RTGS credentials: the main file (if any), then every drop-in in ~/.rtgs_creds.d/
-# (devmon.env holds the publish target; written by the devmon-msi-install script).
+# Source RTGS credentials: the shared file (DEVICEMON_CREDS_FILE); the per-user files are a
+# fallback for running from a personal account.
 CREDS_LOADED=0
-if [ -f "$HOME/.rtgs_credentials" ]; then
-    source "$HOME/.rtgs_credentials"; CREDS_LOADED=1
-    log "Loaded credentials from $HOME/.rtgs_credentials"
-elif [ -f "$HOME/.rtgs_creds" ]; then
-    source "$HOME/.rtgs_creds"; CREDS_LOADED=1
-    log "Loaded credentials from $HOME/.rtgs_creds"
-fi
-for f in "$HOME"/.rtgs_creds.d/*.env; do
+for f in "$CREDS_FILE" "$HOME/.rtgs_credentials" "$HOME/.rtgs_creds"; do
     [ -f "$f" ] || continue
     source "$f"; CREDS_LOADED=1
     log "Loaded credentials from $f"
+    break
 done
 if [ "$CREDS_LOADED" -eq 0 ]; then
-    log "ERROR: No credentials found: expected ~/.rtgs_credentials, ~/.rtgs_creds or ~/.rtgs_creds.d/*.env"
+    log "ERROR: No credentials found: expected $CREDS_FILE (or ~/.rtgs_credentials, ~/.rtgs_creds)"
     exit 1
 fi
 
@@ -146,12 +153,12 @@ if [ -n "${DEVICEMON_INGEST_URL:-}" ] && [ -n "${DEVICEMON_INGEST_TOKEN:-}" ]; t
 elif [ -n "${DEVICEMON_INSTANCE_CONNECTION_NAME:-}" ]; then
     log "WARNING: DEVICEMON_INGEST_URL/TOKEN unset; writing Cloud SQL directly (deprecated)"
 else
-    log "ERROR: set DEVICEMON_INGEST_URL and DEVICEMON_INGEST_TOKEN in ~/.rtgs_creds"
+    log "ERROR: set DEVICEMON_INGEST_URL and DEVICEMON_INGEST_TOKEN in $CREDS_FILE"
     exit 1
 fi
 
 # Setup repository and pin the release. The cron runs a tagged release, never a moving branch.
-# DEVICEMON_RELEASE (in ~/.rtgs_creds):
+# DEVICEMON_RELEASE (in the credentials file):
 #   devmon-v0.1.0      pinned: editing this one line on MSI is the deploy
 #   track:devmon-v*    newest tag matching the glob, fetched every run: pushing a tag is the deploy
 #   (unset)            stay on the current checkout, unpinned, with a warning

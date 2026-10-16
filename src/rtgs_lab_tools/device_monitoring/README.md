@@ -38,39 +38,43 @@ scrontab -e
 
 # Add this line to run monitoring daily at 4:27 AM
 # The line lives in scrontab.msi (versioned); install it with
-scrontab ~/rtgs-lab-tools-cron/rtgs-lab-tools/src/rtgs_lab_tools/device_monitoring/scrontab.msi
+scrontab /projects/standard/runck014/shared/device_monitoring/rtgs-lab-tools-cron/rtgs-lab-tools/src/rtgs_lab_tools/device_monitoring/scrontab.msi
 ```
 
 #### Script Location and Setup
 
 The monitoring script is located at:
 ```
-/home/$USER/code/scripts/scheduled_device_monitoring.sh
+/projects/standard/runck014/shared/device_monitoring/scripts/scheduled_device_monitoring.sh
+(the lab's shared workspace; runs from Bryan's scrontab. Paths are overridable:
+DEVICEMON_BASE_DIR, DEVICEMON_WORK_DIR, DEVICEMON_LOG_DIR, DEVICEMON_CREDS_FILE)
 ```
 
 This script automatically:
 - Loads required MSI modules (Python, Git)
 - Clones/updates the rtgs-lab-tools repository
 - Sets up the virtual environment
-- Loads credentials from the MSI home directory
+- Loads credentials from the shared credentials file
 - Runs the device monitoring
-- Logs all activities to `~/logs/device-monitoring-logs/`
+- Logs all activities to `/projects/standard/runck014/shared/device_monitoring/logs/` (batches in `logs/batches/`)
 
 ### MSI Credentials Configuration
 
 #### Credentials File Setup
 
-Create a secure credentials file in your MSI home directory:
+The shared credentials file (mode 660, group runck014; per-user `~/.rtgs_credentials` or
+`~/.rtgs_creds` are fallbacks):
 
 ```bash
 # Create credentials file with restricted permissions
-touch ~/.rtgs_creds
-chmod 600 ~/.rtgs_creds
+touch /projects/standard/runck014/shared/device_monitoring/credentials/.rtgs_credentials
+chmod 660 /projects/standard/runck014/shared/device_monitoring/credentials/.rtgs_credentials
+chgrp runck014 /projects/standard/runck014/shared/device_monitoring/credentials/.rtgs_credentials
 ```
 
 #### Required Credentials
 
-Edit `~/.rtgs_creds` with your actual credentials:
+Edit `credentials/.rtgs_credentials` with the actual credentials:
 
 ```bash
 # GEMS Database Configuration
@@ -94,10 +98,6 @@ export DEVICEMON_INGEST_URL=https://device-monitoring-ingest-prod-....run.app
 export DEVICEMON_INGEST_TOKEN=your_ingest_token
 # The rtgs-lab-tools tag the cron runs (or track:devmon-v* for newest)
 export DEVICEMON_RELEASE=devmon-v0.1.0
-# Path to a service account key with only the `roles/cloudsql.client` role,
-# used to authenticate the Cloud SQL connector from MSI (which has no gcloud
-# login of its own). Get this from whoever manages the GCP project.
-export GOOGLE_APPLICATION_CREDENTIALS=/path/to/device-monitoring-writer-key.json
 
 # Particle Cloud API
 export PARTICLE_ACCESS_TOKEN=your_particle_token
@@ -110,11 +110,10 @@ export GMAIL_RECIPIENT=notification_recipient@umn.edu
 
 #### Security Notes
 
-- **File permissions**: The credentials file has `600` permissions (readable only by you)
+- **File permissions**: The credentials file has `660` permissions (owner + group runck014)
 - **No VPN required**: MSI infrastructure has direct access to the database
 - **Secure storage**: Credentials are stored locally on MSI, not in version control
-- **Alternative names**: The script also checks for `~/.rtgs_credentials` as a fallback
-- **Service account key**: `GOOGLE_APPLICATION_CREDENTIALS` should also point to a file with `600` permissions, kept outside version control like the credentials file itself
+- **Alternative names**: The script falls back to `~/.rtgs_credentials`, then `~/.rtgs_creds`
 
 ### MSI Monitoring Workflow
 
@@ -122,10 +121,10 @@ export GMAIL_RECIPIENT=notification_recipient@umn.edu
 
 1. **Before 5:00 AM daily**: SLURM crontab triggers the monitoring script
 2. **Environment setup**: Script loads Python and Git modules
-3. **Code update**: Repository is updated with `git pull`
-4. **Credential loading**: Secure credentials are loaded from `~/.rtgs_creds`
+3. **Code update**: The pinned release tag (`DEVICEMON_RELEASE`) is checked out
+4. **Credential loading**: Credentials are loaded from `credentials/.rtgs_credentials`
 5. **Monitoring execution**: Device monitoring runs across all projects
-6. **Logging**: Results and logs are saved to `~/logs/device-monitoring-logs/`
+6. **Logging**: Results and logs are saved to `logs/` in the shared workspace
 7. **Cleanup**: Virtual environment is properly deactivated
 
 #### Log File Management
@@ -153,10 +152,14 @@ module load python
 module load git
 
 # Run the monitoring script directly
-/home/$USER/code/scripts/scheduled_device_monitoring.sh
+/projects/standard/runck014/shared/device_monitoring/scripts/scheduled_device_monitoring.sh
+(the lab's shared workspace; runs from Bryan's scrontab. Paths are overridable:
+DEVICEMON_BASE_DIR, DEVICEMON_WORK_DIR, DEVICEMON_LOG_DIR, DEVICEMON_CREDS_FILE)
 
 # Or run specific monitoring with parameters
-/home/$USER/code/scripts/scheduled_device_monitoring.sh 2024-01-01 2024-01-31 "e00fce68c7f2c2b634bb4b7d" LCCMR
+/projects/standard/runck014/shared/device_monitoring/scripts/scheduled_device_monitoring.sh
+(the lab's shared workspace; runs from Bryan's scrontab. Paths are overridable:
+DEVICEMON_BASE_DIR, DEVICEMON_WORK_DIR, DEVICEMON_LOG_DIR, DEVICEMON_CREDS_FILE) 2024-01-01 2024-01-31 "e00fce68c7f2c2b634bb4b7d" LCCMR
 ```
 
 ## Python API Usage
