@@ -1,0 +1,20 @@
+# What the MSI device-monitoring cron needs, and nothing else. scheduled_device_monitoring.sh
+# builds its venv with:  python -m pip install -r requirements-cron.txt
+#                        python -m pip install --no-deps -e .
+# The package's base dependencies (earthengine, geopandas, streamlit, pyarrow, matplotlib, ...)
+# serve the other tools and are deliberately not installed for the cron.
+# Pins follow uv.lock. Verified on Python 3.12 against tests/device_monitoring and a run of
+# check-ingest + monitor with the network and database faked. Add a line here when the
+# publisher path gains an import; CI installs exactly this file (devmon-publisher.yml).
+# (requirements.txt beside this file is the web app's, not the cron's.)
+click==8.2.1                # CLI
+requests==2.32.4            # ingest POST, Particle lookups
+google-auth==2.40.3         # service-account key -> Secret Manager (ingest token)
+sqlalchemy==2.0.41          # GEMS raw-data query (<2.1: keep postgresql:// on psycopg2)
+psycopg2-binary==2.9.10     # driver for the postgresql:// GEMS URL
+pandas==2.3.1               # parse / analyze (brings numpy)
+python-dotenv==1.1.1        # core.config, message_builder
+yagmail==0.15.293           # notification e-mail
+chardet<6                   # yagmail->premailer->cssutils pulls chardet 7, which requests warns on
+flask==3.1.3                # device_monitoring.core imports web_app.models (record builders)
+flask-sqlalchemy==3.1.1     # same

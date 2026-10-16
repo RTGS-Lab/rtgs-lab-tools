@@ -29,16 +29,22 @@ jobs:
       - name: Cron script parses
         run: bash -n src/rtgs_lab_tools/device_monitoring/scheduled_device_monitoring.sh
 
-      - name: Install
+      # Exactly what the MSI cron installs: if the publisher path gains an import that is not in
+      # requirements-cron.txt, this job fails instead of the 04:27 run.
+      - name: Install (lean, as the cron does)
         run: |
           python -m pip install --upgrade pip
-          pip install -e . pytest pytest-cov jsonschema
+          pip install -r src/rtgs_lab_tools/device_monitoring/requirements-cron.txt
+          pip install --no-deps -e .
+          pip install pytest jsonschema
 
       - name: Publisher tests
-        run: pytest -q --no-cov tests/device_monitoring
+        run: pytest -q -o addopts= tests/device_monitoring
 
       - name: CLI takes the flags the cron passes
         run: |
           rtgs device-monitoring monitor --help | grep -q -- '--start-date'
           rtgs device-monitoring publish --help >/dev/null
           rtgs device-monitoring check-ingest --help >/dev/null
+          python -m rtgs_lab_tools.device_monitoring.cli monitor --help | grep -q -- '--no-email'
+          python -m rtgs_lab_tools.device_monitoring.cli check-ingest --help >/dev/null

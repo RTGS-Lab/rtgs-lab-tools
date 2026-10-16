@@ -26,6 +26,11 @@
 #   DEVICEMON_SA_KEY           service-account key (default ~/.config/devmon/sa.json)
 #   DEVICEMON_TOKEN_SECRET     secret name (default follows the URL: prod or -test)
 #   DEVICEMON_RELEASE_FILE     release pin (default ~/.config/devmon/release)
+#   DEVICEMON_PYTHON_MODULE    module that provides Python >= 3.10 (default
+#                              python3/3.12.4_anaconda2024.06-1_libmamba; agate's bare
+#                              `module load python` left /usr/bin/python3 = 3.6.8 on PATH)
+#   DEVICEMON_PYTHON           interpreter to build the venv with (absolute path); skips the
+#                              module lookup
 #
 # Paths (defaults = the lab's shared MSI workspace):
 #   DEVICEMON_BASE_DIR    /projects/standard/runck014/shared/device_monitoring
@@ -206,12 +211,40 @@ else
 fi
 
 log "Loading required modules"
+PYTHON_MODULE="${DEVICEMON_PYTHON_MODULE:-python3/3.12.4_anaconda2024.06-1_libmamba}"
 if command -v module &> /dev/null; then
-    module load python || log "Warning: Could not load python module"
+    if [ -z "${DEVICEMON_PYTHON:-}" ]; then
+        module load "$PYTHON_MODULE" || log "Warning: Could not load module $PYTHON_MODULE"
+    fi
     module load git || log "Warning: Could not load git module"
 else
     log "Module command not found, assuming modules are already available"
 fi
+
+# The interpreter the venv is built from, by absolute path. A module may put python3, or only
+# python, on PATH; take the first that is new enough. Anything older fails here, not 20 minutes
+# into a pip run that builds sdists for an interpreter the code cannot run on.
+py_ok() { "$1" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; }
+py_ver() { "$1" -c 'import sys; print(sys.version.split()[0])' 2>/dev/null || echo "?"; }
+PY=""
+if [ -n "${DEVICEMON_PYTHON:-}" ]; then
+    PY="$DEVICEMON_PYTHON"
+    py_ok "$PY" || { log "ERROR: DEVICEMON_PYTHON=$PY is Python $(py_ver "$PY"); need >= 3.10"
+                     exit 1; }
+else
+    for cand in python3 python; do
+        c="$(command -v "$cand" 2>/dev/null)" || continue
+        if py_ok "$c"; then PY="$c"; break; fi
+        log "Skipping $c: Python $(py_ver "$c") (need >= 3.10)"
+    done
+    if [ -z "$PY" ]; then
+        log "ERROR: no Python >= 3.10 on PATH after 'module load $PYTHON_MODULE'."
+        log "       Check 'module avail python', then set DEVICEMON_PYTHON_MODULE (or"
+        log "       DEVICEMON_PYTHON=/abs/path/python3) in the scrontab line."
+        exit 1
+    fi
+fi
+log "Python for the venv: $PY ($(py_ver "$PY"))"
 
 # Credentials: the shared file (DEVICEMON_CREDS_FILE) as data; per-user files are a fallback
 # for running from a personal account.
@@ -289,48 +322,47 @@ if [ -z "${DEVICEMON_REEXEC:-}" ] && [ -f "$NEW_SELF" ] \
     exec env DEVICEMON_REEXEC=1 bash "$NEW_SELF" "$@"
 fi
 
-if [ ! -d "venv" ]; then
-    log "Virtual environment not found, running installation"
-    bash install.sh >&3 2>&1
+# The cron's venv holds only what the publisher needs (requirements-cron.txt), never the
+# package's full base dependencies, install.sh, or the dev/all extras.
+REQS="src/rtgs_lab_tools/device_monitoring/requirements-cron.txt"
+VPY="$REPO_DIR/venv/bin/python"
+if [ ! -f "$REQS" ]; then
+    log "ERROR: $REQS is not in release $PIN_TAG; cannot build the venv"
+    exit 1
 fi
 if [ ! -d "venv" ]; then
-    log "ERROR: Virtual environment not found after installation"
+    log "Virtual environment not found, creating it with $PY"
+    "$PY" -m venv venv >&3 2>&1
+fi
+if [ ! -x "$VPY" ]; then
+    log "ERROR: Virtual environment not found after installation ($VPY missing)"
+    exit 1
+fi
+if ! py_ok "$VPY"; then
+    log "ERROR: venv/ runs Python $(py_ver "$VPY"); need >= 3.10. Move $REPO_DIR/venv aside"
+    log "       and re-run: the venv is rebuilt with $PY."
     exit 1
 fi
 fail_if_shared "venv"
 
-log "Activating virtual environment"
-if [ -f "venv/bin/activate" ]; then
-    source venv/bin/activate
-elif [ -f "venv/Scripts/activate" ]; then
-    source venv/Scripts/activate
-else
-    log "ERROR: No activate script found in venv/bin or venv/Scripts"
-    exit 1
-fi
-
-# A new release may bring new dependencies: refresh the editable install once per commit.
+# A new release may bring new dependencies: refresh once per commit, still lean.
 STAMP="venv/.devmon-installed-release"
 if [ "$(cat "$STAMP" 2>/dev/null)" != "$PIN_TAG $PIN_SHA" ]; then
-    log "Installing rtgs-lab-tools for release $PIN_TAG"
-    if command -v uv &> /dev/null; then
-        uv pip install --quiet -e . >&3 2>&1
-    else
-        pip install --quiet -e . >&3 2>&1
-    fi
+    log "Installing the device-monitoring requirements for release $PIN_TAG"
+    "$VPY" -m pip install --quiet --disable-pip-version-check -r "$REQS" >&3 2>&1
+    "$VPY" -m pip install --quiet --disable-pip-version-check --no-deps -e . >&3 2>&1
     echo "$PIN_TAG $PIN_SHA" > "$STAMP"
     fail_if_shared "venv"
 fi
 
-if ! command -v rtgs &> /dev/null; then
-    log "ERROR: rtgs command not found in virtual environment"
-    exit 1
-fi
+# Device monitoring's own CLI, not the `rtgs` router: a missing dependency shows up as a
+# traceback naming the module instead of "No such command".
+DEVMON=("$VPY" -m rtgs_lab_tools.device_monitoring.cli)
 
 # Fail fast on setup problems (key file, IAM, URL) before the 80-second pipeline runs.
 # Exit 2 = setup is wrong; 3 = transient, so carry on and let the attempts retry.
 set +e
-rtgs device-monitoring check-ingest >&3 2>&1
+"${DEVMON[@]}" check-ingest >&3 2>&1
 CHECK=$?
 set -e
 if [ "$CHECK" -eq 2 ]; then
@@ -342,7 +374,7 @@ else
     log "Ingest preflight ok"
 fi
 
-MONITOR_ARGS=(device-monitoring monitor)
+MONITOR_ARGS=(monitor)
 [ -z "$START_DATE" ] || MONITOR_ARGS+=("--start-date=$START_DATE")
 [ -z "$END_DATE" ] || MONITOR_ARGS+=("--end-date=$END_DATE")
 [ -z "$NODE_IDS" ] || MONITOR_ARGS+=("--node-ids=$NODE_IDS")
@@ -363,9 +395,9 @@ fi
 EXIT_CODE=1
 ATTEMPT=1
 while [ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]; do
-    log "Attempt $ATTEMPT/$MAX_ATTEMPTS - running: rtgs ${MONITOR_ARGS[*]}"
+    log "Attempt $ATTEMPT/$MAX_ATTEMPTS - running: device_monitoring.cli ${MONITOR_ARGS[*]}"
     set +e
-    "${TIMEOUT_PREFIX[@]}" rtgs "${MONITOR_ARGS[@]}" >&3 2>&1
+    "${TIMEOUT_PREFIX[@]}" "${DEVMON[@]}" "${MONITOR_ARGS[@]}" >&3 2>&1
     EXIT_CODE=$?
     set -e
 
