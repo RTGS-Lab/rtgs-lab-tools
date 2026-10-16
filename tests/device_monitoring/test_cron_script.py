@@ -94,13 +94,14 @@ def ws(tmp_path):
     return {"home": home, "base": base, "script": script, "sha": sha, "tmp": tmp_path}
 
 
-def run(ws, release=None):
+def run(ws, release=None, **extra_env):
     if release is not None:
         f = ws["home"] / ".config/devmon/release"
         f.write_text(release)
         os.chmod(f, 0o600)
     env = {"HOME": str(ws["home"]), "PATH": os.environ["PATH"],
-           "DEVICEMON_BASE_DIR": str(ws["base"]), "DEVICEMON_INGEST_TOKEN": "must-be-unset"}
+           "DEVICEMON_BASE_DIR": str(ws["base"]), "DEVICEMON_INGEST_TOKEN": "must-be-unset",
+           **extra_env}
     return subprocess.run(["bash", str(ws["script"])], capture_output=True, text=True, env=env,
                           cwd=ws["tmp"], timeout=60)
 
@@ -128,9 +129,87 @@ def test_pinned_release_checks_out_without_hooks(ws):
     r = run(ws, f"devmon-v0.0.1 {ws['sha']}\n")
     # gets past the pin and stops at the (fake) venv, having run no repository hook
     assert f"devmon-v0.0.1 ({ws['sha']})" in r.stdout
-    assert "Virtual environment not found after installation" in r.stdout
+    assert "requirements-cron.txt is not in release devmon-v0.0.1" in r.stdout
     assert not (ws["tmp"] / "hook-ran").exists()
     logs = list((ws["base"] / "logs").glob("device_monitoring_*.log"))
     assert len(logs) == 1 and len(logs[0].name.split("_")[-1]) == len("XXXXXX.log")
     assert (logs[0].stat().st_mode & 0o777) == 0o640
     assert (ws["home"] / ".cache/devmon/device_monitoring.lock").exists()
+
+
+# A stand-in interpreter: logs every call, answers the version probes, and makes a "venv" whose
+# python is itself. Lets the tests follow the install and run commands without pip or a network.
+STUB_PY = """#!/bin/bash
+echo "$0 $*" >> "$STUB_LOG"
+case "$1" in
+  -c) case "$2" in *print*) echo "${STUB_VERSION:-3.12.4}" ;;
+                   *) [ "${STUB_VERSION:-3.12.4}" != 3.6.8 ] ;; esac ;;
+  -m) [ "$2" = venv ] && mkdir -p "$3/bin" && cp "$0" "$3/bin/python"; exit 0 ;;
+esac
+"""
+
+
+def stub_python(ws):
+    py = ws["tmp"] / "stubpy"
+    py.write_text(STUB_PY)
+    os.chmod(py, 0o750)
+    return py
+
+
+def release_with_requirements(ws):
+    """Tag devmon-v0.0.2: the fake release plus a requirements-cron.txt."""
+    repo = ws["base"] / "rtgs-lab-tools-cron/rtgs-lab-tools"
+    env = {**os.environ, **GIT_ENV}
+    os.chmod(repo, 0o750)
+    reqs = repo / "src/rtgs_lab_tools/device_monitoring/requirements-cron.txt"
+    reqs.parent.mkdir(parents=True)
+    reqs.write_text("click==8.2.1\n")
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True, env=env)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "r2"], check=True, env=env)
+    subprocess.run(["git", "-C", str(repo), "tag", "devmon-v0.0.2"], check=True, env=env)
+    subprocess.run(["chmod", "-R", "g-w,o-w", str(repo)], check=True)
+    return subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True,
+                          text=True, check=True).stdout.strip()
+
+
+def test_refuses_python_older_than_310(ws):
+    sha = release_with_requirements(ws)
+    log = ws["tmp"] / "py.log"
+    r = run(ws, f"devmon-v0.0.2 {sha}\n", DEVICEMON_PYTHON=str(stub_python(ws)),
+            STUB_LOG=str(log), STUB_VERSION="3.6.8")
+    assert r.returncode == 1 and "is Python 3.6.8; need >= 3.10" in r.stdout
+    assert "-m venv" not in log.read_text()
+    assert not (ws["base"] / "rtgs-lab-tools-cron/rtgs-lab-tools/venv").exists()
+
+
+def test_builds_lean_venv_and_runs_the_devmon_cli(ws):
+    sha = release_with_requirements(ws)
+    log = ws["tmp"] / "py.log"
+    r = run(ws, f"devmon-v0.0.2 {sha}\n", DEVICEMON_PYTHON=str(stub_python(ws)),
+            STUB_LOG=str(log))
+    assert r.returncode == 0, r.stdout + r.stderr
+    calls = [c.split(" ", 1)[1] for c in log.read_text().splitlines()]
+    pip = [c for c in calls if c.startswith("-m pip")]
+    assert len(pip) == 2
+    assert pip[0].endswith("-r src/rtgs_lab_tools/device_monitoring/requirements-cron.txt")
+    assert pip[1].endswith("--no-deps -e .")
+    assert "-m venv venv" in calls
+    runs = [c for c in calls if c.startswith("-m rtgs_lab_tools.device_monitoring.cli")]
+    assert runs[0].endswith("check-ingest") and runs[1].startswith(
+        "-m rtgs_lab_tools.device_monitoring.cli monitor")
+    venv = ws["base"] / "rtgs-lab-tools-cron/rtgs-lab-tools/venv"
+    bad = subprocess.run(["find", str(venv), "-perm", "/022"], capture_output=True,
+                         text=True).stdout
+    assert bad == ""                                  # umask 027: group may read, never write
+    assert (venv / ".devmon-installed-release").read_text().strip() == f"devmon-v0.0.2 {sha}"
+    # the next run of the same release installs nothing
+    log.write_text("")
+    r = run(ws, f"devmon-v0.0.2 {sha}\n", DEVICEMON_PYTHON=str(stub_python(ws)),
+            STUB_LOG=str(log))
+    assert r.returncode == 0 and "-m pip" not in log.read_text()
+
+
+def test_never_runs_install_sh_or_full_extras():
+    text = SCRIPT.read_text()
+    assert "bash install.sh" not in text and "[dev]" not in text and "[all]" not in text
+    assert "pip install --quiet -e ." not in text     # the full base dependencies

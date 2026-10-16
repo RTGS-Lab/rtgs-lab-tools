@@ -49,7 +49,8 @@ The monitoring script runs from the lab's shared workspace on Bryan's scrontab:
 ```
 Paths are overridable from the scrontab environment (never from the credentials file):
 DEVICEMON_BASE_DIR, DEVICEMON_WORK_DIR, DEVICEMON_LOG_DIR, DEVICEMON_CREDS_FILE,
-DEVICEMON_RELEASE_FILE, DEVICEMON_SA_KEY, DEVICEMON_TOKEN_SECRET.
+DEVICEMON_RELEASE_FILE, DEVICEMON_SA_KEY, DEVICEMON_TOKEN_SECRET, DEVICEMON_PYTHON_MODULE
+(default `python3/3.12.4_anaconda2024.06-1_libmamba`), DEVICEMON_PYTHON (absolute path).
 
 Ownership (the script refuses to run if the code side is group- or world-writable):
 ```
@@ -61,12 +62,17 @@ credentials/.rtgs_credentials                      660, group runck014 -- data, 
 ```
 
 Each run:
-- loads MSI modules (Python, Git)
+- loads MSI modules (Python, Git) and picks a Python >= 3.10 by absolute path; an older one
+  (agate's `/usr/bin/python3` is 3.6.8) stops the run with a message, before any install
+- builds `venv/` lean on first run and once per release: `pip install -r
+  device_monitoring/requirements-cron.txt` then `pip install --no-deps -e .` -- never
+  `install.sh` or the package's full base dependencies (minutes, not 25+)
 - parses the credentials file against an allowlist (no `source`)
 - checks out the release pinned in `~/.config/devmon/release` (`<tag> <commit sha>`; both
   checked; git runs with hooks disabled; an existing tag is never force-moved)
 - fetches the ingest token from Secret Manager with `~/.config/devmon/sa.json`
-  (`rtgs device-monitoring check-ingest` preflight), runs the monitor, publishes the batch
+  (`check-ingest` preflight), runs the monitor, publishes the batch -- all through
+  `venv/bin/python -m rtgs_lab_tools.device_monitoring.cli`, not the `rtgs` router
 - logs to `logs/device_monitoring_<stamp>_<random>.log`; the lock is in `~/.cache/devmon/`
 
 ### MSI Credentials Configuration
