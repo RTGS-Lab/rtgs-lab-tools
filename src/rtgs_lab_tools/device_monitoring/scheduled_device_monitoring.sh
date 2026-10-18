@@ -31,6 +31,8 @@
 #                              `module load python` left /usr/bin/python3 = 3.6.8 on PATH)
 #   DEVICEMON_PYTHON           interpreter to build the venv with (absolute path); skips the
 #                              module lookup
+#   DEVICEMON_EMAIL            1 = send the notification email after each run; default off
+#                              (the dashboard is the place to look; Bryan, 2026-10-18)
 #
 # Paths (defaults = the lab's shared MSI workspace):
 #   DEVICEMON_BASE_DIR    /projects/standard/runck014/shared/device_monitoring
@@ -379,6 +381,12 @@ MONITOR_ARGS=(monitor)
 [ -z "$END_DATE" ] || MONITOR_ARGS+=("--end-date=$END_DATE")
 [ -z "$NODE_IDS" ] || MONITOR_ARGS+=("--node-ids=$NODE_IDS")
 [ "$PROJECT" = "ALL" ] || MONITOR_ARGS+=("--project=$PROJECT")
+if [ "${DEVICEMON_EMAIL:-0}" = "1" ]; then
+    log "Notification email: on (DEVICEMON_EMAIL=1)"
+else
+    MONITOR_ARGS+=("--no-email")
+    log "Notification email: off (set DEVICEMON_EMAIL=1 to send it)"
+fi
 
 # Pin one timestamp for the whole day and keep it across retries, so a retried
 # report replaces the rows of the attempt it is repeating. UTC throughout.

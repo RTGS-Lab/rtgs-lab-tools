@@ -209,6 +209,24 @@ def test_builds_lean_venv_and_runs_the_devmon_cli(ws):
     assert r.returncode == 0 and "-m pip" not in log.read_text()
 
 
+def test_email_off_by_default_and_opt_in(ws):
+    sha = release_with_requirements(ws)
+    log = ws["tmp"] / "py.log"
+    pin = f"devmon-v0.0.2 {sha}\n"
+
+    def monitor_call(**extra):
+        log.write_text("")
+        r = run(ws, pin, DEVICEMON_PYTHON=str(stub_python(ws)), STUB_LOG=str(log), **extra)
+        assert r.returncode == 0, r.stdout + r.stderr
+        calls = [c.split(" ", 1)[1] for c in log.read_text().splitlines()]
+        return [c for c in calls if ".cli monitor" in c][0], r.stdout
+
+    call, out = monitor_call()
+    assert call.endswith("--no-email") and "Notification email: off" in out
+    call, out = monitor_call(DEVICEMON_EMAIL="1")
+    assert "--no-email" not in call and "Notification email: on" in out
+
+
 def test_never_runs_install_sh_or_full_extras():
     text = SCRIPT.read_text()
     assert "bash install.sh" not in text and "[dev]" not in text and "[all]" not in text
