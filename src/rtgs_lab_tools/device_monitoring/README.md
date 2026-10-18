@@ -50,7 +50,8 @@ The monitoring script runs from the lab's shared workspace on Bryan's scrontab:
 Paths are overridable from the scrontab environment (never from the credentials file):
 DEVICEMON_BASE_DIR, DEVICEMON_WORK_DIR, DEVICEMON_LOG_DIR, DEVICEMON_CREDS_FILE,
 DEVICEMON_RELEASE_FILE, DEVICEMON_SA_KEY, DEVICEMON_TOKEN_SECRET, DEVICEMON_PYTHON_MODULE
-(default `python3/3.12.4_anaconda2024.06-1_libmamba`), DEVICEMON_PYTHON (absolute path).
+(default `python3/3.12.4_anaconda2024.06-1_libmamba`), DEVICEMON_PYTHON (absolute path),
+DEVICEMON_EMAIL (`1` sends the notification email after each run; off by default).
 
 Ownership (the script refuses to run if the code side is group- or world-writable):
 ```
