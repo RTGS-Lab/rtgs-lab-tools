@@ -97,3 +97,45 @@ def test_cron_uses_the_cli_flag_names():
     script = (DM / "scheduled_device_monitoring.sh").read_text()
     for bad in ("--start_date", "--end_date", "--node_ids"):
         assert bad not in script
+
+
+P = "https://device-monitoring-ingest-prod-685278787484.us-central1.run.app"
+T = "https://device-monitoring-ingest-test-685278787484.us-central1.run.app"
+
+
+def test_ingest_urls_parses_a_comma_list():
+    assert publisher.ingest_urls(f" {P}/ , {T},{P} ,") == [P, T]
+    assert publisher.ingest_urls("") == []
+
+
+def test_publish_all_posts_to_every_service(monkeypatch):
+    seen = []
+    monkeypatch.setattr(publisher.requests, "post",
+                        lambda url, **k: seen.append(url) or FakeResponse(201, {"status": "stored"}))
+    out = publisher.publish_all(sample(), urls=[P, T], token="t", sleep=lambda s: None)
+    assert seen == [f"{P}/v1/batches", f"{T}/v1/batches"] and set(out) == {P, T}
+
+
+def test_mirror_failure_does_not_fail_the_run(monkeypatch, capsys):
+    def post(url, **k):
+        return FakeResponse(201, {"status": "stored"}) if url.startswith(P) else FakeResponse(400, {})
+    monkeypatch.setattr(publisher.requests, "post", post)
+    out = publisher.publish_all(sample(), urls=[P, T], token="t", sleep=lambda s: None)
+    assert set(out) == {P} and "mirror" in capsys.readouterr().out
+
+
+def test_primary_failure_raises_after_trying_the_mirror(monkeypatch):
+    seen = []
+    def post(url, **k):
+        seen.append(url)
+        return FakeResponse(400, {}) if url.startswith(P) else FakeResponse(201, {"status": "stored"})
+    monkeypatch.setattr(publisher.requests, "post", post)
+    with pytest.raises(publisher.PublishError):
+        publisher.publish_all(sample(), urls=[P, T], token="t", sleep=lambda s: None)
+    assert seen == [f"{P}/v1/batches", f"{T}/v1/batches"]
+
+
+def test_pinned_secret_refused_with_several_services(monkeypatch):
+    monkeypatch.setenv("DEVICEMON_TOKEN_SECRET", "devicemon-ingest-token")
+    with pytest.raises(publisher.PublishError):
+        publisher.publish_all(sample(), urls=[P, T], token="t")

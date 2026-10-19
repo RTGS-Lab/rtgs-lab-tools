@@ -266,7 +266,7 @@ if [ -z "${DEVICEMON_INGEST_URL:-}" ]; then
     log "ERROR: set DEVICEMON_INGEST_URL in $CREDS_FILE"
     exit 1
 fi
-log "Results go to the ingest service: $DEVICEMON_INGEST_URL"
+log "Results go to the ingest service(s), primary first: $DEVICEMON_INGEST_URL"
 
 # Release pin: "<tag> <commit sha>" in a file only Bryan can write.
 [ -f "$RELEASE_FILE" ] && [ -O "$RELEASE_FILE" ] \
