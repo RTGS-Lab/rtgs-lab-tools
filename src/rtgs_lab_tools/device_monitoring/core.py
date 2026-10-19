@@ -37,7 +37,7 @@ from .web_app.produce_db import (
     init_db, build_db, build_logger_info, build_app_config,
     monitoring_records, logger_info_records, app_config_defaults,
 )
-from .publisher import build_batch, publish, save_batch
+from .publisher import build_batch, publish_all, save_batch
 
 
 def _run_timestamp():
@@ -105,7 +105,7 @@ def monitor(
             batch_path = save_batch(batch)
         print(f"--Batch saved: {batch_path}--")
         with step_timeout(STEP_TIMEOUT_PUBLISH, "Publish"):
-            publish(batch)
+            publish_all(batch)
         print("--Publish complete--")
     else:
         print(f"--Beginning adding data to SQLite database--")

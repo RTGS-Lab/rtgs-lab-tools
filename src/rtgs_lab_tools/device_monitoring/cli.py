@@ -117,15 +117,29 @@ def check_ingest_cmd():
     import requests
 
     from . import ingest_token
+    from .publisher import ingest_urls
 
-    url = os.getenv("DEVICEMON_INGEST_URL", "")
+    # Several services may be listed (primary first, then mirrors): the exit code is the
+    # primary's; a mirror that fails is reported as a warning, as publish_all treats it.
+    urls = ingest_urls() or [""]
+    code = _check_one(urls[0], ingest_token, requests)
+    for url in urls[1:]:
+        if _check_one(url, ingest_token, requests):
+            click.echo(f"check-ingest: WARNING: mirror {url} failed (the run still publishes to "
+                       f"the primary)", err=True)
+    if code:
+        sys.exit(code)
+
+
+def _check_one(url, ingest_token, requests):
+    """check-ingest for one service; returns 0 ok, 2 setup, 3 transient."""
     try:
         base, _ = ingest_token.check_ingest_url(url)
         secret = ingest_token.secret_for(base)
         token, version = ingest_token.fetch_from_secret_manager(secret)
     except ingest_token.TokenError as e:
         click.echo(f"check-ingest: FAILED: {e}", err=True)
-        sys.exit(3 if e.transient else 2)
+        return 3 if e.transient else 2
     click.echo(f"check-ingest: token from {version}")
     try:
         h = requests.get(f"{base}/health", timeout=(10, 30))
@@ -133,7 +147,7 @@ def check_ingest_cmd():
                          headers={"Authorization": f"Bearer {token}"})
     except requests.RequestException as e:
         click.echo(f"check-ingest: FAILED: {base} unreachable: {type(e).__name__}", err=True)
-        sys.exit(3)
+        return 3
     finally:
         del token
     click.echo(f"check-ingest: {base}/health HTTP {h.status_code}; /v1/status HTTP "
@@ -141,9 +155,10 @@ def check_ingest_cmd():
     if s.status_code == 401:
         click.echo("check-ingest: FAILED: the service rejects this token (it pins secret "
                    "versions; redeploy it after adding a version)", err=True)
-        sys.exit(2)
+        return 2
     if h.status_code != 200 or s.status_code != 200:
-        sys.exit(3 if max(h.status_code, s.status_code) >= 500 else 2)
+        return 3 if max(h.status_code, s.status_code) >= 500 else 2
+    return 0
 
 
 if __name__ == "__main__":

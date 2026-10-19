@@ -96,8 +96,10 @@ DB_NAME=gems
 DB_USER=your_username
 DB_PASSWORD=your_password
 
-# Publish target: device-monitoring-ingest-prod (or -test). The token is NOT here.
-DEVICEMON_INGEST_URL=https://device-monitoring-ingest-prod-685278787484.us-central1.run.app
+# Publish target(s), comma-separated, primary first: prod is the primary (its failure fails the
+# run); test is a mirror (a failure there is only a warning). Each gets its own token from
+# Secret Manager. The token is NOT here.
+DEVICEMON_INGEST_URL=https://device-monitoring-ingest-prod-685278787484.us-central1.run.app,https://device-monitoring-ingest-test-685278787484.us-central1.run.app
 
 # Particle Cloud API
 PARTICLE_ACCESS_TOKEN=your_particle_token

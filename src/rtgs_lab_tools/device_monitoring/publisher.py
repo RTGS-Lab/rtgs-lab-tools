@@ -10,7 +10,10 @@ Payload:
       rtgs-infrastructure services/device-monitoring-ingest/schema/devmon-batch-1.schema.json;
       change both together.
 Environment:
-    DEVICEMON_INGEST_URL      base URL of the ingest service (deploy run summary)
+    DEVICEMON_INGEST_URL      base URL of the ingest service (deploy run summary); several
+                              may be given comma-separated: the first is the primary (its
+                              failure fails the run), the rest are mirrors (e.g. prod, then
+                              test) whose failure is logged but does not fail the run
     DEVICEMON_SA_KEY / DEVICEMON_TOKEN_SECRET   see ingest_token.py (token source)
     DEVICEMON_INGEST_TOKEN    test override only; normally unset (token from Secret Manager)
     DEVICEMON_BATCH_DIR       where each batch is saved before sending
@@ -164,6 +167,45 @@ def publish(batch, url=None, token=None, attempts=None, backoff=None, sleep=time
     raise PublishError(f"publish failed after {attempts} attempts: {last}")
 
 
+def ingest_urls(value=None):
+    """DEVICEMON_INGEST_URL as a list: comma-separated, order kept, duplicates dropped."""
+    raw = os.getenv("DEVICEMON_INGEST_URL", "") if value is None else value
+    out = []
+    for u in (part.strip().rstrip("/") for part in raw.split(",")):
+        if u and u not in out:
+            out.append(u)
+    return out
+
+
+def publish_all(batch, urls=None, **kwargs):
+    """Send the batch to every ingest service in DEVICEMON_INGEST_URL.
+
+    Each service gets its own token (the secret follows the host). The first URL is the
+    primary: if it fails, PublishError is raised after the mirrors have been tried. A mirror's
+    failure is printed as a warning only. The batch id is the same everywhere, so a re-run
+    or replay is a no-op on services that already stored it.
+    """
+    urls = ingest_urls() if urls is None else [u.rstrip("/") for u in urls]
+    if not urls:
+        raise PublishError("DEVICEMON_INGEST_URL must be set")
+    if len(urls) > 1 and os.getenv("DEVICEMON_TOKEN_SECRET"):
+        raise PublishError("DEVICEMON_TOKEN_SECRET pins one secret; unset it when posting to "
+                           "several ingest services (each host's secret is chosen for it)")
+    results, primary_error = {}, None
+    for i, url in enumerate(urls):
+        try:
+            results[url] = publish(batch, url=url, **kwargs)
+        except PublishError as e:
+            if i == 0:
+                primary_error = e
+                print(f"--Publish to primary {url} FAILED: {e}--")
+            else:
+                print(f"--WARNING: mirror {url} not updated: {e}--")
+    if primary_error is not None:
+        raise primary_error
+    return results
+
+
 def publish_file(path, **kwargs):
-    """Re-send a saved batch (replay, or seeding the test service)."""
-    return publish(json.loads(Path(path).read_text()), **kwargs)
+    """Re-send a saved batch to every configured service (replay, or seeding test)."""
+    return publish_all(json.loads(Path(path).read_text()), **kwargs)
