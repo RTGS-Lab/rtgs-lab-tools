@@ -1,5 +1,6 @@
 """MN Geospatial Commons data extractor."""
 
+import io
 import logging
 from typing import Any, Dict
 
@@ -93,8 +94,10 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
                 response = self.session.get(query_url, params=params, timeout=60)
                 response.raise_for_status()
 
-                # Read directly from the response
-                gdf = gpd.read_file(response.text)
+                # Read from the response bytes, not response.text: GDAL's in-memory
+                # string path rejected a valid 5.76 MB GeoJSON (public water basins,
+                # JSON parse error at byte 5,622,109) that the same bytes read fine.
+                gdf = gpd.read_file(io.BytesIO(response.content))
             else:
                 # Need to paginate
                 self.logger.info(f"Pagination required - extracting in batches of {max_record_count}")
@@ -115,7 +118,7 @@ class MNGeospatialExtractor(SpatialSourceExtractor):
                     response = self.session.get(query_url, params=params, timeout=60)
                     response.raise_for_status()
 
-                    batch_gdf = gpd.read_file(response.text)
+                    batch_gdf = gpd.read_file(io.BytesIO(response.content))
                     all_gdfs.append(batch_gdf)
 
                     if len(batch_gdf) < max_record_count:
