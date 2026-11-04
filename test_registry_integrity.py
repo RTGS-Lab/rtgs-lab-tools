@@ -191,9 +191,78 @@ def main():
         "regionally_significant_ecological_areas must record that it does not replace land_cover",
     )
 
+    # --- NRPC additions (2026-11-04): delivered, partner submissions, map layers --
+    delivered = reg.HENNEPIN_DELIVERED_DATASETS
+    partners = reg.NRPC_PARTNER_SUBMISSIONS
+    catalog_only = {"HENNEPIN_DELIVERED": delivered, "NRPC_PARTNER": partners}
+    for group_name, group in catalog_only.items():
+        for name in group:
+            check(name not in all_keys,
+                  f"{group_name}[{name}] also appears as an acquirable dataset")
+            check(name not in pending and name not in forthcoming,
+                  f"{group_name}[{name}] reuses a PENDING/FORTHCOMING key")
+    check(not (set(delivered) & set(partners)), "a key is in both DELIVERED and PARTNER groups")
+
+    for name, cfg in delivered.items():
+        check(cfg.get("source_type") == "hennepin_delivery",
+              f"HENNEPIN_DELIVERED[{name}] source_type should be 'hennepin_delivery'")
+        check(str(cfg.get("delivery", "")).startswith("thread:"),
+              f"HENNEPIN_DELIVERED[{name}] delivery must cite the mail thread")
+        check(bool(cfg.get("file_name")) and bool(cfg.get("layer_name")),
+              f"HENNEPIN_DELIVERED[{name}] needs file_name and layer_name")
+        check(isinstance(cfg.get("expected_features"), int),
+              f"HENNEPIN_DELIVERED[{name}] expected_features must be an int")
+        for field in ("fulfils", "candidate_for"):
+            if cfg.get(field):
+                check(cfg[field] in pending,
+                      f"HENNEPIN_DELIVERED[{name}].{field} unknown PENDING key {cfg[field]!r}")
+        if cfg.get("relates_to"):
+            check(cfg["relates_to"] in all_keys,
+                  f"HENNEPIN_DELIVERED[{name}].relates_to unknown key {cfg['relates_to']!r}")
+    for name, cfg in pending.items():
+        for target in cfg.get("delivered_as") or []:
+            check(target in delivered,
+                  f"PENDING[{name}].delivered_as unknown DELIVERED key {target!r}")
+        if cfg.get("delivered_as"):
+            check(cfg.get("status") in {"delivered", "candidate_delivered",
+                                        "derived_product_delivered"},
+                  f"PENDING[{name}] has delivered_as but status {cfg.get('status')!r}")
+
+    for name, cfg in partners.items():
+        check(cfg.get("source_type") == "nrpc_partner_submission",
+              f"NRPC_PARTNER[{name}] source_type should be 'nrpc_partner_submission'")
+        check(cfg.get("agol_upload") in {"ready", "on_hold"},
+              f"NRPC_PARTNER[{name}] agol_upload must be 'ready' or 'on_hold'")
+        report = str(cfg.get("qaqc_report", ""))
+        check(report.startswith("QAQC Reports/") and report.endswith("/report.html"),
+              f"NRPC_PARTNER[{name}] qaqc_report must be 'QAQC Reports/<org>/<dataset>/report.html'")
+        for field in ("jurisdiction", "file_stem", "submission_date", "qaqc_assessment"):
+            check(bool(cfg.get(field)), f"NRPC_PARTNER[{name}] missing {field}")
+    ready = sum(1 for c in partners.values() if c.get("agol_upload") == "ready")
+    held = sum(1 for c in partners.values() if c.get("agol_upload") == "on_hold")
+    # 2026-10-13 upload checklist: 26 ready, 26 on hold (MCWD 14, RPBCWD 11, Wayzata 1).
+    check(ready == 26, f"expected 26 partner layers ready for upload, found {ready}")
+    check(held == 26, f"expected 26 partner layers on hold, found {held}")
+
+    webmap = {k: c for k, c in mn.items() if c.get("nrpc_webmap_item")}
+    for name, cfg in webmap.items():
+        check(cfg.get("access_method") == "rest_api" and cfg.get("service_url") == cfg.get("url"),
+              f"MN_GEOSPATIAL[{name}] web-map layer must be rest_api with service_url == url")
+        check(cfg.get("source_type") == "mn_geospatial",
+              f"MN_GEOSPATIAL[{name}] web-map layer must use source_type 'mn_geospatial' "
+              "(the only REST source the extractor maps)")
+    # 21 layer URLs in web map d664f1d1 (2026-11-02 pull) -> 21 entries.
+    check(len(webmap) == 21, f"expected 21 NRPC web-map layers, found {len(webmap)}")
+    v2 = forthcoming.get("hennepin_suitability_v2_results", {})
+    check(set(v2.get("would_supersede") or []) == {"hennepin_suitability_v1_countywide",
+                                                    "hennepin_suitability_v1_parcel_detail"},
+          "FORTHCOMING['hennepin_suitability_v2_results'] must supersede both v1 layers")
+
     # --- accessors still work ------------------------------------------------
     check(callable(reg.get_pending_datasets), "get_pending_datasets is not callable")
     check(callable(reg.get_forthcoming_datasets), "get_forthcoming_datasets is not callable")
+    check(reg.get_delivered_datasets() is delivered, "get_delivered_datasets broken")
+    check(reg.get_nrpc_partner_submissions() is partners, "get_nrpc_partner_submissions broken")
     check(isinstance(reg.format_gaps_for_llm(), str), "format_gaps_for_llm did not return a string")
     # NB: only exercise paths that do not reach the FGDB branch. That branch does
     # `from ..sources.fgdb import is_fgdb_available`, a package-relative import
@@ -209,7 +278,8 @@ def main():
 
     # --- report --------------------------------------------------------------
     print(f"registry: {len(mn)} MN_GEOSPATIAL, {len(fgdb)} FGDB, "
-          f"{len(pending)} pending, {len(forthcoming)} forthcoming")
+          f"{len(pending)} pending, {len(forthcoming)} forthcoming, "
+          f"{len(delivered)} delivered, {len(partners)} partner submissions")
     print(f"crosswalk rows traceable: {len(covered)}/41")
     print(f"{checks} checks run")
     if failures:
