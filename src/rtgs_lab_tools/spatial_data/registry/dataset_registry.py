@@ -2427,6 +2427,205 @@ NRPC_PARTNER_SUBMISSIONS = {
         "qaqc_overall_score": 5.0,
         "agol_upload": "on_hold",
     },
+    # --- RPBCWD (11) ---
+    "nrpc_rpbcwd_ann_subwatershed": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - Ann Subwatershed (NRPC partner submission, "
+            "file stem Ann_2025_P8_Subwatersheds)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 3,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "Ann_2025_P8_Subwatersheds",
+        "submission_date": "2026-01-27",
+        "qaqc_report": "QAQC Reports/RPBCWD/Ann Subwatershed/report.html",
+        "qaqc_report_date": "2026-06-15",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 4.67,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_rpbcwd_cras_reaches_2021": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - CRAS Reaches 2021 (NRPC partner submission, "
+            "file stem CRAS_Reaches_2021)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "unknown",
+        "coordinate_system": "unknown",
+        "expected_features": 97,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "CRAS_Reaches_2021",
+        "submission_date": "2026-01-26",
+        "qaqc_report": "QAQC Reports/RPBCWD/CRAS Reaches 2021/report.html",
+        "qaqc_report_date": "2026-06-15",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.4,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_rpbcwd_flood_risk": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - Flood Risk (NRPC partner submission, file "
+            "stem EP_Inundation_100Yr)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 1733,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "EP_Inundation_100Yr",
+        "submission_date": "2026-01-27",
+        "qaqc_report": "QAQC Reports/RPBCWD/Flood Risk/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.8,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_rpbcwd_high_risk_erosion_areas": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - High Risk Erosion Areas (NRPC partner "
+            "submission, file stem High_Risk_Erosion_Areas)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 6,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "High_Risk_Erosion_Areas",
+        "submission_date": "2026-01-27",
+        "qaqc_report": "QAQC Reports/RPBCWD/High Risk Erosion Areas/report.html",
+        "qaqc_report_date": "2026-06-30",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.6,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_rpbcwd_lake_lucy_subwatershed": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - Lake Lucy Subwatershed (NRPC partner "
+            "submission, file stem Lucy_2025_P8_Subwatersheds)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 58,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "Lucy_2025_P8_Subwatersheds",
+        "submission_date": "2026-01-27",
+        "qaqc_report": "QAQC Reports/RPBCWD/Lake Lucy Subwatershed/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.17,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_rpbcwd_lake_mitchell_subwatershed": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - Lake Mitchell Subwatershed (NRPC partner "
+            "submission, file stem Mitchell_2025_P8_Subwatersheds)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 50,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "Mitchell_2025_P8_Subwatersheds",
+        "submission_date": "2026-01-27",
+        "qaqc_report": "QAQC Reports/RPBCWD/Lake Mitchell Subwatershed/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 4.5,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_rpbcwd_lake_susan_subwatershed": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - Lake Susan Subwatershed (NRPC partner "
+            "submission, file stem Susan_2025_P8_Subwatersheds)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 88,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "Susan_2025_P8_Subwatersheds",
+        "submission_date": "2026-01-27",
+        "qaqc_report": "QAQC Reports/RPBCWD/Lake Susan Subwatershed/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 4.67,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_rpbcwd_mnram": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - MnRAM (NRPC partner submission, file stem "
+            "MnRAM_RPBCWD)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 2015,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "MnRAM_RPBCWD",
+        "submission_date": "2026-01-27",
+        "qaqc_report": "QAQC Reports/RPBCWD/MnRAM/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_rpbcwd_red_rock_lake_subwatershed": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - Red Rock Lake Subwatershed (NRPC partner "
+            "submission, file stem RedRock_2025_P8_Subwatersheds)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 69,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "RedRock_2025_P8_Subwatersheds",
+        "submission_date": "2026-01-27",
+        "qaqc_report": "QAQC Reports/RPBCWD/Red Rock Lake Subwatershed/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 4.5,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_rpbcwd_residential_soil_samples_overview": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - Residential Soil Samples Overview (NRPC "
+            "partner submission, file stem SoilsGISDataSample_XYTableToPoint)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "unknown",
+        "coordinate_system": "unknown",
+        "expected_features": 206,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "SoilsGISDataSample_XYTableToPoint",
+        "submission_date": "2026-01-26",
+        "qaqc_report": "QAQC Reports/RPBCWD/Residential Soil Samples Overview/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.0,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_rpbcwd_wetland_inventory": {
+        "description": (
+            "RILEY-PURGATORY-BLUFF CREEK - Wetland Inventory (NRPC partner submission, "
+            "file stem Wetland_Inventory)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 1973,
+        "jurisdiction": "RILEY-PURGATORY-BLUFF CREEK",
+        "file_stem": "Wetland_Inventory",
+        "submission_date": "2026-01-26",
+        "qaqc_report": "QAQC Reports/RPBCWD/Wetland Inventory/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "on_hold",
+    },
 }
 
 
