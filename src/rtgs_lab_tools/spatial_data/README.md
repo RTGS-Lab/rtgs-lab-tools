@@ -12,6 +12,7 @@ The `spatial_data` module provides unified extraction and processing capabilitie
 
 - **FGDB (File Geodatabase)** - Hennepin County analysis datasets (16 layers)
 - **MN Geospatial Commons** - Public Minnesota datasets (10+ sources)
+- **NRPC (Hennepin)** - the NRPC map's ArcGIS REST layers, plus catalogs of Hennepin deliveries and QA/QC'd partner data
 - **Local files** - Shapefiles, GeoPackages, GeoParquet, GeoJSON, ZIP archives
 - **Directories** - Batch extraction from a folder of spatial files
 - **Grid generation** - Regular grid cells from any boundary polygon
@@ -85,6 +86,52 @@ Always available without configuration.
 | `groundwater_recharge` | Groundwater recharge rates | 201,264 |
 | `TNC_lands` | The Nature Conservancy lands | 383 |
 | `cemeteries` | Regional cemeteries | 108 |
+
+### NRPC datasets (Hennepin NRPC work, added 2026-11-04)
+
+ArcGIS REST layers, extractable like `TNC_lands` (`access_method: rest_api`). The first
+21 are every layer of the NRPC Interactive Map web map
+(`d664f1d163544d25bb92921e5c4bf214`); counts are `returnCountOnly` on 2026-11-04.
+
+| Dataset | Description | Features |
+|---------|-------------|----------|
+| `hennepin_suitability_v1_countywide` | Hennepin County Parcel Prioritization Model results, v1 | 445,517 |
+| `hennepin_suitability_v1_parcel_detail` | Hennepin County Parcel Prioritization Model results, v1, ... | 445,517 |
+| `metc_protection_opportunities` | Metropolitan Council natural-systems Protection Opportunities, ... | 37 |
+| `metc_improvement_opportunities` | Metropolitan Council natural-systems Improvement Opportunities, ... | 60 |
+| `metc_existing_natural_systems` | Metropolitan Council Existing Natural Systems | 114 |
+| `metc_ecologically_significant_areas` | Metropolitan Council Ecologically Significant Areas, Hennepin ... | 51 |
+| `metc_ecologically_sensitive_areas` | Metropolitan Council Ecologically Sensitive Areas, Hennepin County ... | 60 |
+| `hc_public_water_basins_clipped` | DNR public water basin delineations clipped to Hennepin County | 1,036 |
+| `hc_public_parcels_clipped` | Publicly owned parcels in Hennepin County | 14,724 |
+| `hc_parks_clipped` | Parks in Hennepin County, clipped | 1,100 |
+| `regional_trails` | Regional trails | 240 |
+| `nrpc_winter_workshop_activity_1` | NRPC Winter Workshop 2025, Activity 1: points placed by members | 162 |
+| `nrpc_winter_workshop_activity_2_thematic` | NRPC Winter Workshop 2025, Activity 2: thematic connections drawn ... | 49 |
+| `nrpc_winter_workshop_activity_2_physical` | NRPC Winter Workshop 2025, Activity 2: physical connections drawn ... | 21 |
+| `nrpc_opportunity_areas_point` | NRPC Opportunity Layer, point features: opportunity areas members ... | 0 |
+| `nrpc_opportunity_areas_polygon` | NRPC Opportunity Layer, polygon features: opportunity areas ... | 0 |
+| `hc_watershed_districts` | Watershed district / WMO administrative boundaries in Hennepin County | 16 |
+| `hennepin_parcels` | Hennepin County parcel base | 379,625 |
+| `hc_cities` | Hennepin County cities and townships | 47 |
+| `hc_ctu_labels` | City/township label polygons for Hennepin County | 41 |
+| `hennepin_county_boundary` | Hennepin County boundary | 1 |
+| `trpd_park_boundaries` | Three Rivers Park District park boundaries | 44 |
+
+Catalog-only groups (never returned by `list_available_datasets()`; the extractor
+cannot fetch them):
+
+- `HENNEPIN_DELIVERED_DATASETS` (8) - private layers Hennepin County sent by email, each with its
+  mail thread, file and layer name; `get_delivered_datasets()`. `delivered_as` on a
+  `PENDING_HENNEPIN_DATASETS` row names the delivery that answered it.
+- `NRPC_PARTNER_SUBMISSIONS` (52) - partner layers QA/QC'd by UMN, one per
+  `QAQC Reports/<org>/<dataset>/report.html`; `agol_upload` is `ready` (26) or `on_hold`
+  (26); `get_nrpc_partner_submissions()`.
+- `FORTHCOMING_DATASETS['hennepin_suitability_v2_results']` - V2 model results, not yet
+  published; supersedes the two v1 layers.
+
+Integrity: `python3 test_registry_integrity.py` (no geopandas needed).
+
 
 ## CLI Commands
 
