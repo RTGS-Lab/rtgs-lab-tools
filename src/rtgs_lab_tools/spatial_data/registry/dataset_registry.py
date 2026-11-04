@@ -1016,6 +1016,30 @@ MN_GEOSPATIAL_DATASETS = {
         # Local copy in nrpc-qaqc: jurisdictions/hennepin.shp (QA/QC boundary;
         # also the study area of the 2026-10-22 v1 replay run).
     },
+    # --- Protected-areas gap source named by Hennepin, 2026-11-03 ---
+    "trpd_park_boundaries": {
+        "description": (
+            "Three Rivers Park District park boundaries (open data). Fills parks that "
+            "neither the county Parks of NR Significance layer nor PAD-US carries."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis.trpdmn.org/traditional/rest/services/Park_Bndry_Public/FeatureServer/0",
+        "service_url": "https://gis.trpdmn.org/traditional/rest/services/Park_Bndry_Public/FeatureServer/0",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 44,  # returnCountOnly, 2026-11-04
+        "agol_item_id": "e0cba3b47bc1460297f6d0ec198f99c7",
+        "relates_to": "pad_us",
+        # Meaghan Dietrich, 2026-11-03 14:02 CST, thread:0000000000036996: 'there are a few Three
+        # Rivers Park District properties that don't make it into the Parks of NR Significance layer
+        # the county has on hand or the PAD-US data.' Her subset: trpd_gap_subset (delivered).
+        # Owner gisadmin@trpd; hub page gis.threeriversparks.org/datasets/trpd::park-boundaries-open-data.
+    },
 }
 
 # Hennepin County File Geodatabase (FGDB) datasets
