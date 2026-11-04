@@ -2044,6 +2044,63 @@ NRPC_PARTNER_SUBMISSIONS = {
         "qaqc_overall_score": 3.4,
         "agol_upload": "ready",
     },
+    # --- MWMO (3) ---
+    "nrpc_mwmo_boundary": {
+        "description": (
+            "MISSISSIPPI - Boundary (NRPC partner submission, file stem "
+            "MWMOBoundary_July2024)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 1,
+        "jurisdiction": "MISSISSIPPI",
+        "file_stem": "MWMOBoundary_July2024",
+        "submission_date": "2025-10-27",
+        "qaqc_report": "QAQC Reports/MWMO/Boundary/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 4.8,
+        "agol_upload": "ready",
+        # Upload copy: W42 task dir 02-08-output-20261012-MWMO_Boundary_fixed.zip (NAME field
+        # added by UMN; Aaron Goemann to confirm, thread:0000000000034652).
+    },
+    "nrpc_mwmo_soils_anoka_county": {
+        "description": (
+            "MISSISSIPPI - Soils - Anoka County (NRPC partner submission, file stem "
+            "MWMO_Soils_Anoka)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 130,
+        "jurisdiction": "MISSISSIPPI",
+        "file_stem": "MWMO_Soils_Anoka",
+        "submission_date": "2026-03-20",
+        "qaqc_report": "QAQC Reports/MWMO/Soils - Anoka County/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "ready",
+    },
+    "nrpc_mwmo_soils_hennepin_county": {
+        "description": (
+            "MISSISSIPPI - Soils - Hennepin County (NRPC partner submission, file stem "
+            "MWMO_Soils_Hennepin_Ramsey)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 921,
+        "jurisdiction": "MISSISSIPPI",
+        "file_stem": "MWMO_Soils_Hennepin_Ramsey",
+        "submission_date": "2026-03-20",
+        "qaqc_report": "QAQC Reports/MWMO/Soils - Hennepin County/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "ready",
+    },
 }
 
 
