@@ -512,6 +512,57 @@ MN_GEOSPATIAL_DATASETS = {
         "usage_undecided": "model input vs interactive-map display layer (crosswalk row 40)",
         "crosswalk_rows": [40],
     },
+    # --- NRPC interactive map: v1 model results (web map d664f1d1) ---
+    "hennepin_suitability_v1_countywide": {
+        "description": (
+            "Hennepin County Parcel Prioritization Model results, v1 (2020 inputs), "
+            "county-wide view: every parcel with its six category scores and overall "
+            "rank."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Hennepin_Suitability_Model_Results_PublicView/FeatureServer/96",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Hennepin_Suitability_Model_Results_PublicView/FeatureServer/96",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "static",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 445517,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-01-22",
+        "agol_item_id": "01d9c39e16714ebdaa20af2008f532de",
+        "nrpc_webmap_titles": ["Parcel Prioritization Model Results (County Wide View)"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # v1 = the model as run in 2023; the Natural Spaces centroid bug is in it
+        # (W43THU01 35-output-20261022-notes-for-bryan.md). Superseded by V2 when published.
+    },
+    "hennepin_suitability_v1_parcel_detail": {
+        "description": (
+            "Hennepin County Parcel Prioritization Model results, v1, parcel-detail "
+            "view used by the parcel report for per-parcel tier-2 values."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Hennepin_Suitability_Model_Results_parcel_detail/FeatureServer/97",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Hennepin_Suitability_Model_Results_parcel_detail/FeatureServer/97",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "static",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 445517,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-01-22",
+        "agol_item_id": "3ed0717b29fe491e8b5cbcd548818925",
+        "nrpc_webmap_titles": ["Parcel Prioritization Model Results (Parcel View)"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # Also read by js/report-maps.js for the report plates.
+    },
 }
 
 # Hennepin County File Geodatabase (FGDB) datasets
