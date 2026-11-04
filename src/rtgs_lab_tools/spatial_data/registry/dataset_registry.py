@@ -1696,6 +1696,59 @@ def get_delivered_datasets() -> Dict[str, Dict[str, Any]]:
     """Private datasets Hennepin County has sent by email, with delivery provenance."""
     return HENNEPIN_DELIVERED_DATASETS
 
+# NRPC partner datasets submitted through the 'NRPC Data Submission' Survey123
+# (item 8c0788a5475d46c7bf314f57c55b2278) and QA/QC'd by UMN. One entry per QA/QC report in
+# the UMN shared drive folder 'QAQC Reports/<org>/<dataset>/report.html'. The data files are
+# survey attachments (AGOL sign-in), so these are catalog entries: not acquirable by the
+# extractor, never returned by list_available_datasets(). `agol_upload` is 'ready' for the 26
+# layers on the 2026-10-13 upload checklist and 'on_hold' for the 26 Audrey Robeson is
+# following up (thread:00000000000365b6, 2026-09-30). None is among the UMN org's public
+# items on 2026-11-04 (an anonymous search cannot see group-only shares).
+NRPC_PARTNER_SUBMISSIONS = {
+    # --- Bloomington (2) ---
+    "nrpc_bloomington_barr_engineering_prioritization_plan": {
+        "description": (
+            "Bloomington - Barr Engineering Prioritization Plan (NRPC partner "
+            "submission, file stem Bloomington_Resto_Prty)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 256,
+        "jurisdiction": "Bloomington",
+        "file_stem": "Bloomington_Resto_Prty",
+        "submission_date": "2026-01-21",
+        "qaqc_report": "QAQC Reports/Bloomington/Barr Engineering Prioritization Plan/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.0,
+        "agol_upload": "ready",
+    },
+    "nrpc_bloomington_natural_resources_data": {
+        "description": (
+            "Bloomington - Natural Resources Data (NRPC partner submission, file stem "
+            "Land_Cover)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 496,
+        "jurisdiction": "Bloomington",
+        "file_stem": "Land_Cover",
+        "submission_date": "2026-03-11",
+        "qaqc_report": "QAQC Reports/Bloomington/Natural Resources Data/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.8,
+        "agol_upload": "ready",
+    },
+}
+
+
+def get_nrpc_partner_submissions() -> Dict[str, Dict[str, Any]]:
+    """QA/QC'd NRPC partner datasets (catalog only; files are Survey123 attachments)."""
+    return NRPC_PARTNER_SUBMISSIONS
+
 def get_pending_datasets() -> Dict[str, Dict[str, Any]]:
     """Datasets the model needs that Hennepin or DNR still has to supply.
 
