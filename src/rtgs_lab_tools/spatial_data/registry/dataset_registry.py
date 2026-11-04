@@ -2174,6 +2174,259 @@ NRPC_PARTNER_SUBMISSIONS = {
         "qaqc_overall_score": 3.4,
         "agol_upload": "ready",
     },
+    # --- MCWD (14) ---
+    "nrpc_mcwd_administrative_boundary": {
+        "description": (
+            "MINNEHAHA CREEK - Administrative Boundary (NRPC partner submission, file "
+            "stem MCWD_Administrative_Boundary)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 1,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MCWD_Administrative_Boundary",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/Administrative Boundary/report.html",
+        "qaqc_report_date": "2026-06-10",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 4.8,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_capital_improvement_projects": {
+        "description": (
+            "MINNEHAHA CREEK - Capital Improvement Projects (NRPC partner submission, "
+            "file stem MCWD_Capital_Improvement_Projects)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "point",
+        "coordinate_system": "unknown",
+        "expected_features": 117,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MCWD_Capital_Improvement_Projects",
+        "submission_date": "2026-03-13",
+        "qaqc_report": "QAQC Reports/MCWD/Capital Improvement Projects/report.html",
+        "qaqc_report_date": "2026-06-09",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.0,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_functional_assessments_of_wetlands": {
+        "description": (
+            "MINNEHAHA CREEK - Functional Assessments of Wetlands (NRPC partner "
+            "submission, file stem MCWD_Functional_Assessments_of_Wetlands)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 6752,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MCWD_Functional_Assessments_of_Wetlands",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/Functional Assessments of Wetlands/report.html",
+        "qaqc_report_date": "2026-06-10",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.17,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_hydrologic_boundary": {
+        "description": (
+            "MINNEHAHA CREEK - Hydrologic Boundary (NRPC partner submission, file stem "
+            "MCWD_Hydrologic_Boundary)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 1,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MCWD_Hydrologic_Boundary",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/Hydrologic Boundary/report.html",
+        "qaqc_report_date": "2026-06-10",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 5.0,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_ms4_ditch": {
+        "description": (
+            "MINNEHAHA CREEK - MS4 Ditch (NRPC partner submission, file stem "
+            "MS4_DITCH)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multilinestring",
+        "coordinate_system": "unknown",
+        "expected_features": 18,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MS4_DITCH",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/MS4 Ditch/report.html",
+        "qaqc_report_date": "2026-07-08",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_ms4_drainage_area": {
+        "description": (
+            "MINNEHAHA CREEK - MS4 Drainage Area (NRPC partner submission, file stem "
+            "MS4_DRAINAGE_AREA)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 10,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MS4_DRAINAGE_AREA",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/MS4 Drainage Area/report.html",
+        "qaqc_report_date": "2026-07-08",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.8,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_ms4_outfalls": {
+        "description": (
+            "MINNEHAHA CREEK - MS4 Outfalls (NRPC partner submission, file stem "
+            "MS4_OUTFALLS)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "unknown",
+        "coordinate_system": "unknown",
+        "expected_features": 1,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MS4_OUTFALLS",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/MS4 Outfalls/report.html",
+        "qaqc_report_date": "2026-07-08",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.2,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_ms4_ponds": {
+        "description": (
+            "MINNEHAHA CREEK - MS4 Ponds (NRPC partner submission, file stem "
+            "MS4_PONDS)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 2,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MS4_PONDS",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/MS4 Ponds/report.html",
+        "qaqc_report_date": "2026-07-08",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_ms4_receiving_waters": {
+        "description": (
+            "MINNEHAHA CREEK - MS4 Receiving Waters (NRPC partner submission, file "
+            "stem MS4_REC_WATERS)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 2,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MS4_REC_WATERS",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/MS4 Receiving Waters/report.html",
+        "qaqc_report_date": "2026-07-08",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_ms4_stormwater_pipes": {
+        "description": (
+            "MINNEHAHA CREEK - MS4 Stormwater Pipes (NRPC partner submission, file "
+            "stem MS4_STRMWTR_PIPES)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "unknown",
+        "coordinate_system": "unknown",
+        "expected_features": 2,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MS4_STRMWTR_PIPES",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/MS4 Stormwater Pipes/report.html",
+        "qaqc_report_date": "2026-07-08",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.0,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_property_and_easements": {
+        "description": (
+            "MINNEHAHA CREEK - Property and Easements (NRPC partner submission, file "
+            "stem MCWD_Property_and_Easements)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 66,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MCWD_Property_and_Easements",
+        "submission_date": "2026-03-13",
+        "qaqc_report": "QAQC Reports/MCWD/Property and Easements/report.html",
+        "qaqc_report_date": "2026-06-10",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.2,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_resnet_monitoring_stations": {
+        "description": (
+            "MINNEHAHA CREEK - RESNET Monitoring Stations (NRPC partner submission, "
+            "file stem RESNET_Monitoring_Stations)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "point",
+        "coordinate_system": "unknown",
+        "expected_features": 25,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "RESNET_Monitoring_Stations",
+        "submission_date": "2026-03-13",
+        "qaqc_report": "QAQC Reports/MCWD/RESNET Monitoring Stations/report.html",
+        "qaqc_report_date": "2026-06-11",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 4.8,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_stream_order": {
+        "description": (
+            "MINNEHAHA CREEK - Stream Order (NRPC partner submission, file stem "
+            "MCWD_Stream_Order)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "unknown",
+        "coordinate_system": "unknown",
+        "expected_features": 2211,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MCWD_Stream_Order",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/Stream Order/report.html",
+        "qaqc_report_date": "2026-06-11",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.6,
+        "agol_upload": "on_hold",
+    },
+    "nrpc_mcwd_subwatersheds": {
+        "description": (
+            "MINNEHAHA CREEK - Subwatersheds (NRPC partner submission, file stem "
+            "MCWD_Subwatersheds)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 11,
+        "jurisdiction": "MINNEHAHA CREEK",
+        "file_stem": "MCWD_Subwatersheds",
+        "submission_date": "2025-10-08",
+        "qaqc_report": "QAQC Reports/MCWD/Subwatersheds/report.html",
+        "qaqc_report_date": "2026-06-11",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 5.0,
+        "agol_upload": "on_hold",
+    },
 }
 
 
