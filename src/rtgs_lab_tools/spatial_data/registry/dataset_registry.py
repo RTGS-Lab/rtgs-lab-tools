@@ -775,6 +775,125 @@ MN_GEOSPATIAL_DATASETS = {
         # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
         # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
     },
+    # --- NRPC interactive map: NRPC member-engagement layers ---
+    "nrpc_winter_workshop_activity_1": {
+        "description": (
+            "NRPC Winter Workshop 2025, Activity 1: points placed by members (service "
+            "layer name 20250107_Activity_1)."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Winter_Workshop_Activity_1/FeatureServer/0",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Winter_Workshop_Activity_1/FeatureServer/0",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "continuous",
+        "spatial_type": "point",
+        "model_critical": False,
+        "coordinate_system": "EPSG:3857",
+        "expected_features": 162,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-04-02",
+        "agol_item_id": "3f1b5e6c72c947e388e9422897dc966a",
+        "nrpc_webmap_titles": ["Winter Workshop 2025 - Activity 1"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+    },
+    "nrpc_winter_workshop_activity_2_thematic": {
+        "description": (
+            "NRPC Winter Workshop 2025, Activity 2: thematic connections drawn by "
+            "members."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Winter_Workshop_Activity_2/FeatureServer/0",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Winter_Workshop_Activity_2/FeatureServer/0",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "continuous",
+        "spatial_type": "multilinestring",
+        "model_critical": False,
+        "coordinate_system": "EPSG:3857",
+        "expected_features": 49,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-04-02",
+        "agol_item_id": "5b35b3ba75df4e3caafe7fdee1772af5",
+        "nrpc_webmap_titles": ["Activity 2: Thematic Connection"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+    },
+    "nrpc_winter_workshop_activity_2_physical": {
+        "description": (
+            "NRPC Winter Workshop 2025, Activity 2: physical connections drawn by "
+            "members."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Winter_Workshop_Activity_2/FeatureServer/1",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Winter_Workshop_Activity_2/FeatureServer/1",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "continuous",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:3857",
+        "expected_features": 21,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-04-02",
+        "agol_item_id": "5b35b3ba75df4e3caafe7fdee1772af5",
+        "nrpc_webmap_titles": ["Activity 2: Physical Connection"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+    },
+    "nrpc_opportunity_areas_point": {
+        "description": (
+            "NRPC Opportunity Layer, point features: opportunity areas members submit."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/NRPC_Opportunity_Layer/FeatureServer/0",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/NRPC_Opportunity_Layer/FeatureServer/0",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "continuous",
+        "spatial_type": "point",
+        "model_critical": False,
+        "coordinate_system": "EPSG:3857",
+        "expected_features": 0,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-05-06",
+        "agol_item_id": "8b041fc3953e44d38f667550a8f1d16a",
+        "nrpc_webmap_titles": ["Opportunity Area (Point)"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # Anonymous returnCountOnly = 0 on 2026-11-04: empty or not shared publicly
+        # [NEEDS CONFIRM]. The parcel report's Shared opportunities section reads it.
+    },
+    "nrpc_opportunity_areas_polygon": {
+        "description": (
+            "NRPC Opportunity Layer, polygon features: opportunity areas members "
+            "submit."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/NRPC_Opportunity_Layer/FeatureServer/1",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/NRPC_Opportunity_Layer/FeatureServer/1",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "continuous",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:3857",
+        "expected_features": 0,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-05-06",
+        "agol_item_id": "8b041fc3953e44d38f667550a8f1d16a",
+        "nrpc_webmap_titles": ["Opportunity Area (Polygon)"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # Anonymous returnCountOnly = 0 on 2026-11-04: empty or not shared publicly
+        # [NEEDS CONFIRM].
+    },
 }
 
 # Hennepin County File Geodatabase (FGDB) datasets
