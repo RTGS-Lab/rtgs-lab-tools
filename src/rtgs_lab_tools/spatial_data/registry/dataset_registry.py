@@ -1760,6 +1760,290 @@ NRPC_PARTNER_SUBMISSIONS = {
         "qaqc_overall_score": 3.33,
         "agol_upload": "ready",
     },
+    # --- Eden Prairie (16) ---
+    "nrpc_eden_prairie_archeological_buffers": {
+        "description": (
+            "Eden Prairie - Archeological Buffers (NRPC partner submission, file stem "
+            "ArcheologicalBuffers)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 42,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "ArcheologicalBuffers",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Archeological Buffers/report.html",
+        "qaqc_report_date": "2026-06-15",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.4,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_bluffs": {
+        "description": (
+            "Eden Prairie - Bluffs (NRPC partner submission, file stem Bluffs)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 1082,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "Bluffs",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Bluffs/report.html",
+        "qaqc_report_date": "2026-06-15",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_cultural_resources_buffer": {
+        "description": (
+            "Eden Prairie - Cultural Resources Buffer (NRPC partner submission, file "
+            "stem CulturalResourcesBuffer)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 1,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "CulturalResourcesBuffer",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Cultural Resources Buffer/report.html",
+        "qaqc_report_date": "2026-06-17",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.4,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_easements": {
+        "description": (
+            "Eden Prairie - Easements (NRPC partner submission, file stem "
+            "easements_lyr)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 363,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "easements_lyr",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Easements/report.html",
+        "qaqc_report_date": "2026-07-07",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.67,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_floodplains": {
+        "description": (
+            "Eden Prairie - Floodplains (NRPC partner submission, file stem "
+            "Floodplains)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 1206,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "Floodplains",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Floodplains/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_guideplan_aspire": {
+        "description": (
+            "Eden Prairie - Guideplan Aspire (NRPC partner submission, file stem "
+            "Guideplan_Aspire)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 19751,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "Guideplan_Aspire",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Guideplan Aspire/report.html",
+        "qaqc_report_date": "2026-06-30",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.17,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_he_epc_locations": {
+        "description": (
+            "Eden Prairie - HE EPC Locations (NRPC partner submission, file stem "
+            "HE_EPC_Locations)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "unknown",
+        "coordinate_system": "unknown",
+        "expected_features": 31,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "HE_EPC_Locations",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/HE EPC Locations/report.html",
+        "qaqc_report_date": "2026-06-30",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.2,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_hpc_sites": {
+        "description": (
+            "Eden Prairie - HPC Sites (NRPC partner submission, file stem HPCSites)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "unknown",
+        "coordinate_system": "unknown",
+        "expected_features": 17,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "HPCSites",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/HPC Sites/report.html",
+        "qaqc_report_date": "2026-06-30",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 4.8,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_natural_resources_management": {
+        "description": (
+            "Eden Prairie - Natural Resources Management (NRPC partner submission, "
+            "file stem NR_Management)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 164,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "NR_Management",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Natural Resources Management/report.html",
+        "qaqc_report_date": "2026-06-30",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.0,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_shoreland_buffer": {
+        "description": (
+            "Eden Prairie - Shoreland Buffer (NRPC partner submission, file stem "
+            "Shoreland_Buffer)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 1,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "Shoreland_Buffer",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Shoreland Buffer/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 5.0,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_social_trails": {
+        "description": (
+            "Eden Prairie - Social Trails (NRPC partner submission, file stem "
+            "SocialTrails)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multilinestring",
+        "coordinate_system": "unknown",
+        "expected_features": 147,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "SocialTrails",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Social Trails/report.html",
+        "qaqc_report_date": "2026-06-30",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.6,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_trails": {
+        "description": (
+            "Eden Prairie - Trails (NRPC partner submission, file stem Trail_System)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multilinestring",
+        "coordinate_system": "unknown",
+        "expected_features": 2600,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "Trail_System",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Trails/report.html",
+        "qaqc_report_date": "2026-06-30",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.67,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_tree_inventory": {
+        "description": (
+            "Eden Prairie - Tree Inventory (NRPC partner submission, file stem "
+            "TreeInventory)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "point",
+        "coordinate_system": "unknown",
+        "expected_features": 31164,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "TreeInventory",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Tree Inventory/report.html",
+        "qaqc_report_date": "2026-06-30",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.0,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_watersheds": {
+        "description": (
+            "Eden Prairie - Watersheds (NRPC partner submission, file stem "
+            "Watersheds)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 15,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "Watersheds",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Watersheds/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.2,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_wetlands": {
+        "description": (
+            "Eden Prairie - Wetlands (NRPC partner submission, file stem Wetlands)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 651,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "Wetlands",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Wetlands/report.html",
+        "qaqc_report_date": "2026-07-08",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.8,
+        "agol_upload": "ready",
+    },
+    "nrpc_eden_prairie_zoning": {
+        "description": (
+            "Eden Prairie - Zoning (NRPC partner submission, file stem Zoning)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 19824,
+        "jurisdiction": "Eden Prairie",
+        "file_stem": "Zoning",
+        "submission_date": "2026-04-14",
+        "qaqc_report": "QAQC Reports/Eden Prairie/Zoning/report.html",
+        "qaqc_report_date": "2026-06-29",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "ready",
+    },
 }
 
 
