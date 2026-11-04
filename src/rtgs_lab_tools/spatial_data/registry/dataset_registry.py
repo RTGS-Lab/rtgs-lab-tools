@@ -894,6 +894,128 @@ MN_GEOSPATIAL_DATASETS = {
         # Anonymous returnCountOnly = 0 on 2026-11-04: empty or not shared publicly
         # [NEEDS CONFIRM].
     },
+    # --- NRPC interactive map: boundaries ---
+    "hc_watershed_districts": {
+        "description": (
+            "Watershed district / WMO administrative boundaries in Hennepin County "
+            "(service layer PUBLICWORKS.PWGIS.Watershed_Admin_Boundaries)."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services1.arcgis.com/ziLNoRgqnICUM0q1/arcgis/rest/services/Watershed_Districts_2/FeatureServer/0",
+        "service_url": "https://services1.arcgis.com/ziLNoRgqnICUM0q1/arcgis/rest/services/Watershed_Districts_2/FeatureServer/0",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "unknown",
+        "expected_features": 16,  # returnCountOnly, 2026-11-04
+        "last_updated": "2019-07-09",
+        "agol_item_id": "7060522e3e534bc7bc9207bcc4c13da8",
+        "nrpc_webmap_titles": ["Watershed Districts"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # Projection is a custom Hennepin County LCC (US feet) WKT with no EPSG;
+        # the extractor reprojects to EPSG:4326. Local copy in nrpc-qaqc:
+        # jurisdictions/watershed_districts.shp (QA/QC jurisdiction boundary).
+    },
+    "hennepin_parcels": {
+        "description": (
+            "Hennepin County parcel base (county GIS NATURALRESOURCES map service, "
+            "layer 2 'Parcel Base'). Parcel geometry for the map, the parcel report "
+            "and mobile.js."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis.hennepin.us/arcgis/rest/services/Maps/NATURALRESOURCES/MapServer/2",
+        "service_url": "https://gis.hennepin.us/arcgis/rest/services/Maps/NATURALRESOURCES/MapServer/2",
+        "access_method": "rest_api",
+        "file_format": "mapserver",
+        "update_frequency": "continuous",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 379625,  # returnCountOnly, 2026-11-04
+        "agol_item_id": "8bf37684d18440a59c4eb923427ee3fb",
+        "nrpc_webmap_titles": ["Parcels"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # County-hosted MapServer; maxRecordCount 2000, geoJSON supported.
+    },
+    "hc_cities": {
+        "description": (
+            "Hennepin County cities and townships (NRPC map 'Cities'; service layer "
+            "FindExistingLocationsOutput)."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Hennepin County Cities/FeatureServer/0",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Hennepin County Cities/FeatureServer/0",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "static",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 47,  # returnCountOnly, 2026-11-04
+        "last_updated": "2024-05-22",
+        "agol_item_id": "3a098bd9dadf45088eb153c3e86cadfe",
+        "nrpc_webmap_titles": ["Cities"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # The service name contains spaces; requests must percent-encode them.
+        # Local copy in nrpc-qaqc: jurisdictions/cities.shp.
+    },
+    "hc_ctu_labels": {
+        "description": (
+            "City/township label polygons for Hennepin County (NRPC map 'Cities - "
+            "Labels')."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/CTUs_labels/FeatureServer/123",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/CTUs_labels/FeatureServer/123",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "static",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 41,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-03-26",
+        "agol_item_id": "f73146604ab548b292b0849bfec9553b",
+        "nrpc_webmap_titles": ["Cities - Labels"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+    },
+    "hennepin_county_boundary": {
+        "description": (
+            "Hennepin County boundary (county GIS BOUNDARIES map service, layer 1)."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis.hennepin.us/arcgis/rest/services/HennepinData/BOUNDARIES/MapServer/1",
+        "service_url": "https://gis.hennepin.us/arcgis/rest/services/HennepinData/BOUNDARIES/MapServer/1",
+        "access_method": "rest_api",
+        "file_format": "mapserver",
+        "update_frequency": "static",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1,  # returnCountOnly, 2026-11-04
+        "agol_item_id": "d47c495bda3f4458bdbfff0e6a842d70",
+        "nrpc_webmap_titles": ["Hennepin County"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # Local copy in nrpc-qaqc: jurisdictions/hennepin.shp (QA/QC boundary;
+        # also the study area of the 2026-10-22 v1 replay run).
+    },
 }
 
 # Hennepin County File Geodatabase (FGDB) datasets
