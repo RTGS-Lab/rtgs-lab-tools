@@ -2626,6 +2626,25 @@ NRPC_PARTNER_SUBMISSIONS = {
         "qaqc_overall_score": 3.4,
         "agol_upload": "on_hold",
     },
+    # --- Wayzata (1) ---
+    "nrpc_wayzata_tree_inventory": {
+        "description": (
+            "Wayzata - Tree Inventory (NRPC partner submission, file stem "
+            "Wayzata_Tree_Inventory_Use)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "unknown",
+        "coordinate_system": "unknown",
+        "expected_features": 1885,
+        "jurisdiction": "Wayzata",
+        "file_stem": "Wayzata_Tree_Inventory_Use",
+        "submission_date": "2026-04-08",
+        "qaqc_report": "QAQC Reports/Wayzata/Tree Inventory/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.67,
+        "agol_upload": "on_hold",
+    },
 }
 
 
