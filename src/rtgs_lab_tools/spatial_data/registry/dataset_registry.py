@@ -2101,6 +2101,79 @@ NRPC_PARTNER_SUBMISSIONS = {
         "qaqc_overall_score": 3.4,
         "agol_upload": "ready",
     },
+    # --- NMCWD (4) ---
+    "nrpc_nmcwd_habitat_corridor": {
+        "description": (
+            "NINE MILE CREEK - Habitat Corridor (NRPC partner submission, file stem "
+            "Habitat_Corridor)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 3,
+        "jurisdiction": "NINE MILE CREEK",
+        "file_stem": "Habitat_Corridor",
+        "submission_date": "2026-06-25",
+        "qaqc_report": "QAQC Reports/NMCWD/Habitat Corridor/report.html",
+        "qaqc_report_date": "2026-07-09",
+        "qaqc_assessment": "Accepted",
+        "qaqc_overall_score": 4.6,
+        "agol_upload": "ready",
+    },
+    "nrpc_nmcwd_habitat_patches": {
+        "description": (
+            "NINE MILE CREEK - Habitat Patches (NRPC partner submission, file stem "
+            "Habitat_patches)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 261,
+        "jurisdiction": "NINE MILE CREEK",
+        "file_stem": "Habitat_patches",
+        "submission_date": "2026-06-25",
+        "qaqc_report": "QAQC Reports/NMCWD/Habitat Patches/report.html",
+        "qaqc_report_date": "2026-07-09",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.4,
+        "agol_upload": "ready",
+    },
+    "nrpc_nmcwd_stream_erosion_risk": {
+        "description": (
+            "NINE MILE CREEK - Stream Erosion Risk (NRPC partner submission, file stem "
+            "Stream_erosion_risk)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "unknown",
+        "coordinate_system": "unknown",
+        "expected_features": 73,
+        "jurisdiction": "NINE MILE CREEK",
+        "file_stem": "Stream_erosion_risk",
+        "submission_date": "2026-06-25",
+        "qaqc_report": "QAQC Reports/NMCWD/Stream Erosion Risk/report.html",
+        "qaqc_report_date": "2026-07-09",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 4.4,
+        "agol_upload": "ready",
+    },
+    "nrpc_nmcwd_vulnerability_scoring": {
+        "description": (
+            "NINE MILE CREEK - Vulnerability Scoring (NRPC partner submission, file "
+            "stem Vulnerability_Scoring)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 164,
+        "jurisdiction": "NINE MILE CREEK",
+        "file_stem": "Vulnerability_Scoring",
+        "submission_date": "2026-06-25",
+        "qaqc_report": "QAQC Reports/NMCWD/Vulnerability Scoring/report.html",
+        "qaqc_report_date": "2026-07-09",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.4,
+        "agol_upload": "ready",
+    },
 }
 
 
