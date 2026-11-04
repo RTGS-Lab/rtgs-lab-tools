@@ -684,6 +684,97 @@ MN_GEOSPATIAL_DATASETS = {
         # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
         # Hosted copy in the UMN org (runcklab_UMN), not Met Council's own service.
     },
+    # --- NRPC interactive map: public natural-systems data ---
+    "hc_public_water_basins_clipped": {
+        "description": (
+            "DNR public water basin delineations clipped to Hennepin County (NRPC map "
+            "'Public Water Basins')."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/HennepinCounty_PublicWaterBasins_Clipped/FeatureServer/99",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/HennepinCounty_PublicWaterBasins_Clipped/FeatureServer/99",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1036,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-02-11",
+        "agol_item_id": "de61209bdef64edbbcbf6aeca9cb49fb",
+        "nrpc_webmap_titles": ["Public Water Basins"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        "relates_to": "public_waters_basins_watercourses",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+    },
+    "hc_public_parcels_clipped": {
+        "description": (
+            "Publicly owned parcels in Hennepin County (NRPC map 'Public Parcels')."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/HennepinCounty_PublicParcels_Clipped/FeatureServer/100",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/HennepinCounty_PublicParcels_Clipped/FeatureServer/100",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 14724,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-02-11",
+        "agol_item_id": "a4e53a771ffa43e29e4b2ff3c1206625",
+        "nrpc_webmap_titles": ["Public Parcels"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+    },
+    "hc_parks_clipped": {
+        "description": (
+            "Parks in Hennepin County, clipped (NRPC map 'Public Parks')."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/HennepinCounty_Parks_Clipped/FeatureServer/101",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/HennepinCounty_Parks_Clipped/FeatureServer/101",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1100,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-02-11",
+        "agol_item_id": "c300f32677bb487a8983fa5326b2e7d8",
+        "nrpc_webmap_titles": ["Public Parks"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+    },
+    "regional_trails": {
+        "description": (
+            "Regional trails (NRPC map 'Regional Trails')."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Regional_Trails/FeatureServer/118",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Regional_Trails/FeatureServer/118",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multilinestring",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 240,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-03-19",
+        "agol_item_id": "3f74c86a386b4e1bbc6c7a87e7edb0f1",
+        "nrpc_webmap_titles": ["Regional Trails"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+    },
 }
 
 # Hennepin County File Geodatabase (FGDB) datasets
