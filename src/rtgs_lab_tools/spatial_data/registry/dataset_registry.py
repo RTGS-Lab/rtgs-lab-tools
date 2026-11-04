@@ -1374,7 +1374,8 @@ PENDING_HENNEPIN_DATASETS = {
         "owner": "Meaghan Dietrich, Hennepin County",
         "storage_location": "GIS warehouse",
         "layer_query": None,
-        "status": "awaiting_delivery",
+        "status": "delivered",  # 2026-10-06, see HENNEPIN_DELIVERED_DATASETS
+        "delivered_as": ["hc_all_known_easements_combined_2026"],
         "blocking": ["protected_areas_hc"],
         "note": (
             "Compiled database of Hennepin County, Minnesota Land Trust and BWSR "
@@ -1388,7 +1389,10 @@ PENDING_HENNEPIN_DATASETS = {
         "owner": "Hennepin County GIS (Meaghan to ask Alex how the layer is generated)",
         "storage_location": "File network",
         "layer_query": "NaturalResources_Category <> 'Amenities'",
-        "status": "awaiting_delivery",
+        "status": "delivered",  # 2026-10-06
+        "delivered_as": ["parks_natural_resources_analysis"],
+        # 2026-11-03: Hennepin found Three Rivers Park District parks missing from this layer
+        # and from PAD-US (trpd_park_boundaries, trpd_gap_subset).
         "blocking": ["protected_areas_hc"],
         "note": (
             "Built on the HC parks layer; Kristine identified regionally significant "
@@ -1401,7 +1405,8 @@ PENDING_HENNEPIN_DATASETS = {
         "owner": "Meaghan Dietrich, Hennepin County",
         "storage_location": "File network",
         "layer_query": "Status IN ('Current Applicant', 'On-Hold', 'Selected')",
-        "status": "awaiting_delivery",
+        "status": "candidate_delivered",  # Easement_Inquiries, not confirmed as this layer
+        "delivered_as": ["hc_easement_inquiries"],
         "blocking": ["the model's analysis units"],
         "note": (
             "Highest priority of the pending deliveries: this is the candidate-site "
@@ -1431,7 +1436,8 @@ PENDING_HENNEPIN_DATASETS = {
             "0-1 mile": "name_cat NOT IN ('Other (Ecological)')",
             "1-3 mile": "name_cat NOT IN ('Other (Ecological)', 'Vascular Plant')",
         },
-        "status": "access_unresolved",
+        "status": "derived_product_delivered",  # NHIS per PLS section, 2026-11-02
+        "delivered_as": ["nhis_summary_by_section"],
         "blocking": ["NHIS Occurrence criterion (both distance bands)"],
         "note": (
             "Restricted data by direct request, so no public registry entry is "
@@ -1446,7 +1452,8 @@ PENDING_HENNEPIN_DATASETS = {
         "owner": "[NEEDS CONFIRM] Bryan Runck - Meaghan asks directly whether he holds this",
         "storage_location": None,
         "layer_query": None,
-        "status": "unresolved",
+        "status": "candidate_delivered",  # Bee_Habitat_Areas 2026-10-06, classes unexplained
+        "delivered_as": ["bee_habitat_areas_2026"],
         "blocking": ["bee_habitat"],
         "note": (
             "Sheet: 'RPBB high potential zones/pollinator suitability analysis (Bryan "
