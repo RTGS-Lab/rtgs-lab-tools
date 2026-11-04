@@ -563,6 +563,127 @@ MN_GEOSPATIAL_DATASETS = {
         # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
         # Also read by js/report-maps.js for the report plates.
     },
+    # --- NRPC interactive map: Metropolitan Council data ---
+    "metc_protection_opportunities": {
+        "description": (
+            "Metropolitan Council natural-systems Protection Opportunities, Hennepin "
+            "County cut, as served in the NRPC map (county and city views share this "
+            "layer)."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Met_Council_Data_Protection_Opportunities/FeatureServer/103",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Met_Council_Data_Protection_Opportunities/FeatureServer/103",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 37,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-03-12",
+        "agol_item_id": "73b722c7e92a428e85ba15d262f410dc",
+        "nrpc_webmap_titles": ["Met Council - Protection Opportunities (County View)", "Met Council - Protection Opportunities (City View)"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # Hosted copy in the UMN org (runcklab_UMN), not Met Council's own service.
+    },
+    "metc_improvement_opportunities": {
+        "description": (
+            "Metropolitan Council natural-systems Improvement Opportunities, Hennepin "
+            "County cut."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Met_Council_Data_Improvement_Opportunities/FeatureServer/104",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Met_Council_Data_Improvement_Opportunities/FeatureServer/104",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 60,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-03-12",
+        "agol_item_id": "9b5143f9ba4e4692bd36b33cefc83ef4",
+        "nrpc_webmap_titles": ["Met Council - Improvement Opportunities (County View)", "Met Council - Improvement Opportunities (City View)"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # Hosted copy in the UMN org (runcklab_UMN), not Met Council's own service.
+    },
+    "metc_existing_natural_systems": {
+        "description": (
+            "Metropolitan Council Existing Natural Systems (aquatic and terrestrial), "
+            "Hennepin County cut; the map draws aquatic and terrestrial as two "
+            "renderings of this layer."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Met_Council_Data_Existing_Natural_Systems/FeatureServer/105",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Met_Council_Data_Existing_Natural_Systems/FeatureServer/105",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 114,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-04-27",
+        "agol_item_id": "39d718683b2a4615be582343d3a80531",
+        "nrpc_webmap_titles": ["Met Council - Existing Natural Systems (County View) - Aquatic", "Met Council - Existing Natural Systems (County View) - Terrestrial", "Met Council - Existing Natural Systems (City View)"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # Hosted copy in the UMN org (runcklab_UMN), not Met Council's own service.
+    },
+    "metc_ecologically_significant_areas": {
+        "description": (
+            "Metropolitan Council Ecologically Significant Areas, Hennepin County cut."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Met_Council_Data_Ecologically_Significant_Areas/FeatureServer/106",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Met_Council_Data_Ecologically_Significant_Areas/FeatureServer/106",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 51,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-03-12",
+        "agol_item_id": "bba2acb6b9ce4c66ae2d813b3f2a1348",
+        "nrpc_webmap_titles": ["Met Council - Ecologically Significant Areas (County View)", "Met Council - Ecologically Significant Areas (City View)"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # Hosted copy in the UMN org (runcklab_UMN), not Met Council's own service.
+    },
+    "metc_ecologically_sensitive_areas": {
+        "description": (
+            "Metropolitan Council Ecologically Sensitive Areas, Hennepin County cut."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Met_Council_Data_Ecologically_Sensitive_Areas/FeatureServer/108",
+        "service_url": "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/Met_Council_Data_Ecologically_Sensitive_Areas/FeatureServer/108",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 60,  # returnCountOnly, 2026-11-04
+        "last_updated": "2026-03-12",
+        "agol_item_id": "88362700d2a640df99f1eb6e540e7792",
+        "nrpc_webmap_titles": ["Met Council - Ecologically Sensitive Areas (County View)", "Met Council - Ecologically Sensitive Areas (City View)"],
+        "nrpc_webmap_item": "d664f1d163544d25bb92921e5c4bf214",
+        # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
+        # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        # Hosted copy in the UMN org (runcklab_UMN), not Met Council's own service.
+    },
 }
 
 # Hennepin County File Geodatabase (FGDB) datasets
