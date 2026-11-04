@@ -1529,6 +1529,26 @@ FORTHCOMING_DATASETS = {
         ),
         "crosswalk_rows": [25],
     },
+    # --- NRPC webinar 2026-11-20 ---
+    "hennepin_suitability_v2_results": {
+        "description": (
+            "Hennepin County Parcel Prioritization Model results, V2: re-run on the "
+            "2026 inputs (overall plus the six categories), to replace the v1 layers "
+            "in the NRPC map for the 2026-11-20 webinar."
+        ),
+        "would_supersede": [
+            "hennepin_suitability_v1_countywide",
+            "hennepin_suitability_v1_parcel_detail",
+        ],
+        "status": "not_published",
+        "checked": "2026-11-04",
+        "evidence": (
+            "The UMN org's public services list (services.arcgis.com/8df8p0NlLFEShl0r) "
+            "has only the two v1 services; an AGOL search of runck* items for "
+            "suitability/prioritization/NRPC returns no V2 item. V2 scope (Natural "
+            "Spaces fix, Water outlier, NHIS rule, breaks) is Bryan's open decision."
+        ),
+    },
 }
 
 
