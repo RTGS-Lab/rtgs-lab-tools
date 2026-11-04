@@ -1742,6 +1742,24 @@ NRPC_PARTNER_SUBMISSIONS = {
         "qaqc_overall_score": 3.8,
         "agol_upload": "ready",
     },
+    # --- Champlin (1) ---
+    "nrpc_champlin_parks": {
+        "description": (
+            "Champlin - Parks (NRPC partner submission, file stem Parks_Map)."
+        ),
+        "source_type": "nrpc_partner_submission",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "unknown",
+        "expected_features": 34,
+        "jurisdiction": "Champlin",
+        "file_stem": "Parks_Map",
+        "submission_date": "2026-03-18",
+        "qaqc_report": "QAQC Reports/Champlin/Parks/report.html",
+        "qaqc_report_date": "2026-07-06",
+        "qaqc_assessment": "Accepted with Comments",
+        "qaqc_overall_score": 3.33,
+        "agol_upload": "ready",
+    },
 }
 
 
