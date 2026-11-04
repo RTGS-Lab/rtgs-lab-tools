@@ -1525,6 +1525,112 @@ FORTHCOMING_DATASETS = {
 }
 
 
+# Datasets Hennepin County has DELIVERED to UMN by email (private; not acquirable by URL).
+# The extractor cannot fetch these; they live where the lab files deliveries (see each entry's
+# `delivery`). Kept outside MN_GEOSPATIAL_DATASETS / FGDB_DATASETS so list_available_datasets()
+# never offers something unfetchable -- same rule as PENDING_HENNEPIN_DATASETS. An entry here
+# whose `fulfils` names a PENDING key is the delivery that pending row was waiting for.
+HENNEPIN_DELIVERED_DATASETS = {
+    # --- Delivered 2026-10-06 (EDA: W41WED00 12-context-20261007-eda-findings.md) ---
+    "hc_all_known_easements_combined_2026": {
+        "description": (
+            "All known conservation easements in Hennepin County, combined 2026 "
+            "(fields EasementID, EasementHolder, Acres only); layer "
+            "All_Known_Easements_Combined_2026 of All Easement Data Compilation.gdb."
+        ),
+        "source_type": "hennepin_delivery",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "ESRI:103734",
+        "expected_features": 227,
+        "file_name": "All Easement Data Compilation.gdb.zip",
+        "layer_name": "All_Known_Easements_Combined_2026",
+        "delivery": "thread:00000000000366cd, Meaghan Dietrich, 2026-10-06 13:12 CDT",
+        "fulfils": "established_conservation_easements",
+        # Overlaps itself: summed 6,967 ac vs dissolved union 6,874.3 ac -- dissolve first.
+    },
+    "hc_easement_inquiries": {
+        "description": (
+            "Hennepin County easement inquiries (layer Easement_Inquiries of the same "
+            "gdb): the only candidate for the potential-easements layer."
+        ),
+        "source_type": "hennepin_delivery",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 29,
+        "file_name": "All Easement Data Compilation.gdb.zip",
+        "layer_name": "Easement_Inquiries",
+        "delivery": "thread:00000000000366cd, Meaghan Dietrich, 2026-10-06 13:12 CDT",
+        "candidate_for": "potential_easements",
+        # AcquisStatus vocabulary does not match the registry query; ContactName holds
+        # landowner names -- never screen-share the attribute table. [NEEDS CONFIRM, Bryan]
+    },
+    "padus_county_clip_nrvalue": {
+        "description": (
+            "PAD-US clipped to Hennepin County with an undocumented 'NRValue' filter, "
+            "prepared by Hennepin County."
+        ),
+        "source_type": "hennepin_delivery",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:3857",
+        "expected_features": 105,
+        "file_name": "PADUS_CountyClip_NRValue.zip",
+        "layer_name": "PADUS_CountyClip_NRValue",
+        "delivery": "thread:00000000000366cd, Meaghan Dietrich, 2026-10-06 13:12 CDT",
+        "relates_to": "pad_us",
+        # 88 of 105 are GAP 4; the NRValue filter is undocumented [NEEDS CONFIRM].
+    },
+    "bee_habitat_areas_2026": {
+        "description": (
+            "Bee habitat areas, classes 1 and 2 (Hennepin County delivery; Noe layer "
+            "as-is or updated is not stated)."
+        ),
+        "source_type": "hennepin_delivery",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 2,
+        "file_name": "Bee_Habitat_Areas.zip",
+        "layer_name": "Bee_Habitat_Areas",
+        "delivery": "thread:00000000000366cd, Meaghan Dietrich, 2026-10-06 13:12 CDT",
+        "candidate_for": "pollinator_suitability",
+        # Both polygons invalid; ~2.96M vertices; no field explains classes 1/2.
+    },
+    "parks_natural_resources_analysis": {
+        "description": (
+            "Hennepin County parks with NaturalResources_Category, layer "
+            "Parks_NaturalResources_Analysis of LandCover2011_Parks.gdb."
+        ),
+        "source_type": "hennepin_delivery",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 1044,
+        "file_name": "LandCover2011_Parks.gdb.zip",
+        "layer_name": "Parks_NaturalResources_Analysis",
+        "delivery": "thread:00000000000366cd, Meaghan Dietrich, 2026-10-06 13:20 CDT",
+        "fulfils": "parks_natural_resource_significance",
+        "attribute_filter": {"description": "Parks of natural resource significance", "columns": ["NaturalResources_Category"], "values": ["Natural Area Park", "Regionally Significant", "Nature Preserve"], "match_type": "any"},
+        # Equivalent to the sheet's NaturalResources_Category <> 'Amenities' (keeps 402).
+    },
+    "landcover2011_parks_composition": {
+        "description": (
+            "2011 land-cover composition inside Hennepin County parks, layer "
+            "LandCover2011_Parks_Composition of LandCover2011_Parks.gdb."
+        ),
+        "source_type": "hennepin_delivery",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 3664,
+        "file_name": "LandCover2011_Parks.gdb.zip",
+        "layer_name": "LandCover2011_Parks_Composition",
+        "delivery": "thread:00000000000366cd, Meaghan Dietrich, 2026-10-06 13:20 CDT",
+        # 246 invalid geometries; 2011 basis.
+    },
+}
+
+
+def get_delivered_datasets() -> Dict[str, Dict[str, Any]]:
+    """Private datasets Hennepin County has sent by email, with delivery provenance."""
+    return HENNEPIN_DELIVERED_DATASETS
+
 def get_pending_datasets() -> Dict[str, Dict[str, Any]]:
     """Datasets the model needs that Hennepin or DNR still has to supply.
 
