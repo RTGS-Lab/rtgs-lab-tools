@@ -1624,6 +1624,44 @@ HENNEPIN_DELIVERED_DATASETS = {
         "delivery": "thread:00000000000366cd, Meaghan Dietrich, 2026-10-06 13:20 CDT",
         # 246 invalid geometries; 2011 basis.
     },
+    # --- Delivered 2026-11-02 / 2026-11-03 ---
+    "nhis_summary_by_section": {
+        "description": (
+            "NHIS observations summarised per PLS section by Hennepin County (derived "
+            "product of the restricted DNR NHIS data)."
+        ),
+        "source_type": "hennepin_delivery",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 746,
+        "file_name": "NHIS_Summary_by_Section.zip",
+        "layer_name": "NHIS_Summary_by_Section",
+        "delivery": "thread:0000000000036996, Meaghan Dietrich, 2026-11-02 15:33 CST",
+        "fulfils": "nhis_rare_features",
+        "scoring_rule": (
+            "area-weighted: 'the parcel should receive a score based on the weight by "
+            "percent of total acreage in each section' (Meaghan, 2026-11-02)"
+        ),
+        # Her email names the field Count_of_SpObs; the delivered .dbf has no such field --
+        # columns include Polygon_Co and sum_Area_S. Which is the count? [NEEDS CONFIRM]
+    },
+    "trpd_gap_subset": {
+        "description": (
+            "Three Rivers Park District parks missing from both the county parks layer "
+            "and PAD-US, subset exported by Hennepin County."
+        ),
+        "source_type": "hennepin_delivery",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 6,
+        "file_name": "TRPD_GAP_data.zip",
+        "layer_name": "TRPD_GAP_data",
+        "delivery": "thread:0000000000036996, Meaghan Dietrich, 2026-11-03 14:02 CST",
+        "relates_to": "trpd_park_boundaries",
+        # Her email: seven features not captured, Hopkins Depot and a golf course removed.
+        # The file holds 6: Big Island, Goose, Wawatasso, Kingswood, North Corridor,
+        # South Corridor (7 - 2 = 5, so one is extra [NEEDS CONFIRM]).
+    },
 }
 
 
