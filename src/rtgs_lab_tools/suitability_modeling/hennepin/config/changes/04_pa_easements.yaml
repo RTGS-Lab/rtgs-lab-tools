@@ -1,0 +1,15 @@
+id: pa_easements_2026
+label: 'Protected Areas: 2026 easements'
+module: protected_areas
+inputs:
+- PA_Value
+enabled: true
+setting:
+  source: easements_2026
+alternatives: []
+chosen_by: agent; Bryan to confirm
+rationale: Hennepin's 2026 compilation updates the 2020 protected set. The 2026-10-07 data review
+  found it ready. Dissolved first, it overlaps itself.
+primary_source: thread:00000000000366cd Meaghan Dietrich 2026-10-06; 2026-W41 12-context eda-findings
+registry_keys:
+- hc_all_known_easements_combined_2026
