@@ -1,0 +1,15 @@
+id: potential_easements
+label: Nearness to potential easements
+module: potential_easements
+inputs:
+- PEA_Value
+enabled: false
+setting: all_inquiries
+alternatives: []
+chosen_by: agent; Bryan to confirm
+rationale: Off. In the 2019 document at 15% of Spatial Context and absent from v1. Easement_Inquiries
+  is an unconfirmed stand-in and its status values do not match the document's query. Variant only.
+primary_source: 2019 scoring document, Nearness to Potential Easement Acquisition (15%); 2026-W41
+  12-context eda-findings Q1
+registry_keys:
+- hc_easement_inquiries
