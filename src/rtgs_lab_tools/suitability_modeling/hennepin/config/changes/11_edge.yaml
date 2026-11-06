@@ -1,0 +1,16 @@
+id: edge_distance
+label: Edge distance for Protected Areas and Natural Spaces
+module: distance_method
+inputs:
+- PA_Value
+- NS_Value
+enabled: false
+setting: edge
+alternatives: []
+chosen_by: agent; Bryan to confirm
+rationale: Off. The 2019 document measures to the edge; v1 measures centroid to centroid. Kept as
+  v1 for comparability; run as a variant so Bryan can see the size of the difference.
+primary_source: 2019 scoring document, Protected Areas distance classes; BL_1.1 parcel_PA_dists
+registry_keys:
+- protected_areas_hc
+- natural_spaces
