@@ -62,8 +62,9 @@ def reproduce_v1(ctx, stored_sb, denominator):
     g = pyogrio.read_dataframe(ctx.gdb, layer="Shoreland_BufferAreas_ANALYSIS", force_2d=True)
     g = g.to_crs(26915)
     simple = g.geometry.simplify(50, preserve_topology=True).iloc[0]
-    layer = shapely.get_parts(simple)
-    layer = layer[shapely.is_valid(layer)]
+    # The notebook splits the simplified feature into parts; overlay then repairs each one.
+    layer = shapely.get_parts(shapely.make_valid(shapely.get_parts(simple)))
+    layer = layer[shapely.get_type_id(layer) == 3]
     parcels = ctx.parcels_valid
     tree = shapely.STRtree(layer)
     pi, li = tree.query(parcels, predicate="intersects")
