@@ -1,0 +1,15 @@
+id: pa_trpd_gap
+label: 'Protected Areas: Three Rivers parks gap'
+module: protected_areas
+inputs:
+- PA_Value
+enabled: true
+setting:
+  source: trpd_gap
+alternatives: []
+chosen_by: agent; Bryan to confirm
+rationale: Meaghan found Three Rivers Park District parks missing from the county and PAD-US layers.
+  Her email counts 7 minus 2 = 5; the file has 6 [NEEDS CONFIRM]. File used as delivered.
+primary_source: thread:0000000000036996 Meaghan Dietrich 2026-11-03 14:02
+registry_keys:
+- trpd_gap_subset
