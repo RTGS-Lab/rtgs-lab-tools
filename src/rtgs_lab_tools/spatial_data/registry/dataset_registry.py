@@ -1468,7 +1468,8 @@ PENDING_HENNEPIN_DATASETS = {
         "owner": "Meaghan Dietrich, Hennepin County",
         "storage_location": None,
         "layer_query": None,
-        "status": "awaiting_delivery",
+        "status": "candidate_delivered",
+        "delivered_as": ["hockert_development_risk_parcels_2023"],
         "blocking": ["risk_of_development"],
         "note": (
             "Sheet: 'Buffer utilities and roads. Sewers etc. -- other simple metrics "
@@ -1671,6 +1672,22 @@ HENNEPIN_DELIVERED_DATASETS = {
         ),
         # Her email names the field Count_of_SpObs; the delivered .dbf has no such field --
         # columns include Polygon_Co and sum_Area_S. Which is the count? [NEEDS CONFIRM]
+    },
+    "hockert_development_risk_parcels_2023": {
+        "description": (
+            "Chance of subdivision in 2024 for every 2023 Hennepin parcel (444,443 PINs, "
+            "12,762 at risk), Matthew Hockert's linear probability model; layer holds "
+            "Met Council roll fields including owner names, so keep it local."
+        ),
+        "source_type": "hennepin_delivery",
+        "spatial_type": "multipolygon",
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 444443,
+        "file_name": "Runk_deliverables.zip",
+        "layer_name": "development_risk_parcels_2023",
+        "delivery": "thread:0000000000036c2e, Matthew Hockert, 2026-11-04 16:57 CST",
+        "fulfils": "risk_of_development_inputs",
+        # Fields used: PIN (053-<13-digit PID>), at_risk, p_sub24, USECLASS1.
     },
     "trpd_gap_subset": {
         "description": (
