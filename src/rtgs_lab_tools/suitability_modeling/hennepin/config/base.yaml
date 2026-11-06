@@ -1,0 +1,29 @@
+# Hennepin parcel prioritization model. Change entries live in config/changes/*.yaml, one per file,
+# so a git log of that directory is the record of what V2 is.
+model:
+  id: hennepin_prioritization
+  break_method: esriClassifyNaturalBreaks, 5 classes (kept from the published v1 layer for
+    comparability; v1 published maxima 10.0705 / 15.3075 / 19.8327 / 33.3379 / 78.0392)
+paths:
+  v1_csv: /storage/wd10tb/gdrive-runck-lab-mirror/runck_lab_operations/projects_runck_lab/projects-to-sort/202409_011_Hennepin_Model_Comparison_Ben_Landers/repos/BL_Hennepin_suitability_analysis/BL_Open_Source_Rebuild/data/shp/full_dataset_v1/full_parcels_ranked_final_v1.csv
+  v1_shp: /storage/wd10tb/gdrive-runck-lab-mirror/runck_lab_operations/projects_runck_lab/projects-to-sort/202409_011_Hennepin_Model_Comparison_Ben_Landers/repos/BL_Hennepin_suitability_analysis/BL_Open_Source_Rebuild/data/shp/full_dataset_v1/full_parcels_ranked_final_v1.shp
+  gdb: /storage/wd10tb/gdrive-runck-lab-mirror/runck_lab_operations/projects_runck_lab/archive/2023_hennepin_suitability_analysis/data/FinalHennepin Project/HC_EasementAnalysis_Model_Inputs_2020.gdb
+  county: /storage/wd10tb/gdrive-runck-lab-mirror/runck_lab_operations/projects_runck_lab/Tim_Johnson/nrpc-qaqc (Local version)/jurisdictions/hennepin.shp
+# ${DELIVERED} is the run directory's unpacked copy; each zip below is the primary file and its hash
+# is what the manifest records.
+delivered:
+  easements_gdb: ${DELIVERED}/delivered/01-context-20261007-All-Easement-Data-Compilation.gdb/All Easement Data Compilation.gdb
+  padus_shp: ${DELIVERED}/delivered/02-context-20261007-PADUS_CountyClip_NRValue/PADUS_CountyClip_NRValue.shp
+  bee_shp: ${DELIVERED}/delivered/03-context-20261007-Bee_Habitat_Areas/Bee_Habitat_Areas.shp
+  parks_gdb: ${DELIVERED}/delivered/04-context-20261007-LandCover2011_Parks.gdb/LandCover2011_Parks.gdb
+  nhis_shp: ${DELIVERED}/delivered/10-context-20261104-NHIS_Summary_by_Section/NHIS_Summary_by_Section.shp
+  trpd_gap_shp: ${DELIVERED}/delivered/11-context-20261104-TRPD_GAP_data/TRPD_GAP_data.shp
+  hockert_parcels_gpkg: ${DELIVERED}/hockert/Runk_deliverables/development_risk_parcels_2023.gpkg
+delivered_zips:
+  easements_gdb: /home/rtgs/Documents/working/2026-W41/2026-10-07T1053-WEDNESDAY/00-meaghan-eda-T1200/01-context-20261007-All-Easement-Data-Compilation.gdb.zip
+  padus_shp: /home/rtgs/Documents/working/2026-W41/2026-10-07T1053-WEDNESDAY/00-meaghan-eda-T1200/02-context-20261007-PADUS_CountyClip_NRValue.zip
+  bee_shp: /home/rtgs/Documents/working/2026-W41/2026-10-07T1053-WEDNESDAY/00-meaghan-eda-T1200/03-context-20261007-Bee_Habitat_Areas.zip
+  parks_gdb: /home/rtgs/Documents/working/2026-W41/2026-10-07T1053-WEDNESDAY/00-meaghan-eda-T1200/04-context-20261007-LandCover2011_Parks.gdb.zip
+  nhis_shp: /home/rtgs/Documents/working/2026-W45/2026-11-04T0933-WEDNESDAY/03-kristine-webinar-workplan-T1415/10-context-20261104-NHIS_Summary_by_Section.zip
+  trpd_gap_shp: /home/rtgs/Documents/working/2026-W45/2026-11-04T0933-WEDNESDAY/03-kristine-webinar-workplan-T1415/11-context-20261104-TRPD_GAP_data.zip
+  hockert_parcels_gpkg: ${DELIVERED}/hockert/Runk_deliverables.zip

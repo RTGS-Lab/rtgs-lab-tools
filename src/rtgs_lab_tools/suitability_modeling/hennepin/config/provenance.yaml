@@ -1,0 +1,36 @@
+# Where each tier-2 input comes from in v1. Notebooks are under NOTEBOOKS, at
+# Hennepin_suitability_analysis@94770eb 00_suitability_model_open_source_v2 and on the lab drive.
+notebooks_root: /storage/wd10tb/gdrive-runck-lab-mirror/runck_lab_operations/projects_runck_lab/projects-to-sort/202409_011_Hennepin_Model_Comparison_Ben_Landers/repos/BL_Hennepin_suitability_analysis/BL_Open_Source_Rebuild/Notebooks/00_suitability_model_open_source_v2
+inputs:
+  PA_Value: {layer: Protected_Areas_ANALYSIS, registry: protected_areas_hc, source: gdb, notebook: 1_Spatial_Context/BL_1.1.protected_area.ipynb}
+  NS_Value: {layer: Natural_Spaces_ANALYSIS, registry: natural_spaces, source: gdb, notebook: 1_Spatial_Context/BL_1.2.natural_spaces.ipynb}
+  QR_Value: {layer: "MLCCS_ANALYSIS + MBS_ANALYSIS", registry: "land_cover, mbs_sites", source: gdb, notebook: 2_Habitat_Quality_and_Diversity/BL_2.1. Quality Ranking.ipynb}
+  QC_Value: {layer: MBS_ANALYSIS, registry: "mbs_sites, quality_community", source: gdb, notebook: 2_Habitat_Quality_and_Diversity/BL_2.2. Quality Community.ipynb}
+  Lvl3_Value: {layer: MBS_ANALYSIS, registry: "mbs_sites, habitat_diversity", source: gdb, notebook: 2_Habitat_Quality_and_Diversity/BL_2.3. Habitat Diversity.ipynb}
+  Size_Value: {layer: v1 parcel polygons, registry: hennepin_suitability_v1_parcel_detail, source: v1_shp, notebook: 3_Size/BL_3.1. Relative and Absolute Size.ipynb}
+  WAN_Value: {layer: Wildlife_Action_Network_ANALYSIS, registry: wildlife_action_network, source: gdb, notebook: 4_Wildlife_and_Plant_Conservation/BL_4.2. Wildlife Action Network.ipynb}
+  Bird_Value: {layer: Important_Bird_Areas_ANALYSIS, registry: important_bird_areas, source: gdb, notebook: 4_Wildlife_and_Plant_Conservation/BL_4.3. Bird Habitat.ipynb}
+  Bee_Value: {layer: Bee_Habitat_ANALYSIS, registry: bee_habitat, source: gdb, notebook: 4_Wildlife_and_Plant_Conservation/BL_4.4. Pollinator Habitat.ipynb}
+  ROD_Value: {layer: Risk_of_Development_ANALYSIS, registry: risk_of_development, source: gdb, notebook: 5_Risk _of_Conservation/BL_5.1. Risk of Development.ipynb}
+  SB_Value: {layer: Shoreland_BufferAreas_ANALYSIS, registry: shoreland_buffers, source: gdb, notebook: 6_Water_Resources/BL_6.1. Shoreland Buffer.ipynb}
+  FP_Value: {layer: Floodplains_ANALYSIS, registry: floodplains, source: gdb, notebook: 6_Water_Resources/BL_6.2. Floodplain.ipynb}
+  HCWI_Value: {layer: HCWI_ANALYSIS, registry: hennepin_wetland_inventory, source: gdb, notebook: 6_Water_Resources/BL_6.3. Wetlands.ipynb}
+  HW_Value: {layer: Headwaters_ANALYSIS, registry: headwaters, source: gdb, notebook: 6_Water_Resources/BL_6.4. Headwater Area.ipynb}
+  GW_Value: {layer: Mean_GW_Recharge_1996_2010_ANALYSIS, registry: groundwater_recharge_hc, source: gdb, notebook: 6_Water_Resources/BL_6.5. Groundwater Recharge.ipynb}
+  Cont_Value: {layer: Susceptibility_Contamination_Groundwater_ANALYSIS, registry: groundwater_susceptibility, source: gdb, notebook: 6_Water_Resources/BL_6.6. GW Contamination.ipynb}
+overrides:
+  # input -> change id -> (source key in the manifest, intermediate file, columns)
+  NS_Value:
+    natural_spaces: {source: gdb, intermediate: natural_spaces, columns: [NS_dist_v1_point_m, NS_dist_part_centroid_m], code: changes/natural_spaces.py}
+  PA_Value:
+    pa_easements_2026: {source: easements_gdb, intermediate: protected_areas, columns: [PA_dist_easements_2026_m], code: changes/protected_areas.py}
+    pa_trpd_gap: {source: trpd_gap_shp, intermediate: protected_areas, columns: [PA_dist_trpd_gap_m], code: changes/protected_areas.py}
+    pa_parks_nr: {source: parks_gdb, intermediate: protected_areas, columns: [PA_dist_parks_nr_m], code: changes/protected_areas.py}
+  SB_Value:
+    water_outlier: {source: gdb, intermediate: water_outlier, columns: [SB_area_m2, SB_share], code: changes/water_outlier.py}
+  HCWI_Value:
+    water_outlier: {source: gdb, intermediate: water_outlier, columns: [HCWI_area_m2, HCWI_share], code: changes/water_outlier.py}
+  NHIS_Value:
+    nhis: {source: nhis_shp, intermediate: nhis, columns: [NHIS_sections_crossed, NHIS_cover_share, NHIS_aw_Polygon_Co], code: changes/nhis.py}
+  ROD_Value:
+    risk_of_development: {source: hockert_parcels_gpkg, intermediate: risk_of_development, columns: [ROD_in_hockert, ROD_at_risk, ROD_p_sub24], code: changes/risk_of_development.py}
