@@ -1,0 +1,15 @@
+id: natural_spaces
+label: Natural Spaces fix
+module: natural_spaces
+inputs:
+- NS_Value
+enabled: true
+setting: part_centroid
+alternatives:
+- edge
+chosen_by: agent; Bryan to confirm
+rationale: v1 measures every parcel to one point, the centroid of a single multipolygon of 1,091
+  parts. The Protected Areas method on exploded parts is the fix tested on 2026-10-22.
+primary_source: BL_1.2.natural_spaces.ipynb cell 6 vs BL_1.1 cell 8; 2026-W43 37-working ns-centroid-bug-check
+registry_keys:
+- natural_spaces
