@@ -1,0 +1,16 @@
+id: bee_habitat
+label: Bee habitat 2026 delivery
+module: bee_habitat
+inputs:
+- Bee_Value
+enabled: true
+setting: delivered_2026
+alternatives: []
+chosen_by: agent; Bryan to confirm
+rationale: The delivery is the same layer v1 used, tested in build(), so this changes nothing. The
+  Rusty Patched Bumble Bee update has not reached UMN as data.
+primary_source: thread:00000000000366cd 2026-10-06; thread:0000000000036b43 Kristine 2026-10-30,
+  Bees
+registry_keys:
+- bee_habitat_areas_2026
+- bee_habitat
