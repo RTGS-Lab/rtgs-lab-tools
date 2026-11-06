@@ -1,0 +1,15 @@
+id: pa_padus
+label: 'Protected Areas: PAD-US county clip'
+module: protected_areas
+inputs:
+- PA_Value
+enabled: false
+setting:
+  source: padus_nrvalue
+alternatives: []
+chosen_by: agent; Bryan to confirm
+rationale: Off. Not on the tracking sheet, its NRValue filter is undocumented, and 88 of 105 features
+  are GAP 4. Run as a variant only.
+primary_source: 2026-W41 12-context eda-findings, Gaps and defects
+registry_keys:
+- padus_county_clip_nrvalue
