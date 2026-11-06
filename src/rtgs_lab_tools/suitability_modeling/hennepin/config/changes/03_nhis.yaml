@@ -1,0 +1,25 @@
+id: nhis
+label: NHIS per section, area-weighted
+module: nhis
+inputs:
+- NHIS_Value
+enabled: true
+setting:
+  field: Polygon_Co
+  scale: cap_p99
+alternatives:
+- field: Polygon_Co
+  scale: linear
+- field: sum_Area_S
+  scale: cap_p99
+- field: Polygon_Co
+  scale: log
+chosen_by: agent; Bryan to confirm
+rationale: 'Meaghan''s rule, accepted by Bryan. Count_of_SpObs is not in the .dbf. Polygon_Co is
+  the chosen field: it is an integer and holds a 35 as in her example; sum_Area_S peaks at 8.41 [NEEDS
+  CONFIRM with Meaghan]. Within weight 0.30 from the 2019 document. Scale caps at the 99th percentile
+  so one section (count 147) does not set the county scale, the fault fixed in Water.'
+primary_source: thread:0000000000036996 Meaghan Dietrich 2026-11-02 15:33; Bryan Runck 2026-11-03
+  05:22; 2019 scoring document NHIS Occurrence (30%)
+registry_keys:
+- nhis_summary_by_section
