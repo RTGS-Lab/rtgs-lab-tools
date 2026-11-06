@@ -184,9 +184,11 @@ def main():
         f = out / "engine" / variant / "engine_check.json"
         if f.exists():
             e = json.loads(f.read_text())
-            log.check(f"engine: run-config equals score.py, {variant}",
-                      e["null_scores"] == 0 and e["parcels_over_0.0001"] == 0,
-                      {k: e[k] for k in ("max_abs_diff", "parcels_over_0.0001", "identical_rank_share")})
+            log.check(f"engine: run-config equals score.py, {variant}, apart from explained stacked parcels",
+                      e["null_scores"] == 0
+                      and e["parcels_over_0.0001"] == e["differences_explained_by_stacked_parcels"],
+                      {k: e[k] for k in ("max_abs_diff", "parcels_over_0.0001",
+                                         "differences_explained_by_stacked_parcels", "differing_pids")})
         else:
             log.check(f"engine: run-config equals score.py, {variant}", False, "not run")
 

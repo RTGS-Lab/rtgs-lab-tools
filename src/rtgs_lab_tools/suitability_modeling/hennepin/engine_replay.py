@@ -17,6 +17,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pyogrio
+import shapely
 import yaml
 
 from .context import load_config
@@ -88,8 +89,29 @@ def check(out, variant):
     rank = m.suitability_score.round(4).rank(ascending=False, method="min")
     return {"variant": variant, "rows": int(len(m)), "null_scores": int(m.suitability_score.isna().sum()),
             "max_abs_diff": float(diff.max()), "parcels_over_0.0001": int((diff > 1e-4).sum()),
+            **stacked_explanation(out, m, diff),
             "identical_rank_share": float((rank == m.Rank).mean()),
             "spearman": float(m.suitability_score.corr(m.Overall_Value, method="spearman"))}
+
+
+def stacked_explanation(out, merged, diff):
+    """The engine takes the maximum over points inside a unit. A parcel whose polygon holds another
+    parcel's representative point can therefore take that parcel's higher value. Test each difference
+    for exactly that cause: the engine score must equal the score of some other parcel inside."""
+    bad = merged.index[diff > 1e-4]
+    if not len(bad):
+        return {"differing_pids": [], "differences_explained_by_stacked_parcels": 0}
+    units = gpd.read_parquet(out / "engine" / "units.parquet")
+    points = units.representative_point().to_numpy()
+    tree = shapely.STRtree(points)
+    scores = merged.Overall_Value.to_numpy()
+    explained = 0
+    for i in bad:
+        inside = tree.query(shapely.make_valid(units.geometry.iat[i]), predicate="intersects")
+        others = scores[inside[inside != i]]
+        if len(others) and np.abs(others - merged.suitability_score.iat[i]).min() < 1e-3:
+            explained += 1
+    return {"differing_pids": merged.PID.iloc[bad].tolist(), "differences_explained_by_stacked_parcels": explained}
 
 
 def main():
