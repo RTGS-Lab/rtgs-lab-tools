@@ -44,7 +44,12 @@ def main():
     t.to_parquet(cmp_dir / "parcel_changes.parquet")
 
     dp = [f"dpts_{f}" for f in ALL_FIELDS]
-    t["main_driver"] = t[dp].abs().idxmax(axis=1).str.replace("dpts_", "").str.replace("_Value", "")
+    # An input moves two ways: its value changed, or its category's scale changed around it. Name the
+    # driver only among inputs whose value changed; a parcel with none moved by rescaling alone.
+    changed = pd.DataFrame({f"dpts_{f}": (v2[f] - (v1[f] if f in v1 else 0.0)).abs() > 1e-9 for f in ALL_FIELDS})
+    moved = t[dp].abs().where(changed, 0.0)
+    t["main_driver"] = moved.idxmax(axis=1).str.replace("dpts_", "").str.replace("_Value", "")
+    t.loc[moved.max(axis=1) == 0, "main_driver"] = "rescale only"
     movers = pd.concat([t.nlargest(25, "rank_gain").assign(direction="up"),
                         t.nsmallest(25, "rank_gain").assign(direction="down")])
     keep = ["direction", "PID", "MUNIC_NM", "acres", "Rank_v1", "Rank_v2", "rank_gain", "Overall_v1",
