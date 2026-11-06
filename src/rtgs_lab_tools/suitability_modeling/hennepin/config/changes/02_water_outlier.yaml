@@ -1,0 +1,18 @@
+id: water_outlier
+label: Water Resources outlier
+module: water_outlier
+inputs:
+- SB_Value
+- HCWI_Value
+enabled: true
+setting: recompute
+alternatives:
+- clip
+chosen_by: agent; Bryan to confirm
+rationale: SB_Value and HCWI_Value should be shares of parcel area. v1 reaches 194,933 and 6,391,
+  and one parcel sets the county Water Resources scale. Recompute as a true share.
+primary_source: BL_6.1 Shoreland Buffer.ipynb sjoin and sum; 2026-W43 21-context tier2-field-meanings;
+  2019 scoring document, Shoreland/Buffer Area
+registry_keys:
+- shoreland_buffers
+- hennepin_wetland_inventory
