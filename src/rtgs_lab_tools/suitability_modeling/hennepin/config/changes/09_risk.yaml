@@ -1,0 +1,17 @@
+id: risk_of_development
+label: Risk of development from Hockert 2023 model
+module: risk_of_development
+inputs:
+- ROD_Value
+enabled: true
+setting: terciles_at_risk
+alternatives:
+- terciles_no_farm
+chosen_by: agent; Bryan to confirm
+rationale: Reachable and PIN joins to PID. Thirds of p_sub24 follow the 2019 document's scale. The
+  document scores agriculture 0 and Hockert's at-risk set includes farms; terciles_no_farm tests
+  that.
+primary_source: thread:0000000000036c2e Matthew Hockert 2026-11-04 16:57; Runk_deliverables/README.md;
+  2019 scoring document, Risk of Development
+registry_keys:
+- hockert_development_risk_parcels_2023
