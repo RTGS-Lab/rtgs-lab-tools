@@ -53,7 +53,8 @@ def main():
     top = t[(t.Rank_v1 <= 1000) | (t.Rank_v2 <= 1000)]
     top_up = top.nlargest(25, "rank_gain").assign(direction="up")
     top_down = top.nsmallest(25, "rank_gain").assign(direction="down")
-    pd.concat([top_up, top_down])[[c for c in keep if c in top]].to_csv(
+    both = pd.concat([top_up, top_down])
+    both[[c for c in keep if c in both]].to_csv(
         cmp_dir / "largest_movers_top1000.tsv", sep="\t", index=False)
     summary = {
         "rank_gain_percentiles": {str(q): float(t.rank_gain.quantile(q / 100))
