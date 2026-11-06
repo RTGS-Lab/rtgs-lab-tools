@@ -1,0 +1,16 @@
+id: pa_parks_nr
+label: 'Protected Areas: parks of natural resource significance'
+module: protected_areas
+inputs:
+- PA_Value
+enabled: true
+setting:
+  source: parks_nr
+alternatives: []
+chosen_by: agent; Bryan to confirm
+rationale: Tracking-sheet layer, query NaturalResources_Category <> 'Amenities' keeps 402 parks.
+  Land-cover basis is 2011; whether that is acceptable is open.
+primary_source: Easement Scoring v2 Data Tracking.xlsx, Protected Areas rows; thread:00000000000366cd
+  2026-10-06 13:20
+registry_keys:
+- parks_natural_resources_analysis
