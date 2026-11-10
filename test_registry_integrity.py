@@ -82,7 +82,7 @@ def main():
             )
         elif method == "rest_api":
             check(
-                bool(cfg.get("service_url")) or name == "usfws_national_realty_boundaries",
+                bool(cfg.get("service_url")),
                 f"MN_GEOSPATIAL[{name}] access_method=rest_api but no service_url",
             )
 
@@ -172,6 +172,61 @@ def main():
         not missing,
         f"crosswalk rows with no registry entry, pending entry or forthcoming entry: {sorted(missing)}",
     )
+
+    # --- Scoring Review coverage (2026-11-10 sheet) ---------------------------
+    # The 2026-11-10 "Scoring Review and Recommendations" tab of Meaghan Dietrich's sheet has 46
+    # dataset rows, 2-47. scoring_review_rows numbers that tab; crosswalk_rows (above) still
+    # numbers the 2026-09-21 version. Every dataset row must trace to at least one entry.
+    review_rows = set(range(2, 48))
+    review_groups = {
+        "MN_GEOSPATIAL": mn, "FGDB": fgdb, "PENDING": pending, "FORTHCOMING": forthcoming,
+        "HENNEPIN_DELIVERED": reg.HENNEPIN_DELIVERED_DATASETS,
+        "NRPC_PARTNER": reg.NRPC_PARTNER_SUBMISSIONS,
+    }
+    review_covered = set()
+    for group_name, group in review_groups.items():
+        for name, cfg in group.items():
+            rows = cfg.get("scoring_review_rows")
+            if rows is None:
+                continue
+            check(
+                isinstance(rows, list) and rows and all(isinstance(r, int) for r in rows),
+                f"{group_name}[{name}].scoring_review_rows must be a non-empty list of ints",
+            )
+            check(rows == sorted(set(rows)),
+                  f"{group_name}[{name}].scoring_review_rows must be sorted and unique: {rows}")
+            check(set(rows) <= review_rows,
+                  f"{group_name}[{name}].scoring_review_rows outside 2-47: "
+                  f"{sorted(set(rows) - review_rows)}")
+            review_covered.update(rows)
+    check(
+        not (review_rows - review_covered),
+        f"Scoring Review rows with no registry entry: {sorted(review_rows - review_covered)}",
+    )
+    # Datasets the 11/10 tab added that the 9/21 sheet did not name.
+    for name, rows in (
+        ("metro_conservation_corridors", [16]),
+        ("dnr_native_plant_communities", [18, 20]),
+        ("rpbb_high_potential_zones", [29, 30]),
+        ("important_bird_areas_public", [31]),
+        ("audubon_migratory_stopover_water_mn", [32]),
+        ("lakes_of_biological_significance", [33]),
+        ("shallow_lakes_dnr_wildlife", [34]),
+        ("land_use_2025", [37]),
+        ("fema_nfhl_flood_hazard_zones", [43]),
+        ("water_table_aquifer_vulnerability", [47]),
+    ):
+        check(name in mn, f"MN_GEOSPATIAL['{name}'] (Scoring Review rows {rows}) is missing")
+        check(mn.get(name, {}).get("scoring_review_rows") == rows,
+              f"MN_GEOSPATIAL['{name}'].scoring_review_rows should be {rows}")
+    glu = forthcoming.get("generalized_land_use_2025", {})
+    if glu.get("now_acquirable_as"):
+        check(glu["now_acquirable_as"] in mn,
+              "FORTHCOMING['generalized_land_use_2025'].now_acquirable_as unknown key")
+    # Every resources.gisdata.mn.gov bulk path returned HTTP 404 on 2026-11-10.
+    for name, cfg in mn.items():
+        check("resources.gisdata.mn.gov" not in str(cfg.get("download_url", "")),
+              f"MN_GEOSPATIAL[{name}] download_url uses the retired resources.gisdata.mn.gov path")
 
     # --- MLCCS provenance must not be quietly reverted -----------------------
     land_cover = fgdb.get("land_cover", {})
@@ -281,6 +336,7 @@ def main():
           f"{len(pending)} pending, {len(forthcoming)} forthcoming, "
           f"{len(delivered)} delivered, {len(partners)} partner submissions")
     print(f"crosswalk rows traceable: {len(covered)}/41")
+    print(f"Scoring Review rows traceable: {len(review_covered & review_rows)}/46")
     print(f"{checks} checks run")
     if failures:
         print(f"\nFAILED ({len(failures)}):")
