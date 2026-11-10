@@ -44,7 +44,9 @@ FETCH = {
     "lakes_of_biological_significance": {}, "shallow_lakes_dnr_wildlife": {},
     "public_waters_basins_watercourses": {"also": {"watercourses": "service_url_watercourses"}},
     "nwi_wetlands": {"page": 250}, "fema_nfhl_flood_hazard_zones": {"page": 50},
-    "watersheds": {}, "water_table_aquifer_vulnerability": {}, "land_use_2025": {},
+    "watersheds": {}, "water_table_aquifer_vulnerability": {},
+    # Met Council service answers HTTP 500 to feature queries (23 region-wide polygons); its zip reads
+    "land_use_2025": {"download": True},
 }
 
 

@@ -35,11 +35,16 @@ def score(values, inputs):
         scaling[key] = {"raw_min": lo, "raw_max": hi, "weight": weight}
         out[f"raw_{key}"] = raw
         out[CATEGORY_COLUMNS[key]] = scaled
-        # A term's points: its share of the category's scaled score, in Overall_Value units.
+        # A term's points: its share of the category's scaled score, in Overall_Value units. Each
+        # term is measured from its own minimum; that adds up when the term minima sum to the
+        # category minimum (always true for one term; true for v1, whose minima are all 0; true
+        # when a term never reaches 0 county-wide, e.g. RPBB zones cover every parcel).
+        mins = {f: float(term.min()) for f, term in terms.items()}
+        if abs(sum(mins.values()) - lo) > 1e-9:
+            raise ValueError(f"{key}: raw minimum {lo} differs from the sum of term minima, "
+                             "points would not add up")
         for f, term in terms.items():
-            out[f"pts_{f}"] = 100 * weight * (term - (lo if len(terms) == 1 else 0)) / (hi - lo)
-        if len(terms) > 1 and lo != 0:
-            raise ValueError(f"{key}: raw minimum {lo} is not 0, points would not add up")
+            out[f"pts_{f}"] = 100 * weight * (term - mins[f]) / (hi - lo)
     overall = 100 * sum(CATEGORY_WEIGHTS[k] * out[CATEGORY_COLUMNS[k]] for k in CATEGORY_WEIGHTS)
     out["Overall_Value"] = overall
     out["Rank"] = overall.round(4).rank(ascending=False, method="min").astype(np.int64)
