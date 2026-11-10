@@ -39,10 +39,10 @@ def score(values, inputs):
         # term is measured from its own minimum; that adds up when the term minima sum to the
         # category minimum (always true for one term; true for v1, whose minima are all 0; true
         # when a term never reaches 0 county-wide, e.g. RPBB zones cover every parcel).
+        # When they do not, Overall_Value is still exact; only the per-term split is approximate,
+        # and scaling records points_additive = False.
         mins = {f: float(term.min()) for f, term in terms.items()}
-        if abs(sum(mins.values()) - lo) > 1e-9:
-            raise ValueError(f"{key}: raw minimum {lo} differs from the sum of term minima, "
-                             "points would not add up")
+        scaling[key]["points_additive"] = bool(abs(sum(mins.values()) - lo) <= 1e-9)
         for f, term in terms.items():
             out[f"pts_{f}"] = 100 * weight * (term - mins[f]) / (hi - lo)
     overall = 100 * sum(CATEGORY_WEIGHTS[k] * out[CATEGORY_COLUMNS[k]] for k in CATEGORY_WEIGHTS)
