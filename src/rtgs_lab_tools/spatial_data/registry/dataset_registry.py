@@ -68,7 +68,10 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://geospatial.tnc.org/datasets/53441934d168434e8ff255bda7fd1e3e_1/explore",
-        "service_url": "https://services.arcgis.com/F7DSX1DSNSiWmOqh/arcgis/rest/services/TNC_Lands_MNDK_Public_Layer_2024/FeatureServer/1",
+        # 2026-11-10: the MNDK 2024 service answers "Invalid URL" (HTTP 200, error 400 body).
+        # Switched to the service sheet row 8 names, which answers; 12 features meet the Hennepin bbox.
+        "service_url": "https://services.arcgis.com/F7DSX1DSNSiWmOqh/arcgis/rest/services/TNC_Lands_Public_Layer/FeatureServer/0",
+        "service_url_retired": "https://services.arcgis.com/F7DSX1DSNSiWmOqh/arcgis/rest/services/TNC_Lands_MNDK_Public_Layer_2024/FeatureServer/1",
         "access_method": "rest_api",
         "file_format": "featureserver",
         "update_frequency": "yearly",
@@ -113,6 +116,9 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://gisdata.mn.gov/dataset/biota-mcbs-sites-of-biodiversity",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item cfb2da4b8adb4fa88654cd6e7b604b9b).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/687/biota_mcbs_sites_of_biodiversity.zip",
+        # 2026-11-10: the Commons zips now hold compressed FileGDBs (CDF) that GDAL's OpenFileGDB
+        # driver cannot read; the feature service answers bbox queries.
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/biota_mcbs_sites_of_biodiversity/FeatureServer/0",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "yearly",
@@ -138,6 +144,7 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://gisdata.mn.gov/dataset/env-mnwap-wildlife-action-netwrk",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 0c75d22b85254bd79a46d061fb16b035).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/748/env_mnwap_wildlife_action_netwrk.zip",
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_mnwap_wildlife_action_netwrk/FeatureServer/0",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "yearly",
@@ -230,6 +237,10 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://gisdata.mn.gov/dataset/geos-dnr-watersheds",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 9152888e541347428ce4ca6a718c8fd0).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/875/geos_dnr_watersheds.zip",
+        # 2026-11-10: layer 4 is DNR Level 08 All Catchments. The current suite has no Level 9
+        # auto-catchment layer and no CATCH_POS field (sheet row 45 query); up_count and upadj_cat
+        # give upstream links instead.
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/geos_dnr_watersheds/FeatureServer/4",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "static",
@@ -262,6 +273,7 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://gisdata.mn.gov/dataset/bdry-dnr-managed-areas",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item a1f0f05706f34506879494c218216d16).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/622/bdry_dnr_managed_areas.zip",
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/bdry_dnr_managed_areas/FeatureServer/3",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "yearly",
@@ -356,6 +368,7 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://gisdata.mn.gov/dataset/env-swap-habitats",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item f70069de20464372b75f3edcab7db3a5).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/887/env_swap_habitats.zip",
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_swap_habitats/FeatureServer/0",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "periodic",
@@ -381,6 +394,7 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://gisdata.mn.gov/dataset/env-swap-coa",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 8688b4b04b104e4fa104dc855281c6d6).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/886/env_swap_coa.zip",
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_swap_coa/FeatureServer/0",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "periodic",
@@ -406,6 +420,9 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://gisdata.mn.gov/dataset/water-mn-public-waters",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 8159243e8b024922b3a2ea19b0c899dd).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/866/water_mn_public_waters.zip",
+        # 2026-11-10: layer 1 basins (pwi_class P basin / W wetland); watercourses are layer 0.
+        "service_url_watercourses": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/water_mn_public_waters/FeatureServer/0",
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/water_mn_public_waters/FeatureServer/1",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "continuous",
