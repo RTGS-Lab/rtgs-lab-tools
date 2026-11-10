@@ -71,6 +71,13 @@ def max_value_overlap(ctx, geoms, values):
     out = np.zeros(len(ctx.parcels_valid))
     if len(geoms) == 0:
         return out
+    # cut each feature into 2 km tiles: intersecting a parcel with a county-sized polygon is slow
+    pieces, pvals = [], []
+    for g, v in zip(geoms, vals):
+        t = tile(polygons_only(g)) if shapely.area(g) > 4e6 else np.array([g], dtype=object)
+        pieces.append(t)
+        pvals.append(np.full(len(t), v))
+    geoms, vals = np.concatenate(pieces), np.concatenate(pvals)
     pairs = overlap_areas(ctx.parcels_valid, geoms)
     pairs = pairs[pairs.area > 0]
     pairs["v"] = vals[pairs.layer.to_numpy()]
