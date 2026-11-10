@@ -2019,6 +2019,7 @@ HENNEPIN_DELIVERED_DATASETS = {
         "delivery": "thread:0000000000036c2e, Matthew Hockert, 2026-11-04 16:57 CST",
         "fulfils": "risk_of_development_inputs",
         # Fields used: PIN (053-<13-digit PID>), at_risk, p_sub24, USECLASS1.
+        "scoring_review_rows": [35],
     },
     "trpd_gap_subset": {
         "description": (
