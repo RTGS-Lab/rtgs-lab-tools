@@ -13,7 +13,8 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/bdry-dnr-wildlife-mgmt-areas-pub",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/bdry_dnr_wildlife_mgmt_areas_pub/gpkg_bdry_dnr_wildlife_mgmt_areas_pub.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 275daac450844f55bbd2efbc6a51584e).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/627/bdry_dnr_wildlife_mgmt_areas_pub.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "yearly",
@@ -21,13 +22,15 @@ MN_GEOSPATIAL_DATASETS = {
         "model_critical": True,
         "coordinate_system": "EPSG:26915",
         "expected_features": 1731,  # Actual count from test
+        "scoring_review_rows": [5],
     },
     "groundwater_recharge": {
         "description": "Mean annual potential groundwater recharge rates from 1996-2010 for Minnesota",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/id/dataset/geos-gw-recharge-1996-2010-mean",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_pca/geos_gw_recharge_1996_2010_mean/aaigrid_geos_gw_recharge_1996_2010_mean.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 4c7faa8f4005420c95b750ce07fc593a).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/342/geos_gw_recharge_1996_2010_mean.zip",
         "access_method": "download",
         "file_format": "aaigrid",
         "update_frequency": "static",
@@ -41,13 +44,15 @@ MN_GEOSPATIAL_DATASETS = {
         # Crosswalk row 35 offers an "updated link"; it resolves to this same
         # dataset. Authored by USGS, published on the Commons under MPCA.
         "crosswalk_rows": [35],
+        "scoring_review_rows": [46],
     },
     "scientific_and_natural_areas": {
         "description": "DNR Scientific and Natural Areas",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/bdry-scientific-and-nat-areas",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/bdry_scientific_and_nat_areas/gpkg_bdry_scientific_and_nat_areas.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item efb2f468b7dc440f8f60143456b978d2).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/650/bdry_scientific_and_nat_areas.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "yearly",
@@ -56,6 +61,7 @@ MN_GEOSPATIAL_DATASETS = {
         "coordinate_system": "EPSG:26915",
         "expected_features": 237,  # Actual count from test
         "layer_name": "scientific_and_natural_area_boundaries",  # Specific layer in multi-layer GeoPackage
+        "scoring_review_rows": [7],
     },
     "TNC_lands": {
         "description": "The Nature Conservancy lands and waters in Minnesota, North Dakota, & South Dakota",
@@ -83,26 +89,30 @@ MN_GEOSPATIAL_DATASETS = {
             "entities; needed only if the model scored them differently (row 8)"
         ),
         "crosswalk_rows": [7, 8],
+        "scoring_review_rows": [8, 11],
     },
     "aquatic_areas": {
         "description": "DNR Fisheries Acquisition - Aquatic Management Areas",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/plan-mndnr-fisheries-acquisition",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/plan_mndnr_fisheries_acquisition/gpkg_plan_mndnr_fisheries_acquisition.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 5e8a2e67f2954268ac8f88cefb09f0df).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/802/plan_mndnr_fisheries_acquisition.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "yearly",
         "spatial_type": "multipolygon",
         "model_critical": True,
         "coordinate_system": "EPSG:26915",
+        "scoring_review_rows": [6],
     },
     "MBS_sites": {
         "description": "Minnesota Biological Survey (MBS) - Sites of Biodiversity Significance",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/biota-mcbs-sites-of-biodiversity",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/biota_mcbs_sites_of_biodiversity/gpkg_biota_mcbs_sites_of_biodiversity.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item cfb2da4b8adb4fa88654cd6e7b604b9b).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/687/biota_mcbs_sites_of_biodiversity.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "yearly",
@@ -119,13 +129,15 @@ MN_GEOSPATIAL_DATASETS = {
             "match_type": "any",
         },
         "crosswalk_rows": [14, 16],
+        "scoring_review_rows": [19, 21],
     },
     "WAN": {
         "description": "WAN (Wildlife Action Network) - Minnesota Wildlife Action Plan Network",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/env-mnwap-wildlife-action-netwrk",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/env_mnwap_wildlife_action_netwrk/gpkg_env_mnwap_wildlife_action_netwrk.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 0c75d22b85254bd79a46d061fb16b035).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/748/env_mnwap_wildlife_action_netwrk.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "yearly",
@@ -142,13 +154,15 @@ MN_GEOSPATIAL_DATASETS = {
         # Keep scoring on WAN. See FORTHCOMING_DATASETS["conservation_action_network"].
         "successor_status": "CAN expected, not published as of 2026-09-21 - do not retire",
         "crosswalk_rows": [21],
+        "scoring_review_rows": [26],
     },
     "land_use": {
         "description": "Generalized Land Use 2020 - Metropolitan Council Regional Land Use",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/us-mn-state-metc-plan-generl-lnduse2020",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_metc/plan_generl_lnduse2020/gpkg_plan_generl_lnduse2020.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 02083b659b744f3e8f0867cf06c8fdb4).
+        "download_url": "https://gisdata.metc.state.mn.us/gisdata/Planning/generalized_landuse_2020.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "periodic",
@@ -179,13 +193,15 @@ MN_GEOSPATIAL_DATASETS = {
             "match_type": "any",
         },
         "crosswalk_rows": [25],
+        "scoring_review_rows": [37],
     },
     "cemeteries": {
         "description": "Cemeteries - Regional Parcels Dataset (filtered)",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/us-mn-state-metrogis-plan-regional-parcels",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_metrogis/plan_regional_parcels/gpkg_plan_regional_parcels.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 136b28bd0d874076b702ca55b9aafffc).
+        "download_url": "https://gisdata.metc.state.mn.us/gisdata/Parcels/plan_regional_parcels.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "quarterly",
@@ -205,13 +221,15 @@ MN_GEOSPATIAL_DATASETS = {
         # enumerates all seven county parcel layers, and the underlying regional
         # parcels dataset is itself refreshed quarterly. Row closed.
         "crosswalk_rows": [28],
+        "scoring_review_rows": [36],
     },
     "watersheds": {
         "description": "DNR Level 9 Watersheds - Hydrologic Unit Boundaries",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/geos-dnr-watersheds",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/geos_dnr_watersheds/gpkg_geos_dnr_watersheds.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 9152888e541347428ce4ca6a718c8fd0).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/875/geos_dnr_watersheds.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "static",
@@ -227,6 +245,7 @@ MN_GEOSPATIAL_DATASETS = {
             "match_type": "any",
         },
         "crosswalk_rows": [34],
+        "scoring_review_rows": [45],
     },
     # ------------------------------------------------------------------
     # Added 2026-09-21 from Meaghan Dietrich's easement-scoring-to-registry
@@ -241,7 +260,8 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/bdry-dnr-managed-areas",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/bdry_dnr_managed_areas/gpkg_bdry_dnr_managed_areas.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item a1f0f05706f34506879494c218216d16).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/622/bdry_dnr_managed_areas.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "yearly",
@@ -256,6 +276,7 @@ MN_GEOSPATIAL_DATASETS = {
         "consolidates": ["wildlife_areas", "scientific_and_natural_areas", "aquatic_areas"],
         "consolidation_status": "candidate - verify feature-type coverage before retiring the three",
         "crosswalk_rows": [5, 6, 9],
+        "scoring_review_rows": [5, 6, 7, 9],
     },
     "regionally_significant_ecological_areas": {
         "description": (
@@ -266,7 +287,8 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/us-mn-state-metc-plan-img2050-significantecoareas",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_metc/plan_img2050_significantecoareas/gpkg_plan_img2050_significantecoareas.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item a5b34c1fbc874f33a5fe09f22a7e836a).
+        "download_url": "https://gisdata.metc.state.mn.us/gisdata/Planning/imagine2050_significantecologicalareas.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "periodic",
@@ -297,6 +319,7 @@ MN_GEOSPATIAL_DATASETS = {
         ],
         "not_a_replacement_for": "land_cover",
         "crosswalk_rows": [10],
+        "scoring_review_rows": [13],
     },
     "mlccs_npc_prediction": {
         "description": (
@@ -306,7 +329,8 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/biota-mlccs-npc-model-results",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/biota_mlccs_npc_model_results/gpkg_biota_mlccs_npc_model_results.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 7dfc0f065481429697114cf4894366a7).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/688/biota_mlccs_npc_model_results.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "periodic",
@@ -319,6 +343,7 @@ MN_GEOSPATIAL_DATASETS = {
         # not support row 10's "remove all MLCCS".
         "relates_to": "land_cover",
         "crosswalk_rows": [15, 17],
+        "scoring_review_rows": [20, 22],
     },
     "swap_habitats": {
         "description": (
@@ -329,7 +354,8 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/env-swap-habitats",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/env_swap_habitats/gpkg_env_swap_habitats.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item f70069de20464372b75f3edcab7db3a5).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/887/env_swap_habitats.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "periodic",
@@ -342,6 +368,7 @@ MN_GEOSPATIAL_DATASETS = {
         # shallow lakes, lake basin morphology, NWI and the USFWS Midwest
         # Terrestrial Habitat System - it carries no M_34X-equivalent quality grade.
         "crosswalk_rows": [13],
+        "scoring_review_rows": [22],
     },
     "conservation_opportunity_areas": {
         "description": (
@@ -352,7 +379,8 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/env-swap-coa",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/env_swap_coa/gpkg_env_swap_coa.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 8688b4b04b104e4fa104dc855281c6d6).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/886/env_swap_coa.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "periodic",
@@ -365,6 +393,7 @@ MN_GEOSPATIAL_DATASETS = {
         # acquisition and is also still live. Do not conflate the two.
         "not_to_be_confused_with": "env-sna-conserv-opportunity-area (SNA/Marxan acquisition layer)",
         "crosswalk_rows": [37],
+        "scoring_review_rows": [27],
     },
     "public_waters_basins_watercourses": {
         "description": (
@@ -375,7 +404,8 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gisdata.mn.gov/dataset/water-mn-public-waters",
-        "download_url": "https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_dnr/water_mn_public_waters/gpkg_water_mn_public_waters.zip",
+        # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 8159243e8b024922b3a2ea19b0c899dd).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/866/water_mn_public_waters.zip",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "continuous",
@@ -392,6 +422,7 @@ MN_GEOSPATIAL_DATASETS = {
             "largely redundant with NWI; a de-duplication rule is still needed."
         ),
         "crosswalk_rows": [27, 30, 31],
+        "scoring_review_rows": [39, 41, 42],
     },
     "nwi_wetlands": {
         "description": (
@@ -403,6 +434,11 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://www.fws.gov/program/national-wetlands-inventory/download-state-wetlands-data",
         "download_url": "https://documentst.ecosphere.fws.gov/wetlands/data/State-Downloads/MN_geopackage_wetlands.zip",
         "download_url_gdb": "https://documentst.ecosphere.fws.gov/wetlands/data/State-Downloads/MN_geodatabase_wetlands.zip",
+        # 2026-11-10: the state zip is 4.14 GB (Content-Length). For one county, query the FWS
+        # Wetlands Mapper service by bbox instead: 43,193 polygons meet the Hennepin bbox
+        # (WETLAND_TYPE: Freshwater Emergent 21,299, Pond 12,519, Forested/Shrub 6,134,
+        # Riverine 2,433, Lake 808). maxRecordCount 500.
+        "service_url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "periodic",
@@ -416,6 +452,7 @@ MN_GEOSPATIAL_DATASETS = {
         # Wetland - NWI", so a straight swap discards Hennepin's own delineation.
         "additive_to": "hennepin_wetland_inventory",
         "crosswalk_rows": [26],
+        "scoring_review_rows": [38, 44],
     },
     "pad_us": {
         "description": (
@@ -442,6 +479,7 @@ MN_GEOSPATIAL_DATASETS = {
         # easements, so it does not substitute for the row 2 delivery.
         "does_not_cover": "Hennepin County / MLT / BWSR conservation easements (crosswalk row 2)",
         "crosswalk_rows": [29, 39],
+        "scoring_review_rows": [12, 40],
     },
     "usfws_national_realty_boundaries": {
         "description": (
@@ -462,12 +500,17 @@ MN_GEOSPATIAL_DATASETS = {
         # Crosswalk row 3 replaces the dead 2020 link
         # (fws.gov/gis/data/CadastralDB/links_cadastral.html) with this. No single
         # static download URL: it is an ArcGIS Hub item exported on demand.
-        "service_url": None,  # [NEEDS CONFIRM] exact FeatureServer endpoint
+        # 2026-11-10: FWS interest tracts (item 6305bf7644f54733980623449617100c, "USFWS National
+        # Realty Boundaries", FWS org services.arcgis.com/QVENGdaPbd4LUkLV). 25 tracts meet the
+        # Hennepin bbox, all Minnesota Valley NWR or Litchfield WMD. The approved external
+        # boundary is National_Wildlife_Refuge_System_Boundaries (item 745ed874c1394da3a9aae50267c9e049).
+        "service_url": "https://services.arcgis.com/QVENGdaPbd4LUkLV/arcgis/rest/services/FWSInterest_Simplified_Authoritative/FeatureServer/0",
         "notes": (
             "Hub item confirmed live 2026-09-21; the specific FeatureServer layer id "
             "and whether any refuge unit intersects Hennepin County are unconfirmed."
         ),
         "crosswalk_rows": [3],
+        "scoring_review_rows": [3],
     },
     "tnc_resilient_lands": {
         "description": (
@@ -487,7 +530,12 @@ MN_GEOSPATIAL_DATASETS = {
         "data_source": "The Nature Conservancy",
         # Service URL supplied by Hennepin in crosswalk row 38 and used as given.
         "url_provenance": "crosswalk row 38 (Meaghan Dietrich), not independently discovered",
+        # 2026-11-10: the MapServer is TilesOnly (rendered tiles, no values). The TNC vector
+        # service Resilient_and_Connected_Network/FeatureServer/0 has 0 features in the
+        # Hennepin bbox. No public download of the classes found: model input NOT AVAILABLE.
+        "model_availability": "tiles only; no downloadable classes found 2026-11-10",
         "crosswalk_rows": [38],
+        "scoring_review_rows": [15],
     },
     "midwest_conservation_blueprint": {
         "description": (
@@ -562,6 +610,7 @@ MN_GEOSPATIAL_DATASETS = {
         # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
         # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
         # Also read by js/report-maps.js for the report plates.
+        "scoring_review_rows": [23, 24],
     },
     # --- NRPC interactive map: Metropolitan Council data ---
     "metc_protection_opportunities": {
@@ -708,6 +757,7 @@ MN_GEOSPATIAL_DATASETS = {
         "relates_to": "public_waters_basins_watercourses",
         # Layer of the NRPC Interactive Map web map d664f1d1 (public, read 2026-11-02);
         # the same URL is hard-coded in nrpc-interactive-map js/parcel-report.js.
+        "scoring_review_rows": [39, 41, 42],
     },
     "hc_public_parcels_clipped": {
         "description": (
@@ -1039,6 +1089,253 @@ MN_GEOSPATIAL_DATASETS = {
         # Rivers Park District properties that don't make it into the Parks of NR Significance layer
         # the county has on hand or the PAD-US data.' Her subset: trpd_gap_subset (delivered).
         # Owner gisadmin@trpd; hub page gis.threeriversparks.org/datasets/trpd::park-boundaries-open-data.
+        "scoring_review_rows": [10],
+    },
+    # ------------------------------------------------------------------
+    # Added 2026-11-10 from the Scoring Review and Recommendations tab (Meaghan Dietrich,
+    # Hennepin County; sheet rows in scoring_review_rows). Every URL below answered HTTP 200 and
+    # its Hennepin feature count is from a bbox returnCountOnly query, 2026-11-10.
+    # ------------------------------------------------------------------
+    "metro_conservation_corridors": {
+        "description": (
+            "Metro Conservation Corridors (MeCC) - DNR regional corridors for conservation and "
+            "restoration in the 7-county metro; LCCMR uses them to site grants."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis.data.mn.gov/datasets/minnesota::metro-conservation-corridors-1/about",
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/706/env_conservation_corridors.zip",
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_conservation_corridors/FeatureServer/0",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "last_updated": "2026-09-16",
+        "agol_item_id": "f8e488bd709244ab99d3dc864a362bd3",
+        # Fields: mecc only. 3 features meet the Hennepin bbox.
+        "scoring_review_rows": [16],
+    },
+    "priority_natural_resource_corridors": {
+        "description": (
+            "Hennepin County Priority Natural Resource Corridors (22 corridors). Sheet row 14 "
+            "removes this layer from the model: the corridors are meant to be a model result."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis.data.mn.gov/datasets/f066ef57b3fe40ebbfefaa318a261d75_2/about",
+        "service_url": "https://gis.hennepin.us/arcgis/rest/services/HennepinData/ENVIRONMENT/MapServer/2",
+        "access_method": "rest_api",
+        "file_format": "mapserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "expected_features": 22,
+        "agol_item_id": "f066ef57b3fe40ebbfefaa318a261d75",
+        "model_use": "removed per sheet row 14",
+        "scoring_review_rows": [14],
+    },
+    "dnr_native_plant_communities": {
+        "description": (
+            "MNDNR Native Plant Communities - mapped NPC polygons with class, condition rank, "
+            "biodiversity significance and state (S) / global (G) conservation ranks."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis.data.mn.gov/maps/a451392396c74acc921a3d2f3f32c5b2/about",
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/876/biota_dnr_native_plant_comm.zip",
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/biota_dnr_native_plant_comm/FeatureServer/7",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "last_updated": "2026-11-10",
+        "agol_item_id": "a451392396c74acc921a3d2f3f32c5b2",
+        # Service layer 7 "Dnr Native Plant Communities": 876 polygons meet the Hennepin bbox.
+        # Fields the sheet scores on: s_rank_highest_risk (S1-S5; row 18 proposal),
+        # biodiversity_significance_rank, condition_rank (A-D).
+        "key_attributes": {
+            "s_rank_highest_risk": "S1..S5, parenthesised when uncertain",
+            "condition_rank": "A, AB, B, BC, C, CD, D, NR",
+            "biodiversity_significance_rank": "Outstanding, High, Moderate, Below",
+        },
+        "replaces": "land_cover (MLCCS) for sheet rows 18 and 20",
+        "scoring_review_rows": [18, 20],
+    },
+    "rpbb_high_potential_zones": {
+        "description": (
+            "USFWS Rusty Patched Bumble Bee (Bombus affinis) High Potential Zone model, 2025 "
+            "update: high and low potential zones around recent records."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://www.arcgis.com/home/item.html?id=b2e7e0c1ddad4f50a20bcfc1bfcfbbcb",
+        "service_url": "https://services.arcgis.com/QVENGdaPbd4LUkLV/arcgis/rest/services/RPBB_HPZModel_Update/FeatureServer/0",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:3857",
+        "data_source": "U.S. Fish and Wildlife Service",
+        "agol_item_id": "b2e7e0c1ddad4f50a20bcfc1bfcfbbcb",
+        # Field Zone: "High Potential Zone" (gridcode 1) / "Low Potential Zone" (gridcode 4).
+        # 12 features meet the Hennepin bbox. Layer of web map 2716d871 (sheet row 30 link);
+        # the same service is the "other link" of row 29.
+        "scoring_review_rows": [29, 30],
+    },
+    "important_bird_areas_public": {
+        "description": (
+            "National Audubon Society Important Bird Areas (IBA) public polygons, current "
+            "boundaries (item modified 2026-11-05)."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://www.arcgis.com/home/item.html?id=087b591fd12d4dc482a4d9a3e2b60246",
+        "service_url": "https://services1.arcgis.com/lDFzr3JyGEn5Eymu/arcgis/rest/services/iba_polygons_public/FeatureServer/0",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:3857",
+        "data_source": "National Audubon Society",
+        "agol_item_id": "087b591fd12d4dc482a4d9a3e2b60246",
+        # 6 IBAs meet the Hennepin bbox (status Identified 4, Recognized 2).
+        "supersedes": "important_bird_areas (2020 geodatabase, Summer 2019)",
+        "scoring_review_rows": [31],
+    },
+    "audubon_migratory_stopover_water_mn": {
+        "description": (
+            "National Audubon Society Migratory Stopover Importance for Water System Species "
+            "(Minnesota), eBird Zonation priority, published 2026-10-09."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://www.arcgis.com/home/item.html?id=db7f5dee9ac84ed5b5f6abafd8281778",
+        "service_url": "https://services1.arcgis.com/lDFzr3JyGEn5Eymu/arcgis/rest/services/CEST_MN_eBird_Zonation_Water/FeatureServer/0",
+        "access_method": "rest_api",
+        "file_format": "featureserver",
+        "update_frequency": "static",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "unknown",
+        "data_source": "National Audubon Society",
+        "agol_item_id": "db7f5dee9ac84ed5b5f6abafd8281778",
+        # Fields: gridcode (sheet: importance rank 0-99). 385 polygons meet the Hennepin bbox.
+        "scoring_review_rows": [32],
+    },
+    "lakes_of_biological_significance": {
+        "description": (
+            "DNR Lakes of Biological Significance - lakes classed outstanding, high or moderate "
+            "for aquatic plants, fish, birds or herptiles."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis.data.mn.gov/datasets/dc159f8d412848f8819044a649577be6_0/about",
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/733/env_lakes_of_biological_signific.zip",
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_lakes_of_biological_signific/FeatureServer/0",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "last_updated": "2026-09-16",
+        "agol_item_id": "dc159f8d412848f8819044a649577be6",
+        # Field lbs_class: Outstanding / High / Moderate. 46 lakes meet the Hennepin bbox.
+        "scoring_review_rows": [33],
+    },
+    "shallow_lakes_dnr_wildlife": {
+        "description": (
+            "Shallow Lakes Identified by DNR Wildlife - shallow lakes for wildlife habitat "
+            "restoration and enhancement (layer 0) and the priority subset (layer 1)."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis.data.mn.gov/maps/ad5983f428b84b4fbc8adfb946a06c3b/about",
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/847/water_shallow_lakes_id_by_wldlif.zip",
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/water_shallow_lakes_id_by_wldlif/FeatureServer/0",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "last_updated": "2026-09-17",
+        "agol_item_id": "ad5983f428b84b4fbc8adfb946a06c3b",
+        # 211 shallow lakes meet the Hennepin bbox (40 in the priority layer).
+        "scoring_review_rows": [34],
+    },
+    "land_use_2025": {
+        "description": (
+            "Metropolitan Council Generalized Land Use 2025 (field Dscrpt2025). Supersedes "
+            "land_use (2020) for sheet row 37."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis.data.mn.gov/datasets/c0bca5584e704731880b81c646d5e271_2/about",
+        "download_url": "https://gisdata.metc.state.mn.us/gisdata/Planning/generalized_landuse_2025.zip",
+        "service_url": "https://arcgis.metc.state.mn.us/data1/rest/services/planning/Land_Use/FeatureServer/2",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "periodic",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "temporal_coverage": "2025",
+        "agol_item_id": "c0bca5584e704731880b81c646d5e271",
+        # 2026-11-10: the zip answers HTTP 200 (25.6 MB). FORTHCOMING generalized_land_use_2025
+        # recorded it as not downloadable on 2026-09-21.
+        "scoring_review_rows": [37],
+    },
+    "fema_nfhl_flood_hazard_zones": {
+        "description": (
+            "FEMA National Flood Hazard Layer (NFHL), flood hazard zones: 1% annual chance "
+            "(100-year) and 0.2% annual chance (500-year) areas."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://www.fema.gov/flood-maps/national-flood-hazard-layer",
+        "service_url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+        "access_method": "rest_api",
+        "file_format": "mapserver",
+        "update_frequency": "continuous",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:4269",
+        "data_source": "Federal Emergency Management Agency",
+        # Fields FLD_ZONE and ZONE_SUBTY: 100-year = A* zones; 500-year = X with ZONE_SUBTY
+        # "0.2 PCT ANNUAL CHANCE FLOOD HAZARD". Statewide pull is too large: query a bbox.
+        "supersedes": "floodplains (2020 geodatabase)",
+        "scoring_review_rows": [43],
+    },
+    "water_table_aquifer_vulnerability": {
+        "description": (
+            "Minnesota Water Table Aquifer Vulnerability (MDA) - vulnerability rating of the "
+            "water table aquifer, after Porcher (1989)."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        "url": "https://gis.data.mn.gov/datasets/minnesota::minnesota-water-table-aquifer-vulnerability-1/about",
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/262/water_aquifer_vulnerability.zip",
+        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_mda/water_aquifer_vulnerability/FeatureServer/0",
+        "access_method": "download",
+        "file_format": "geopackage",
+        "update_frequency": "static",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "data_source": "Minnesota Department of Agriculture",
+        "agol_item_id": "12e18d9bb4db4a1fa5385de26c1d4101",
+        # Field combined_vulnerabilityrating: High 271, Medium 391, Low 14, Unrated 145 polygons
+        # in the Hennepin bbox. Sheet row 47 names it "Combined_VulnerabilityRating".
+        "replaces": "groundwater_susceptibility (2020 geodatabase) for sheet row 47",
+        "scoring_review_rows": [47],
     },
 }
 
@@ -1065,6 +1362,7 @@ FGDB_DATASETS = {
         "layer_shape": "dissolved score surface - inputs not recoverable from the FGDB",
         "replacement_status": "[NEEDS CONFIRM] pending Bryan on RPBB / pollinator suitability",
         "crosswalk_rows": [23],
+        "scoring_review_rows": [29],
     },
     "floodplains": {
         "description": "Floodplain Analysis - Hennepin County floodplain scoring",
@@ -1086,6 +1384,7 @@ FGDB_DATASETS = {
         },
         "update_frequency": "periodic",  # FEMA restudies the metro every 5-7 years
         "crosswalk_rows": [32],
+        "scoring_review_rows": [43],
     },
     "hennepin_wetland_inventory": {
         "description": "Hennepin County Wetland Inventory (HCWI) - Comprehensive wetland mapping",
@@ -1105,6 +1404,7 @@ FGDB_DATASETS = {
             "match_type": "any",
         },
         "crosswalk_rows": [26, 33],
+        "scoring_review_rows": [38, 44],
     },
     "habitat_diversity": {
         "description": "Habitat Diversity Level 3 Analysis - Ecosystem diversity scoring",
@@ -1125,6 +1425,7 @@ FGDB_DATASETS = {
             "MLCCS source."
         ),
         "crosswalk_rows": [17],
+        "scoring_review_rows": [22],
     },
     "headwaters": {
         "description": "Headwaters Analysis - Stream headwater catchment areas",
@@ -1135,6 +1436,7 @@ FGDB_DATASETS = {
         "coordinate_system": "EPSG:26915",
         "expected_features": 1447,
         "model_critical": True,
+        "scoring_review_rows": [45],
     },
     "important_bird_areas": {
         "description": "Important Bird Areas - Audubon designated bird conservation areas",
@@ -1152,6 +1454,7 @@ FGDB_DATASETS = {
         "public_service_url": "https://services1.arcgis.com/lDFzr3JyGEn5Eymu/arcgis/rest/services/iba_polygons_public/FeatureServer",
         "public_service_item_id": "087b591fd12d4dc482a4d9a3e2b60246",
         "crosswalk_rows": [22],
+        "scoring_review_rows": [31],
     },
     "mbs_sites": {
         "description": "Minnesota Biological Survey Sites - Sites of biodiversity significance",
@@ -1163,6 +1466,7 @@ FGDB_DATASETS = {
         "expected_features": 318,
         "score_column": "Bio_Sig_Score",
         "model_critical": True,
+        "scoring_review_rows": [19, 21],
     },
     "land_cover": {
         "description": "Minnesota Land Cover Classification System (MLCCS) - Detailed land cover",
@@ -1203,6 +1507,7 @@ FGDB_DATASETS = {
         },
         "downstream_selections": ["natural_spaces", "quality_community", "habitat_diversity"],
         "crosswalk_rows": [10, 13, 15, 17],
+        "scoring_review_rows": [13, 18, 20, 22],
     },
     "groundwater_recharge_hc": {
         "description": "Mean Groundwater Recharge 1996-2010 - Hennepin County recharge rates",
@@ -1214,6 +1519,7 @@ FGDB_DATASETS = {
         "expected_features": 2884,
         "score_column": "Recharge_Score",
         "model_critical": True,
+        "scoring_review_rows": [46],
     },
     "natural_spaces": {
         "description": "Natural Spaces Analysis - Protected natural areas composite",
@@ -1237,6 +1543,7 @@ FGDB_DATASETS = {
             "'Ecologically Significant Areas' layer IS this query over MLCCS."
         ),
         "crosswalk_rows": [10],
+        "scoring_review_rows": [13, 14],
     },
     "protected_areas_hc": {
         "description": "Protected Areas Analysis - Hennepin County protected lands composite",
@@ -1258,6 +1565,7 @@ FGDB_DATASETS = {
             "Parks of Natural Resource Significance (row 4)",
         ],
         "crosswalk_rows": [29],
+        "scoring_review_rows": [2, 3, 5, 6, 7, 8, 40],
     },
     "quality_community": {
         "description": "Quality Community Analysis - Community quality metrics composite",
@@ -1277,6 +1585,7 @@ FGDB_DATASETS = {
             "No published replacement layer carries this attribute; see land_cover."
         ),
         "crosswalk_rows": [15],
+        "scoring_review_rows": [20],
     },
     "risk_of_development": {
         "description": "Risk of Development Analysis - Development pressure scoring",
@@ -1296,6 +1605,7 @@ FGDB_DATASETS = {
         "layer_shape": "dissolved score surface - Noe methodology inputs not itemised",
         "pending_source": "Ryan Noe risk-of-development inputs (Meaghan to email)",
         "crosswalk_rows": [24],
+        "scoring_review_rows": [35, 36, 37, 38, 39, 40],
     },
     "shoreland_buffers": {
         "description": "Shoreland Buffer Areas - Lake and stream buffer zones",
@@ -1311,6 +1621,7 @@ FGDB_DATASETS = {
         "layer_shape": "dissolved buffer output",
         "computed_from": "public_waters_basins_watercourses",
         "crosswalk_rows": [30, 31],
+        "scoring_review_rows": [41, 42],
     },
     "groundwater_susceptibility": {
         "description": "Groundwater Contamination Susceptibility - Aquifer vulnerability zones",
@@ -1335,6 +1646,7 @@ FGDB_DATASETS = {
         "candidate_public_agency": "Minnesota Department of Agriculture",
         "candidate_status": "[NEEDS CONFIRM] same product as MGS geological sensitivity, or a successor?",
         "crosswalk_rows": [36],
+        "scoring_review_rows": [47],
     },
     "wildlife_action_network": {
         "description": "Wildlife Action Network Analysis - Wildlife corridor ranking",
@@ -1351,6 +1663,7 @@ FGDB_DATASETS = {
         # equivalent. Retire only after the score mapping is re-derived.
         "successor_status": "CAN expected, not published as of 2026-09-21 - do not retire",
         "crosswalk_rows": [21],
+        "scoring_review_rows": [26],
     },
 }
 
@@ -1383,6 +1696,7 @@ PENDING_HENNEPIN_DATASETS = {
             "dataset closes. Sheet says 'Need to update regularly'."
         ),
         "crosswalk_rows": [2],
+        "scoring_review_rows": [2],
     },
     "parks_natural_resource_significance": {
         "description": "Hennepin County Parks of Natural Resource Significance",
@@ -1399,6 +1713,7 @@ PENDING_HENNEPIN_DATASETS = {
             "parks using standard criteria."
         ),
         "crosswalk_rows": [4],
+        "scoring_review_rows": [4],
     },
     "potential_easements": {
         "description": "Hennepin County potential easements - the candidate sites the model scores",
@@ -1413,6 +1728,7 @@ PENDING_HENNEPIN_DATASETS = {
             "layer the whole suitability model scores against."
         ),
         "crosswalk_rows": [12],
+        "scoring_review_rows": [17],
     },
     "analysis_easements": {
         "description": "Hennepin County analysis easements - used for Relative and Absolute Size scoring",
@@ -1427,6 +1743,7 @@ PENDING_HENNEPIN_DATASETS = {
             "these are three views of one delivery or three files."
         ),
         "crosswalk_rows": [18, 19],
+        "scoring_review_rows": [23, 24],
     },
     "nhis_rare_features": {
         "description": "DNR Natural Heritage Information System (NHIS) rare features polygons",
@@ -1446,6 +1763,7 @@ PENDING_HENNEPIN_DATASETS = {
             "only: https://osaportal.gisdata.mn.gov/public-map"
         ),
         "crosswalk_rows": [20],
+        "scoring_review_rows": [25],
     },
     "pollinator_suitability": {
         "description": "Replacement for the Ryan Noe bee pollination habitat layer",
@@ -1462,6 +1780,7 @@ PENDING_HENNEPIN_DATASETS = {
             "land use that is no longer compatible'."
         ),
         "crosswalk_rows": [23],
+        "scoring_review_rows": [29],
     },
     "risk_of_development_inputs": {
         "description": "Ryan Noe risk-of-development methodology inputs",
@@ -1475,6 +1794,7 @@ PENDING_HENNEPIN_DATASETS = {
             "derived from literature.' Inputs are not itemised anywhere in the registry."
         ),
         "crosswalk_rows": [24],
+        "scoring_review_rows": [35],
     },
 }
 
@@ -1487,7 +1807,9 @@ FORTHCOMING_DATASETS = {
         ),
         "would_supersede": ["WAN", "wildlife_action_network"],
         "status": "not_published",
-        "checked": "2026-09-21",
+        "checked": "2026-11-10",
+        # 2026-11-10: Commons hub search "Conservation Action Network" returns only WAN, COA
+        # and the SNA Marxan layer. Still not published.
         "evidence": (
             "Full-text search of the Minnesota Geospatial Commons / ArcGIS catalog for "
             "'Conservation Action Network' returns no CAN item. DNR's Wildlife Action "
@@ -1498,6 +1820,7 @@ FORTHCOMING_DATASETS = {
         ),
         "shipped_siblings": ["conservation_opportunity_areas", "swap_habitats"],
         "crosswalk_rows": [21, 42],
+        "scoring_review_rows": [26, 28],
     },
     "audubon_umrb_dataset": {
         "description": (
@@ -1517,8 +1840,9 @@ FORTHCOMING_DATASETS = {
     "generalized_land_use_2025": {
         "description": "Met Council Generalized Land Use 2025 (Spring 2025 imagery)",
         "would_supersede": ["land_use"],
-        "status": "catalogued_not_downloadable",
-        "checked": "2026-09-21",
+        "status": "published",  # 2026-11-10: zip answers HTTP 200
+        "now_acquirable_as": "land_use_2025",
+        "checked": "2026-11-10",
         "evidence": (
             "ArcGIS Hub item c0bca5584e704731880b81c646d5e271 exists, created "
             "2026-07-24, but carries no download links; the bulk path "
@@ -1528,6 +1852,7 @@ FORTHCOMING_DATASETS = {
             "Land Use' (planned use)."
         ),
         "crosswalk_rows": [25],
+        "scoring_review_rows": [37],
     },
     # --- NRPC webinar 2026-11-20 ---
     "hennepin_suitability_v2_results": {
@@ -1574,6 +1899,7 @@ HENNEPIN_DELIVERED_DATASETS = {
         "delivery": "thread:00000000000366cd, Meaghan Dietrich, 2026-10-06 13:12 CDT",
         "fulfils": "established_conservation_easements",
         # Overlaps itself: summed 6,967 ac vs dissolved union 6,874.3 ac -- dissolve first.
+        "scoring_review_rows": [2],
     },
     "hc_easement_inquiries": {
         "description": (
@@ -1590,6 +1916,7 @@ HENNEPIN_DELIVERED_DATASETS = {
         "candidate_for": "potential_easements",
         # AcquisStatus vocabulary does not match the registry query; ContactName holds
         # landowner names -- never screen-share the attribute table. [NEEDS CONFIRM, Bryan]
+        "scoring_review_rows": [17],
     },
     "padus_county_clip_nrvalue": {
         "description": (
@@ -1605,6 +1932,7 @@ HENNEPIN_DELIVERED_DATASETS = {
         "delivery": "thread:00000000000366cd, Meaghan Dietrich, 2026-10-06 13:12 CDT",
         "relates_to": "pad_us",
         # 88 of 105 are GAP 4; the NRValue filter is undocumented [NEEDS CONFIRM].
+        "scoring_review_rows": [12, 40],
     },
     "bee_habitat_areas_2026": {
         "description": (
@@ -1620,6 +1948,7 @@ HENNEPIN_DELIVERED_DATASETS = {
         "delivery": "thread:00000000000366cd, Meaghan Dietrich, 2026-10-06 13:12 CDT",
         "candidate_for": "pollinator_suitability",
         # Both polygons invalid; ~2.96M vertices; no field explains classes 1/2.
+        "scoring_review_rows": [29],
     },
     "parks_natural_resources_analysis": {
         "description": (
@@ -1636,6 +1965,7 @@ HENNEPIN_DELIVERED_DATASETS = {
         "fulfils": "parks_natural_resource_significance",
         "attribute_filter": {"description": "Parks of natural resource significance", "columns": ["NaturalResources_Category"], "values": ["Natural Area Park", "Regionally Significant", "Nature Preserve"], "match_type": "any"},
         # Equivalent to the sheet's NaturalResources_Category <> 'Amenities' (keeps 402).
+        "scoring_review_rows": [4],
     },
     "landcover2011_parks_composition": {
         "description": (
@@ -1671,6 +2001,7 @@ HENNEPIN_DELIVERED_DATASETS = {
         ),
         # Her email names the field Count_of_SpObs; the delivered .dbf has no such field --
         # columns include Polygon_Co and sum_Area_S. Which is the count? [NEEDS CONFIRM]
+        "scoring_review_rows": [25],
     },
     "trpd_gap_subset": {
         "description": (
@@ -1688,6 +2019,7 @@ HENNEPIN_DELIVERED_DATASETS = {
         # Her email: seven features not captured, Hopkins Depot and a golf course removed.
         # The file holds 6: Big Island, Goose, Wawatasso, Kingswood, North Corridor,
         # South Corridor (7 - 2 = 5, so one is extra [NEEDS CONFIRM]).
+        "scoring_review_rows": [10],
     },
 }
 
