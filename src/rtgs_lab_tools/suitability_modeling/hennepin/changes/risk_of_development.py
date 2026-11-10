@@ -43,6 +43,12 @@ def apply(values, frames, setting):
     at_risk = f.ROD_at_risk.to_numpy()
     if setting == "terciles_no_farm":
         at_risk = at_risk & ~f.ROD_farm.to_numpy()
+    elif setting == "continuous":
+        # Scoring Review row 35: "use continuous scoring based on the percentage of assigned risk
+        # for each parcel. Will weight risk without bracketing." p_sub24 on at-risk parcels, else 0.
+        p = np.nan_to_num(f.ROD_p_sub24.to_numpy(dtype=float), nan=0.0)
+        values["ROD_Value"] = np.where(at_risk, p, 0.0)
+        return
     elif setting != "terciles_at_risk":
         raise ValueError(setting)
     values["ROD_Value"] = terciles(f.ROD_p_sub24.to_numpy(), at_risk)[0]
