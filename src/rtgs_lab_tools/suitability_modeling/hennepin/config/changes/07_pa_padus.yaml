@@ -13,3 +13,7 @@ rationale: Off. Not on the tracking sheet, its NRValue filter is undocumented, a
 primary_source: 2026-W41 12-context eda-findings, Gaps and defects
 registry_keys:
 - padus_county_clip_nrvalue
+scoring_review_v2: 'Off here: pa_sheet merges this source with the other Scoring Review protected layers and scores by edge distance. Kept for v2_a343a98.'
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 12, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 12, col: "MD Notes and Recommendations"}

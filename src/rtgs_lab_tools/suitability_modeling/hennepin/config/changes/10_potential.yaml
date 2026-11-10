@@ -3,7 +3,7 @@ label: Nearness to potential easements
 module: potential_easements
 inputs:
 - PEA_Value
-enabled: false
+enabled: true
 setting: all_inquiries
 alternatives: []
 chosen_by: agent; Bryan to confirm
@@ -13,3 +13,9 @@ primary_source: 2019 scoring document, Nearness to Potential Easement Acquisitio
   12-context eda-findings Q1
 registry_keys:
 - hc_easement_inquiries
+scoring_review_v2: 'On. Row 17 Proposed Layer Query: "Use all attribute types in the AcquisStatus field of emailed over Easement_Inquiries Feature class" = setting all_inquiries; scores 2 within 100 ft / 1 within 1/2 mile / 0, edge distance; weight 15% of Spatial Context.'
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 17, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 17, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 17, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 17, col: "Subcategory"}

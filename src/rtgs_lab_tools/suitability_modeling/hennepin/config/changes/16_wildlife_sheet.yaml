@@ -1,0 +1,26 @@
+id: wildlife_sheet
+label: 'Wildlife: WAN update, COA, RPBB zones, current IBA'
+module: wildlife_sheet
+inputs: [WAN_S, COA_S, RPBB_S, Bird_S]
+enabled: true
+setting: sheet
+alternatives: []
+chosen_by: Scoring Review tab; agent reading, Bryan to confirm
+rationale: 'Row 26 WAN 1-5 on the updated layer; row 27 COA yes/no; row 30 RPBB High 2 / Low 1;
+  row 31 IBA yes/no on current polygons. CAN (row 28) is not published; Audubon stopover (row 32)
+  has no scoring rule ("Could divide these into buckets") [NEEDS DECISION].'
+primary_source: changes/wildlife_sheet.py docstring
+needs: [sheet_weights]
+registry_keys: [WAN, conservation_opportunity_areas, rpbb_high_potential_zones,
+  important_bird_areas_public]
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 26, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 26, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 26, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 27, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 28, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 30, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 30, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 31, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 31, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 32, col: "Initial Scoring Criteria"}

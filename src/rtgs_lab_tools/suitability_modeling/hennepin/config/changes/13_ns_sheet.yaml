@@ -1,0 +1,23 @@
+id: ns_sheet
+label: 'Natural Spaces: Metro Conservation Corridors'
+module: ns_sheet
+inputs:
+- NS_S
+enabled: true
+setting: mecc
+alternatives: []
+chosen_by: Scoring Review tab; agent reading, Bryan to confirm
+rationale: 'Rows 13-14 remove the MLCCS layers; rows 15-16 add TNC Resilient and Connected Network
+  and Metro Conservation Corridors, each 3/2/1/0 by distance. TNC RCN has no downloadable classes
+  (registry tnc_resilient_lands.model_availability), so NS_S is the MeCC score alone.'
+primary_source: changes/ns_sheet.py docstring
+needs: [sheet_weights]
+registry_keys: [metro_conservation_corridors, tnc_resilient_lands]
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 13, col: "Subcategory"}
+- {tab: Scoring Review and Recommendations, row: 13, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 14, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 15, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 15, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 16, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 16, col: "Proposed Layer Query - Geoprocessing Guide"}

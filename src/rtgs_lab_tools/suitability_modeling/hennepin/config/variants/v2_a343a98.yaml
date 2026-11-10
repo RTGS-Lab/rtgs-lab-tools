@@ -1,0 +1,13 @@
+# The draft V2 as run at a343a98 (2026-11-06, run_meta.json active["v2"]), kept runnable so the
+# Scoring Review V2 can be compared with it. Run dir:
+# 2026-W45/2026-11-06T0432-FRIDAY/12-kristine-slides-first-cut-T1500/04-working-20261106-run
+name: v2_a343a98
+active:
+  natural_spaces: part_centroid
+  water_outlier: recompute
+  nhis: {field: Polygon_Co, scale: cap_p99}
+  pa_easements_2026: {source: easements_2026}
+  pa_trpd_gap: {source: trpd_gap}
+  pa_parks_nr: {source: parks_nr}
+  bee_habitat: delivered_2026
+  risk_of_development: terciles_at_risk

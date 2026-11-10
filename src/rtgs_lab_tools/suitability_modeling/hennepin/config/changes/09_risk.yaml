@@ -4,8 +4,9 @@ module: risk_of_development
 inputs:
 - ROD_Value
 enabled: true
-setting: terciles_at_risk
+setting: continuous
 alternatives:
+- terciles_at_risk
 - terciles_no_farm
 chosen_by: agent; Bryan to confirm
 rationale: Reachable and PIN joins to PID. Thirds of p_sub24 follow the 2019 document's scale. The
@@ -15,3 +16,13 @@ primary_source: thread:0000000000036c2e Matthew Hockert 2026-11-04 16:57; Runk_d
   2019 scoring document, Risk of Development
 registry_keys:
 - hockert_development_risk_parcels_2023
+scoring_review_v2: 'Row 35 Initial Scoring Criteria: "use continuous scoring based on the percentage of assigned risk for each parcel. Will weight risk without bracketing." ROD_Value = p_sub24 on at-risk parcels, else 0. Status "Matthew and Bryan to work together" [NEEDS CONFIRM]. Rows 36-40 (cemeteries, 2016/2025 land use, HCWI, PWI, protected areas) were inputs of the old risk raster; the Hockert model replaces that method (row 35 MD Notes: "Matthew''s model already excludes existing developed areas").'
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 35, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 35, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 35, col: "Subcategory"}
+- {tab: Scoring Review and Recommendations, row: 36, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 37, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 38, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 39, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 40, col: "Keep, Remove, Update, or Replace"}

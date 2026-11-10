@@ -4,7 +4,7 @@ module: water_outlier
 inputs:
 - SB_Value
 - HCWI_Value
-enabled: true
+enabled: false
 setting: recompute
 alternatives:
 - clip
@@ -16,3 +16,8 @@ primary_source: BL_6.1 Shoreland Buffer.ipynb sjoin and sum; 2026-W43 21-context
 registry_keys:
 - shoreland_buffers
 - hennepin_wetland_inventory
+scoring_review_v2: 'Superseded in the Scoring Review V2: water_sheet recomputes shoreland share on the 2026 PWI layer and wetland share on NWI (rows 41-44). Kept for v2_a343a98.'
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 41, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 44, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 44, col: "Keep, Remove, Update, or Replace"}

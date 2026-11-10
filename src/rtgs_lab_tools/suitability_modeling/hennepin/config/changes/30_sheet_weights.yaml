@@ -1,0 +1,60 @@
+id: sheet_weights
+label: 'Within-category weights and divisors from the Scoring Review tab'
+module: sheet_weights
+inputs: []
+enabled: true
+# Each input: category, within-category weight, divisor (the input's maximum points, so every
+# term runs 0-1 before weighting), fallback v1 field when the input's change is off, and the
+# sheet cell the weight comes from. Category weights are the sheet's Category cells and equal
+# spec.CATEGORIES: Spatial Context 30, Habitat Quality and Diversity 25, Size 15, Wildlife and
+# Plant Conservation 15, Risk of Conversion 10, Water Resources 5 (rows 2, 18, 23, 25, 35, 41).
+# Renormalization: where the sheet removes an input, its weight goes to the inputs left in the
+# same subcategory (Size: Absolute 50 -> 100). Where a subcategory lists several layers with no
+# split, its weight is split equally among the layers that have data (Wildlife Networks 16 = WAN
+# 8 + COA 8, CAN unpublished; Bee Habitat 16 = Bee 8 + RPBB 8). Where the sheet gives no weight
+# (Wildlife Important Waters, rows 33-34) the topic takes what the category's stated weights
+# leave: 100 - (30 + 16 + 16 + 16) = 22, split 11 + 11 [NEEDS DECISION]. Divisors fix v1
+# terms that exceed 1: v1 divides WAN_Value (0-5) by 1 and HW_Value (0-6) by 1 (spec.py).
+setting:
+  inputs:
+    PA_S:       {cat: SC, weight: 0.50, div: 3, fallback: PA_Value,   sheet: {tab: Scoring Review and Recommendations, row: 2, col: "Subcategory"}}
+    NS_S:       {cat: SC, weight: 0.35, div: 3, fallback: NS_Value,   sheet: {tab: Scoring Review and Recommendations, row: 13, col: "Subcategory"}}
+    PEA_Value:  {cat: SC, weight: 0.15, div: 2,                       sheet: {tab: Scoring Review and Recommendations, row: 17, col: "Subcategory"}}
+    QR_Value:   {cat: HQ, weight: 0.45, div: 4,                       sheet: {tab: Scoring Review and Recommendations, row: 18, col: "Subcategory"}}
+    QC_S:       {cat: HQ, weight: 0.10, div: 1, fallback: QC_Value,   sheet: {tab: Scoring Review and Recommendations, row: 20, col: "Subcategory"}}
+    Lvl3_Value: {cat: HQ, weight: 0.45, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 22, col: "Subcategory"}}
+    SZ_S:       {cat: SZ, weight: 1.00, div: 4, fallback: Size_Value, sheet: {tab: Scoring Review and Recommendations, row: 24, col: "Subcategory"}}
+    NHIS_Value: {cat: WP, weight: 0.30, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 25, col: "Subcategory"}}
+    WAN_S:      {cat: WP, weight: 0.08, div: 5, fallback: WAN_Value,  sheet: {tab: Scoring Review and Recommendations, row: 26, col: "Subcategory"}}
+    COA_S:      {cat: WP, weight: 0.08, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 27, col: "Initial Scoring Criteria"}}
+    Bee_Value:  {cat: WP, weight: 0.08, div: 2,                       sheet: {tab: Scoring Review and Recommendations, row: 29, col: "Subcategory"}}
+    RPBB_S:     {cat: WP, weight: 0.08, div: 2,                       sheet: {tab: Scoring Review and Recommendations, row: 30, col: "Initial Scoring Criteria"}}
+    Bird_S:     {cat: WP, weight: 0.16, div: 1, fallback: Bird_Value, sheet: {tab: Scoring Review and Recommendations, row: 31, col: "Subcategory"}}
+    LBS_S:      {cat: WP, weight: 0.11, div: 3,                       sheet: {tab: Scoring Review and Recommendations, row: 33, col: "Subcategory"}}
+    SHL_S:      {cat: WP, weight: 0.11, div: 3,                       sheet: {tab: Scoring Review and Recommendations, row: 34, col: "Initial Scoring Criteria"}}
+    ROD_Value:  {cat: RC, weight: 1.00, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 35, col: "Subcategory"}}
+    SB_S:       {cat: WR, weight: 0.15, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 41, col: "Subcategory"}}
+    FP_S:       {cat: WR, weight: 0.20, div: 2, fallback: FP_Value,   sheet: {tab: Scoring Review and Recommendations, row: 43, col: "Subcategory"}}
+    NWI_S:      {cat: WR, weight: 0.20, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 44, col: "Subcategory"}}
+    HW_S:       {cat: WR, weight: 0.15, div: 1, fallback: HW_Value,   sheet: {tab: Scoring Review and Recommendations, row: 45, col: "Subcategory"}}
+    AQV_S:      {cat: WR, weight: 0.30, div: 2, fallback: Cont_Value, sheet: {tab: Scoring Review and Recommendations, row: 47, col: "Subcategory"}}
+alternatives: []
+chosen_by: Scoring Review tab; renormalization rules by the agent, Bryan to confirm
+rationale: 'Weights as the Category and Subcategory cells state them. Removed: Relative Size (row
+  23), Groundwater Recharge (row 46, its 15% moves to contamination: "increasing the singular
+  percentage to 30"). Risk of Conversion stays 10% [NEEDS DECISION, row 35 "Talk to Bryan"].'
+primary_source: changes/sheet_weights.py docstring
+registry_keys: []
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 2, col: "Category"}
+- {tab: Scoring Review and Recommendations, row: 18, col: "Category"}
+- {tab: Scoring Review and Recommendations, row: 23, col: "Category"}
+- {tab: Scoring Review and Recommendations, row: 25, col: "Category"}
+- {tab: Scoring Review and Recommendations, row: 35, col: "Category"}
+- {tab: Scoring Review and Recommendations, row: 41, col: "Category"}
+- {tab: Scoring Review and Recommendations, row: 23, col: "Subcategory"}
+- {tab: Scoring Review and Recommendations, row: 29, col: "Subcategory"}
+- {tab: Scoring Review and Recommendations, row: 31, col: "Subcategory"}
+- {tab: Scoring Review and Recommendations, row: 35, col: "Subcategory"}
+- {tab: Scoring Review and Recommendations, row: 46, col: "Subcategory"}
+- {tab: Scoring Review and Recommendations, row: 47, col: "Subcategory"}

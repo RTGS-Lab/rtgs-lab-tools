@@ -6,10 +6,10 @@ inputs:
 enabled: true
 setting:
   field: Polygon_Co
-  scale: cap_p99
+  scale: linear
 alternatives:
 - field: Polygon_Co
-  scale: linear
+  scale: cap_p99
 - field: sum_Area_S
   scale: cap_p99
 - field: Polygon_Co
@@ -23,3 +23,9 @@ primary_source: thread:0000000000036996 Meaghan Dietrich 2026-11-02 15:33; Bryan
   05:22; 2019 scoring document NHIS Occurrence (30%)
 registry_keys:
 - nhis_summary_by_section
+scoring_review_v2: 'Row 25 Proposed Layer Query: "Scoring will be given as one point per observation", so the count is scaled linearly (value / county maximum); the a343a98 cap at the 99th percentile is alternative 1. Area-weighting across sections follows Meaghan 11/02 (thread:0000000000036996); the sheet says average the two sections [NEEDS CONFIRM: area-weighted or plain mean].'
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 25, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 25, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 25, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 25, col: "Subcategory"}

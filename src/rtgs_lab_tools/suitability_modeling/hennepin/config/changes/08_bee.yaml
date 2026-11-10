@@ -14,3 +14,10 @@ primary_source: thread:00000000000366cd 2026-10-06; thread:0000000000036b43 Kris
 registry_keys:
 - bee_habitat_areas_2026
 - bee_habitat
+scoring_review_v2: 'Kept as is [NEEDS DECISION]: row 29 "Bryan looking at this again to evaluate whether we keep it or not". Proposed query (score 0/1/2 by Bee_Habitat_Score, highest on parcel) is what v1 does. RPBB (row 30) is added in wildlife_sheet.'
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 29, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 29, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 29, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 29, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 29, col: "What Attributes are we Interested in?"}

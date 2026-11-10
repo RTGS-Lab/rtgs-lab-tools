@@ -1,0 +1,21 @@
+id: qc_sheet
+label: 'Adjacent to quality community: DNR NPC + MBS'
+module: qc_sheet
+inputs:
+- QC_S
+enabled: true
+setting: npc_mbs
+alternatives:
+- npc_only
+chosen_by: Scoring Review tab; agent reading, Bryan to confirm
+rationale: 'Row 20: NPCs replace MLCCS A/B, Yes (1) / No (0) kept; row 21: MBS updated. Yes = within
+  100 ft of an NPC polygon or an MBS site of Moderate or higher significance [NEEDS CONFIRM which
+  NPC condition ranks count as quality; all mapped NPCs are used].'
+primary_source: changes/qc_sheet.py docstring
+needs: [sheet_weights]
+registry_keys: [dnr_native_plant_communities, MBS_sites]
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 20, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 20, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 20, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 21, col: "Keep, Remove, Update, or Replace"}

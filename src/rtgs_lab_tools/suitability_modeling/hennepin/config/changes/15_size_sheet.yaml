@@ -1,0 +1,19 @@
+id: size_sheet
+label: 'Size: absolute acreage bins only'
+module: size_sheet
+inputs:
+- SZ_S
+enabled: true
+setting: absolute_bins
+alternatives: []
+chosen_by: Scoring Review tab; agent reading, Bryan to confirm
+rationale: 'Row 23 removes Relative Size; row 24 keeps Absolute Size 4/3/2/1/0.5/0 at 80/50/30/10/5
+  acres. Absolute Size takes the whole Size category (50% renormalized to 100%).'
+primary_source: changes/size_sheet.py docstring
+needs: [sheet_weights]
+registry_keys: [hennepin_suitability_v1_parcel_detail]
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 23, col: "Subcategory"}
+- {tab: Scoring Review and Recommendations, row: 23, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 24, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 24, col: "Proposed Layer Query - Geoprocessing Guide"}

@@ -1,0 +1,34 @@
+id: water_sheet
+label: 'Water: 2026 PWI shoreland, NFHL, NWI, headwaters yes/no, aquifer vulnerability'
+module: water_sheet
+inputs: [SB_S, FP_S, NWI_S, HW_S, AQV_S]
+enabled: true
+setting: {shoreland: 300_1000ft, headwaters: gdb2020}
+alternatives:
+- {shoreland: 50ft, headwaters: gdb2020}
+- {shoreland: 300_1000ft, headwaters: level08_no_upstream}
+chosen_by: Scoring Review tab; agent reading, Bryan to confirm
+rationale: 'Rows 41-47. Shoreland keeps the Proposed Layer Query distances (300 ft / 1,000 ft);
+  row 41 MD Notes "Use a 50-ft buffer" is alternative 1 [NEEDS DECISION]. Headwaters: CATCH_POS
+  exists only in the 2020 layer; alternative 2 uses current Level 8 catchments with no upstream
+  catchment [NEEDS CONFIRM]. Groundwater recharge removed (row 46); contamination weight 30%
+  (rows 46-47 Subcategory).'
+primary_source: changes/water_sheet.py docstring
+needs: [sheet_weights]
+registry_keys: [public_waters_basins_watercourses, fema_nfhl_flood_hazard_zones, nwi_wetlands,
+  headwaters, watersheds, water_table_aquifer_vulnerability]
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 41, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 41, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 41, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 42, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 43, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 43, col: "Initial Model Scoring Process"}
+- {tab: Scoring Review and Recommendations, row: 44, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 44, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 45, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 45, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 46, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 47, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 47, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 47, col: "MD Notes and Recommendations"}

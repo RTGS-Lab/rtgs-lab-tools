@@ -3,7 +3,7 @@ label: 'Protected Areas: parks of natural resource significance'
 module: protected_areas
 inputs:
 - PA_Value
-enabled: true
+enabled: false
 setting:
   source: parks_nr
 alternatives: []
@@ -14,3 +14,7 @@ primary_source: Easement Scoring v2 Data Tracking.xlsx, Protected Areas rows; th
   2026-10-06 13:20
 registry_keys:
 - parks_natural_resources_analysis
+scoring_review_v2: 'Off here: pa_sheet merges this source with the other Scoring Review protected layers and scores by edge distance. Kept for v2_a343a98.'
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 4, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 4, col: "MD Notes and Recommendations"}

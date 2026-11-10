@@ -1,0 +1,19 @@
+id: important_waters
+label: 'Wildlife Important Waters: LBS and DNR shallow lakes'
+module: important_waters
+inputs: [LBS_S, SHL_S]
+enabled: true
+setting: distance_classes
+alternatives: []
+chosen_by: Scoring Review tab; agent reading, Bryan to confirm
+rationale: 'Rows 33-34, new topic, each 3/2/1/0 by 100 ft / 1/2 mile / 1 mile. The sheet gives the
+  topic no weight; sheet_weights gives it the 22% the other Wildlife subcategories leave
+  (30 + 16 + 16 + 16 = 78) [NEEDS DECISION].'
+primary_source: changes/important_waters.py docstring
+needs: [sheet_weights]
+registry_keys: [lakes_of_biological_significance, shallow_lakes_dnr_wildlife]
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 33, col: "Subcategory"}
+- {tab: Scoring Review and Recommendations, row: 33, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 33, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 34, col: "Initial Scoring Criteria"}

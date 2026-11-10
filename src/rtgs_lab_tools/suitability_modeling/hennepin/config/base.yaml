@@ -9,6 +9,9 @@ paths:
   v1_shp: /storage/wd10tb/gdrive-runck-lab-mirror/runck_lab_operations/projects_runck_lab/projects-to-sort/202409_011_Hennepin_Model_Comparison_Ben_Landers/repos/BL_Hennepin_suitability_analysis/BL_Open_Source_Rebuild/data/shp/full_dataset_v1/full_parcels_ranked_final_v1.shp
   gdb: /storage/wd10tb/gdrive-runck-lab-mirror/runck_lab_operations/projects_runck_lab/archive/2023_hennepin_suitability_analysis/data/FinalHennepin Project/HC_EasementAnalysis_Model_Inputs_2020.gdb
   county: /storage/wd10tb/gdrive-runck-lab-mirror/runck_lab_operations/projects_runck_lab/Tim_Johnson/nrpc-qaqc (Local version)/jurisdictions/hennepin.shp
+# Public layers the Scoring Review V2 reads: fetch.py writes <public_root>/<registry key>/<key>.gpkg
+# (county + 1 mile, EPSG:26915) with fetch.json (URL, sha256). Next to the 2020 model gdb; not git.
+public_root: /home/rtgs/Documents/nrpc/data/registry
 # ${DELIVERED} is the run directory's unpacked copy; each zip below is the primary file and its hash
 # is what the manifest records.
 delivered:
@@ -27,3 +30,14 @@ delivered_zips:
   nhis_shp: /home/rtgs/Documents/working/2026-W45/2026-11-04T0933-WEDNESDAY/03-kristine-webinar-workplan-T1415/10-context-20261104-NHIS_Summary_by_Section.zip
   trpd_gap_shp: /home/rtgs/Documents/working/2026-W45/2026-11-04T0933-WEDNESDAY/03-kristine-webinar-workplan-T1415/11-context-20261104-TRPD_GAP_data.zip
   hockert_parcels_gpkg: ${DELIVERED}/hockert/Runk_deliverables.zip
+# Ranking. Kristine (relayed by Bryan 2026-11-10, 00-nrpc-v2-model-slides GOAL Decisions): protected
+# areas "get an index score, but are not apart of the rank county wide". Scoring Review row 2,
+# Proposed Layer Query: "make sure to remove the Airport parcels". Both keep Overall_Value; Rank_ranked
+# is 0 for them. changes/exclusions.py builds the shares.
+ranking:
+  protected_set: sheet          # pa_sheet.SHEET_SOURCES; "explorer" = 2020 + easements + TRPD + parks NR
+  protected_share: 0.5          # nrpc-model-explorer data/build-data.py PROTECTED_SHARE [NEEDS CONFIRM]
+  airport_share: 0.5            # share of parcel in Generalized Land Use 2025 "Airport" [NEEDS CONFIRM]
+  sheet:
+  - {tab: Scoring Review and Recommendations, row: 2, col: "Proposed Layer Query - Geoprocessing Guide"}
+

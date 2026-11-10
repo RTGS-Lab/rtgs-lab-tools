@@ -16,7 +16,9 @@ import numpy as np
 import pandas as pd
 
 from .breaks import natural_breaks
-from .context import file_date, load_config, load_context, load_table, resolve, sha256_path
+import yaml
+
+from .context import CONFIG_DIR, file_date, load_config, load_context, load_table, resolve, sha256_path
 from .spec import CATEGORIES
 from .variants import compare, run_variant
 
@@ -24,7 +26,10 @@ from .variants import compare, run_variant
 def build_modules(config):
     """Each module named by a change entry, once. distance_method has no build of its own: it reads
     the edge distances natural_spaces and protected_areas already computed."""
-    names = [e["module"] for e in config["changes"].values() if e["module"] != "distance_method"]
+    skip = {"distance_method", "sheet_weights"}
+    names = [e["module"] for e in config["changes"].values() if e["module"] not in skip]
+    if config.get("ranking"):
+        names.append("exclusions")
     return list(dict.fromkeys(names))
 
 
@@ -67,13 +72,50 @@ def variant_list(config):
     v2 = recommended(config)
     out = {"v1": {}, "v2": v2}
     for cid, e in config["changes"].items():
-        out[f"only__{cid}"] = {cid: e["setting"]}
+        # a change that adds a sheet input runs with the sheet weights it needs (fallbacks fill
+        # the other inputs with v1 values)
+        deps = {d: config["changes"][d]["setting"] for d in e.get("needs") or []}
+        out[f"only__{cid}"] = {**deps, cid: e["setting"]}
         if cid in v2:
             out[f"without__{cid}"] = {k: s for k, s in v2.items() if k != cid}
         else:
             out[f"plus__{cid}"] = {**v2, cid: e["setting"]}
         for i, alt in enumerate(e.get("alternatives") or []):
             out[f"alt{i + 1}__{cid}"] = {**v2, cid: alt}
+    out.update(named_variants())
+    return out
+
+
+def named_variants():
+    """config/variants/<name>.yaml: a frozen set of active settings, e.g. the a343a98 V2."""
+    out = {}
+    for f in sorted((CONFIG_DIR / "variants").glob("*.yaml")):
+        v = yaml.safe_load(f.read_text())
+        out[v["name"]] = v["active"]
+    return out
+
+
+def ranked(rank_overall, overall, excluded):
+    """Rank among parcels not excluded (descending, ties min, Overall_Value at 4 decimals as v1);
+    0 for excluded parcels, which keep their index score."""
+    r = np.zeros(len(overall), dtype=np.int64)
+    keep = ~excluded
+    r[keep] = pd.Series(np.asarray(overall)[keep]).round(4).rank(
+        ascending=False, method="min").astype(np.int64).to_numpy()
+    return r
+
+
+def public_inputs(config):
+    """fetch.json of every public layer on disk: URL and sha256 of raw download and gpkg."""
+    root = Path(config.get("public_root", ""))
+    out = {}
+    for f in sorted(root.glob("*/fetch.json")):
+        m = json.loads(f.read_text())
+        out[m["key"]] = {k: m.get(k) for k in ("service_url", "download_url", "raw_sha256", "gpkg",
+                                                "gpkg_sha256", "features", "finished")}
+        for k, v in m.items():
+            if isinstance(v, dict) and "gpkg_sha256" in v:
+                out[f"{m['key']}_{k}"] = v
     return out
 
 
@@ -91,8 +133,13 @@ def manifest(out, config):
         p = resolve(p, out)
         entries[name] = {"path": p, "sha256": sha256_path(p), "date": file_date(p)}
     sha, dirty = commit()
+    linked = {}
+    for p in sorted((out / "intermediate").glob("*.parquet")):
+        if p.is_symlink():
+            linked[p.stem] = {"target": str(p.resolve()), "sha256": sha256_path(p.resolve())}
     return {"commit": sha, "dirty": dirty, "python": platform.python_version(),
-            "run_at": time.strftime("%F %T"), "inputs": entries}
+            "run_at": time.strftime("%F %T"), "inputs": entries,
+            "public_layers": public_inputs(config), "intermediates_linked": linked}
 
 
 def variants(out):
@@ -104,13 +151,26 @@ def variants(out):
             raise ValueError(f"{name}: parcel order differs from v1")
     cols = [c for _, _, _, c in CATEGORIES] + ["Overall_Value", "Rank"]
     results, scaling, active_by_name = {}, {}, {}
+    excluded, masks = None, {}
+    if config.get("ranking") and "exclusions" in frames:
+        from .changes.exclusions import masks as exclusion_masks
+        prot, air = exclusion_masks(frames["exclusions"], config["ranking"])
+        excluded = prot | air
+        masks = {"protected": int(prot.sum()), "airport": int(air.sum()),
+                 "both": int((prot & air).sum()), "ranked": int((~excluded).sum())}
+        cols = cols + ["Rank_ranked"]
     for name, active in variant_list(config).items():
         results[name], scaling[name] = run_variant(table, frames, active, config)
+        if excluded is not None:
+            results[name]["Rank_ranked"] = ranked(results[name]["Rank"], results[name]["Overall_Value"],
+                                                  excluded)
         active_by_name[name] = active
     (out / "variants").mkdir(exist_ok=True)
-    for name in ("v1", "v2"):
+    for name in ["v1", "v2"] + list(named_variants()):
         res = results[name].copy()
         res.insert(0, "PID", table.PID.to_numpy())
+        if excluded is not None:
+            res["excluded_protected"], res["excluded_airport"] = prot, air
         res.to_parquet(out / "variants" / f"{name}_full.parquet")
     rows = []
     for name, res in results.items():
@@ -121,7 +181,7 @@ def variants(out):
     pd.DataFrame(rows).to_json(out / "variant_effects.jsonl", orient="records", lines=True)
     breaks = {n: natural_breaks(results[n]["Overall_Value"]) for n in ("v1", "v2")}
     meta = {"manifest": manifest(out, config), "scaling": scaling, "active": active_by_name,
-            "breaks": breaks, "config": config}
+            "breaks": breaks, "config": config, "exclusions": masks}
     (out / "run_meta.json").write_text(json.dumps(meta, indent=1, default=str))
     print("variants", len(results), "breaks", breaks, flush=True)
 

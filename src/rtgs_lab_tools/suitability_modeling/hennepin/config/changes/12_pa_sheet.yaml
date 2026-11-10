@@ -1,0 +1,36 @@
+id: pa_sheet
+label: 'Protected Areas: Scoring Review set, edge distance'
+module: pa_sheet
+inputs:
+- PA_S
+enabled: true
+setting: {padus: true, plus_2020: false}
+alternatives:
+- {padus: false, plus_2020: false}
+- {padus: true, plus_2020: true}
+chosen_by: Scoring Review tab (Meaghan Dietrich, 2026-11-10); agent reading, Bryan to confirm
+rationale: 'Merge the protected layers the tab lists, Near analysis to the edge, 3/2/1/0 at 100 ft /
+  1/2 mile / 1 mile. PAD-US subset scored on its own scale, 1 (100 ft) / 0.5 (1 mile); the parcel
+  keeps the higher score. The 2020 composite is out (row 40); alternative 2 puts it back.'
+primary_source: changes/pa_sheet.py docstring
+needs: [sheet_weights]
+registry_keys: [hc_all_known_easements_combined_2026, usfws_national_realty_boundaries,
+  parks_natural_resources_analysis, state_administered_lands, TNC_lands, trpd_gap_subset,
+  padus_county_clip_nrvalue]
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 2, col: "Subcategory"}
+- {tab: Scoring Review and Recommendations, row: 2, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 2, col: "Initial Model Scoring Process"}
+- {tab: Scoring Review and Recommendations, row: 2, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 3, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 4, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 5, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 6, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 7, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 8, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 9, col: "MD Notes and Recommendations"}
+- {tab: Scoring Review and Recommendations, row: 10, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 11, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 12, col: "Initial Scoring Criteria"}
+- {tab: Scoring Review and Recommendations, row: 12, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 40, col: "MD Notes and Recommendations"}

@@ -14,3 +14,7 @@ primary_source: 2019 scoring document, Protected Areas distance classes; BL_1.1 
 registry_keys:
 - protected_areas_hc
 - natural_spaces
+scoring_review_v2: 'Off: pa_sheet and ns_sheet measure to the edge themselves (rows 2 and 16 "Run Near analysis").'
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 2, col: "Proposed Layer Query - Geoprocessing Guide"}
+- {tab: Scoring Review and Recommendations, row: 16, col: "Proposed Layer Query - Geoprocessing Guide"}

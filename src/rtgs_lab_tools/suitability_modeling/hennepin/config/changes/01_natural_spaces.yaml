@@ -3,7 +3,7 @@ label: Natural Spaces fix
 module: natural_spaces
 inputs:
 - NS_Value
-enabled: true
+enabled: false
 setting: part_centroid
 alternatives:
 - edge
@@ -13,3 +13,8 @@ rationale: v1 measures every parcel to one point, the centroid of a single multi
 primary_source: BL_1.2.natural_spaces.ipynb cell 6 vs BL_1.1 cell 8; 2026-W43 37-working ns-centroid-bug-check
 registry_keys:
 - natural_spaces
+scoring_review_v2: 'Superseded in the Scoring Review V2: rows 13 and 14 remove the MLCCS layer this fix measures to (ns_sheet scores the new layers). Kept for v2_a343a98.'
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 13, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 14, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 13, col: "Subcategory"}

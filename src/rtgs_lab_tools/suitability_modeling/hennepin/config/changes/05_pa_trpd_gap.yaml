@@ -3,7 +3,7 @@ label: 'Protected Areas: Three Rivers parks gap'
 module: protected_areas
 inputs:
 - PA_Value
-enabled: true
+enabled: false
 setting:
   source: trpd_gap
 alternatives: []
@@ -13,3 +13,7 @@ rationale: Meaghan found Three Rivers Park District parks missing from the count
 primary_source: thread:0000000000036996 Meaghan Dietrich 2026-11-03 14:02
 registry_keys:
 - trpd_gap_subset
+scoring_review_v2: 'Off here: pa_sheet merges this source with the other Scoring Review protected layers and scores by edge distance. Kept for v2_a343a98.'
+sheet:  # Meaghan Dietrich's easement-scoring-to-registry-crosswalk.xlsx, 2026-11-10
+- {tab: Scoring Review and Recommendations, row: 10, col: "Keep, Remove, Update, or Replace"}
+- {tab: Scoring Review and Recommendations, row: 10, col: "MD Notes and Recommendations"}

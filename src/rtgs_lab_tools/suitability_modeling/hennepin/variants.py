@@ -25,9 +25,12 @@ def apply_changes(table, frames, active, config):
     edge = "edge_distance" in active
     sources = []
     ns_setting = None
+    weights = None
     for cid, setting in active.items():
         module = entries[cid]["module"]
-        if module == "protected_areas":
+        if module == "sheet_weights":
+            weights = setting
+        elif module == "protected_areas":
             sources.append(setting["source"])
         elif module == "distance_method":
             pass
@@ -38,10 +41,15 @@ def apply_changes(table, frames, active, config):
             mod.apply(values, frames, setting)
             if hasattr(mod, "INPUT"):
                 inputs.append(mod.INPUT)
+            inputs.extend(getattr(mod, "INPUTS", []))
     if sources or edge:
         _module("protected_areas").apply(values, frames, {"sources": sources, "method": "edge" if edge else "part_centroid"})
     if ns_setting or edge:
         _module("natural_spaces").apply(values, frames, "edge" if edge else ns_setting)
+    if weights is not None:
+        # Scoring Review V2: the input list and its weights come from config, not spec.INPUTS
+        inputs, used = _module("sheet_weights").reweight(values, inputs, weights)
+        values.attrs["weights_used"] = used
     return values, inputs
 
 
