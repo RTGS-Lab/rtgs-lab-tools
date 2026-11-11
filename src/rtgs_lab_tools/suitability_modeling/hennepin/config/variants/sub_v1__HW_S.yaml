@@ -1,0 +1,6 @@
+# Substitution variant for the v1 attribution (12-nrpc-v2-vs-v1-layer-attribution, 2026-11-10):
+# V2 Scoring Review with one input put back to its v1 value, v1 divisor, V2 weight. Not a model.
+name: sub_v1__HW_S
+base: v2
+weights_patch:
+  force_v1: [HW_S]

@@ -17,27 +17,27 @@ enabled: true
 # terms that exceed 1: v1 divides WAN_Value (0-5) by 1 and HW_Value (0-6) by 1 (spec.py).
 setting:
   inputs:
-    PA_S:       {cat: SC, weight: 0.50, div: 3, fallback: PA_Value,   sheet: {tab: Scoring Review and Recommendations, row: 2, col: "Subcategory"}}
-    NS_S:       {cat: SC, weight: 0.35, div: 3, fallback: NS_Value,   sheet: {tab: Scoring Review and Recommendations, row: 13, col: "Subcategory"}}
-    PEA_Value:  {cat: SC, weight: 0.15, div: 2,                       sheet: {tab: Scoring Review and Recommendations, row: 17, col: "Subcategory"}}
-    QR_Value:   {cat: HQ, weight: 0.45, div: 4,                       sheet: {tab: Scoring Review and Recommendations, row: 18, col: "Subcategory"}}
-    QC_S:       {cat: HQ, weight: 0.10, div: 1, fallback: QC_Value,   sheet: {tab: Scoring Review and Recommendations, row: 20, col: "Subcategory"}}
-    Lvl3_Value: {cat: HQ, weight: 0.45, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 22, col: "Subcategory"}}
-    SZ_S:       {cat: SZ, weight: 1.00, div: 4, fallback: Size_Value, sheet: {tab: Scoring Review and Recommendations, row: 24, col: "Subcategory"}}
-    NHIS_Value: {cat: WP, weight: 0.30, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 25, col: "Subcategory"}}
-    WAN_S:      {cat: WP, weight: 0.08, div: 5, fallback: WAN_Value,  sheet: {tab: Scoring Review and Recommendations, row: 26, col: "Subcategory"}}
-    COA_S:      {cat: WP, weight: 0.08, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 27, col: "Initial Scoring Criteria"}}
-    Bee_Value:  {cat: WP, weight: 0.08, div: 2,                       sheet: {tab: Scoring Review and Recommendations, row: 29, col: "Subcategory"}}
-    RPBB_S:     {cat: WP, weight: 0.08, div: 2,                       sheet: {tab: Scoring Review and Recommendations, row: 30, col: "Initial Scoring Criteria"}}
-    Bird_S:     {cat: WP, weight: 0.16, div: 1, fallback: Bird_Value, sheet: {tab: Scoring Review and Recommendations, row: 31, col: "Subcategory"}}
-    LBS_S:      {cat: WP, weight: 0.11, div: 3,                       sheet: {tab: Scoring Review and Recommendations, row: 33, col: "Subcategory"}}
-    SHL_S:      {cat: WP, weight: 0.11, div: 3,                       sheet: {tab: Scoring Review and Recommendations, row: 34, col: "Initial Scoring Criteria"}}
-    ROD_Value:  {cat: RC, weight: 1.00, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 35, col: "Subcategory"}}
-    SB_S:       {cat: WR, weight: 0.15, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 41, col: "Subcategory"}}
-    FP_S:       {cat: WR, weight: 0.20, div: 2, fallback: FP_Value,   sheet: {tab: Scoring Review and Recommendations, row: 43, col: "Subcategory"}}
-    NWI_S:      {cat: WR, weight: 0.20, div: 1,                       sheet: {tab: Scoring Review and Recommendations, row: 44, col: "Subcategory"}}
-    HW_S:       {cat: WR, weight: 0.15, div: 1, fallback: HW_Value,   sheet: {tab: Scoring Review and Recommendations, row: 45, col: "Subcategory"}}
-    AQV_S:      {cat: WR, weight: 0.30, div: 2, fallback: Cont_Value, sheet: {tab: Scoring Review and Recommendations, row: 47, col: "Subcategory"}}
+    PA_S:       {cat: SC, weight: 0.50, div: 3, fallback: PA_Value, v1_field: PA_Value, sheet: {tab: Scoring Review and Recommendations, row: 2, col: "Subcategory"}}
+    NS_S:       {cat: SC, weight: 0.35, div: 3, fallback: NS_Value, v1_field: NS_Value, sheet: {tab: Scoring Review and Recommendations, row: 13, col: "Subcategory"}}
+    PEA_Value:  {cat: SC, weight: 0.15, div: 2, v1_field: null, sheet: {tab: Scoring Review and Recommendations, row: 17, col: "Subcategory"}}
+    QR_Value:   {cat: HQ, weight: 0.45, div: 4, v1_field: QR_Value, sheet: {tab: Scoring Review and Recommendations, row: 18, col: "Subcategory"}}
+    QC_S:       {cat: HQ, weight: 0.10, div: 1, fallback: QC_Value, v1_field: QC_Value, sheet: {tab: Scoring Review and Recommendations, row: 20, col: "Subcategory"}}
+    Lvl3_Value: {cat: HQ, weight: 0.45, div: 1, v1_field: Lvl3_Value, sheet: {tab: Scoring Review and Recommendations, row: 22, col: "Subcategory"}}
+    SZ_S:       {cat: SZ, weight: 1.00, div: 4, fallback: Size_Value, v1_field: Size_Value, sheet: {tab: Scoring Review and Recommendations, row: 24, col: "Subcategory"}}
+    NHIS_Value: {cat: WP, weight: 0.30, div: 1, v1_field: null, sheet: {tab: Scoring Review and Recommendations, row: 25, col: "Subcategory"}}
+    WAN_S:      {cat: WP, weight: 0.08, div: 5, fallback: WAN_Value, v1_field: WAN_Value, sheet: {tab: Scoring Review and Recommendations, row: 26, col: "Subcategory"}}
+    COA_S:      {cat: WP, weight: 0.08, div: 1, v1_field: null, sheet: {tab: Scoring Review and Recommendations, row: 27, col: "Initial Scoring Criteria"}}
+    Bee_Value:  {cat: WP, weight: 0.08, div: 2, v1_field: Bee_Value, sheet: {tab: Scoring Review and Recommendations, row: 29, col: "Subcategory"}}
+    RPBB_S:     {cat: WP, weight: 0.08, div: 2, v1_field: null, sheet: {tab: Scoring Review and Recommendations, row: 30, col: "Initial Scoring Criteria"}}
+    Bird_S:     {cat: WP, weight: 0.16, div: 1, fallback: Bird_Value, v1_field: Bird_Value, sheet: {tab: Scoring Review and Recommendations, row: 31, col: "Subcategory"}}
+    LBS_S:      {cat: WP, weight: 0.11, div: 3, v1_field: null, sheet: {tab: Scoring Review and Recommendations, row: 33, col: "Subcategory"}}
+    SHL_S:      {cat: WP, weight: 0.11, div: 3, v1_field: null, sheet: {tab: Scoring Review and Recommendations, row: 34, col: "Initial Scoring Criteria"}}
+    ROD_Value:  {cat: RC, weight: 1.00, div: 1, v1_field: ROD_Value, sheet: {tab: Scoring Review and Recommendations, row: 35, col: "Subcategory"}}
+    SB_S:       {cat: WR, weight: 0.15, div: 1, v1_field: SB_Value, sheet: {tab: Scoring Review and Recommendations, row: 41, col: "Subcategory"}}
+    FP_S:       {cat: WR, weight: 0.20, div: 2, fallback: FP_Value, v1_field: FP_Value, sheet: {tab: Scoring Review and Recommendations, row: 43, col: "Subcategory"}}
+    NWI_S:      {cat: WR, weight: 0.20, div: 1, v1_field: HCWI_Value, sheet: {tab: Scoring Review and Recommendations, row: 44, col: "Subcategory"}}
+    HW_S:       {cat: WR, weight: 0.15, div: 1, fallback: HW_Value, v1_field: HW_Value, sheet: {tab: Scoring Review and Recommendations, row: 45, col: "Subcategory"}}
+    AQV_S:      {cat: WR, weight: 0.30, div: 2, fallback: Cont_Value, v1_field: Cont_Value, sheet: {tab: Scoring Review and Recommendations, row: 47, col: "Subcategory"}}
 alternatives: []
 chosen_by: Scoring Review tab; renormalization rules by the agent, Bryan to confirm
 rationale: 'Weights as the Category and Subcategory cells state them. Removed: Relative Size (row

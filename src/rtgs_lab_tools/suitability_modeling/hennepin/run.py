@@ -89,9 +89,25 @@ def variant_list(config):
 def named_variants():
     """config/variants/<name>.yaml: a frozen set of active settings, e.g. the a343a98 V2."""
     out = {}
+    config = None
     for f in sorted((CONFIG_DIR / "variants").glob("*.yaml")):
         v = yaml.safe_load(f.read_text())
-        out[v["name"]] = v["active"]
+        active = dict(v.get("active") or {})
+        if v.get("base") == "v2":  # substitution variant: V2 with named overrides
+            config = config or load_config()
+            base = recommended(config)
+            for cid, setting in active.items():
+                if setting is None:
+                    base.pop(cid, None)
+                else:
+                    base[cid] = setting
+            if v.get("weights_patch"):
+                import copy
+                w = copy.deepcopy(base["sheet_weights"])
+                w.update(v["weights_patch"])
+                base["sheet_weights"] = w
+            active = base
+        out[v["name"]] = active
     return out
 
 
@@ -166,7 +182,7 @@ def variants(out):
                                                   excluded)
         active_by_name[name] = active
     (out / "variants").mkdir(exist_ok=True)
-    for name in ["v1", "v2"] + list(named_variants()):
+    for name in ["v1", "v2"] + [n for n in named_variants() if not n.startswith("sub_")]:
         res = results[name].copy()
         res.insert(0, "PID", table.PID.to_numpy())
         if excluded is not None:

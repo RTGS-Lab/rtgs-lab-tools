@@ -1,0 +1,5 @@
+# V2 Scoring Review values with v1 within-category weights (new inputs 0, groundwater recharge stays out).
+name: sub_v2_with_v1_weights
+base: v2
+weights_patch:
+  weights_from_v1: true

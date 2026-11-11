@@ -9,6 +9,7 @@ registry MBS_sites.attribute_filter). Setting npc_only drops MBS.
 """
 
 import numpy as np
+import pyogrio
 
 from ..sheet_common import FT100, edge_distance, frame, read_public
 
@@ -20,8 +21,11 @@ def build(ctx):
     npc = read_public("dnr_native_plant_communities")
     mbs = read_public("MBS_sites")
     mbs = mbs[mbs.biodiv_sig.isin(["Outstanding", "High", "Moderate"])]
+    qc20 = pyogrio.read_dataframe(ctx.gdb, layer="Quality_Community_ANALYSIS", force_2d=True)
     out = frame(ctx, QC_S_edge_npc_m=edge_distance(ctx, npc.geometry.to_numpy()),
-                QC_S_edge_mbs_m=edge_distance(ctx, mbs.geometry.to_numpy()))
+                QC_S_edge_mbs_m=edge_distance(ctx, mbs.geometry.to_numpy()),
+                # v1's own layer, with the 100 ft BL_2.2 meant to apply (substitution runs)
+                QC_S_edge_2020_m=edge_distance(ctx, qc20.to_crs(26915).geometry.to_numpy()))
     out.attrs["features"] = {"npc": len(npc), "mbs_moderate_up": len(mbs)}
     return out
 
@@ -31,6 +35,8 @@ def apply(values, frames, setting):
     d = f.QC_S_edge_npc_m.to_numpy()
     if setting == "npc_mbs":
         d = np.minimum(d, f.QC_S_edge_mbs_m.to_numpy())
+    elif setting == "mlccs2020":
+        d = f.QC_S_edge_2020_m.to_numpy()
     elif setting != "npc_only":
         raise ValueError(setting)
     values["QC_S"] = (d < FT100).astype(float)

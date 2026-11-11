@@ -135,3 +135,14 @@ def test_v2_input_list_matches_the_sheet():
     assert "GW_Value" not in names and "Size_Value" not in names and "HCWI_Value" not in names
     res, scaling = score(values, inputs)
     assert res.Overall_Value.between(0, 100).all()
+
+
+def test_force_v1_and_v1_weights():
+    values = pd.DataFrame({"WAN_S": [5.0, 0], "WAN_Value": [5.0, 1], "COA_S": [1.0, 0]})
+    base = {"inputs": {
+        "WAN_S": {"cat": "WP", "weight": .08, "div": 5, "v1_field": "WAN_Value"},
+        "COA_S": {"cat": "WP", "weight": .08, "div": 1, "v1_field": None}}}
+    inputs, _ = sheet_weights.reweight(values, list(INPUTS), {**base, "force_v1": ["WAN_S", "COA_S"]})
+    assert inputs == [("WAN_Value", "Wildlife Action Network Rank", "WP", .08, 1.0)]  # v1 divisor 1
+    inputs, _ = sheet_weights.reweight(values, list(INPUTS), {**base, "weights_from_v1": True})
+    assert [(i[0], i[3]) for i in inputs] == [("WAN_S", .16)]  # COA new in V2: weight 0, out
