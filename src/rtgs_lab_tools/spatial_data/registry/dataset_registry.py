@@ -119,7 +119,9 @@ MN_GEOSPATIAL_DATASETS = {
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gis.data.mn.gov/datasets/cfb2da4b8adb4fa88654cd6e7b604b9b",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item cfb2da4b8adb4fa88654cd6e7b604b9b).
-        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/687/biota_mcbs_sites_of_biodiversity.zip",
+        # 2026-11-12: the .zip holds only a FileGDB, which the extractor's zip reader does not look
+        # for ("No spatial files found in zip"); the .gpkg at the same path extracts (12,588 features).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/687/biota_mcbs_sites_of_biodiversity.gpkg",
         # 2026-11-10: the Commons zips now hold compressed FileGDBs (CDF) that GDAL's OpenFileGDB
         # driver cannot read; the feature service answers bbox queries.
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/biota_mcbs_sites_of_biodiversity/FeatureServer/0",
@@ -282,7 +284,9 @@ MN_GEOSPATIAL_DATASETS = {
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gis.data.mn.gov/datasets/a1f0f05706f34506879494c218216d16",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item a1f0f05706f34506879494c218216d16).
-        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/622/bdry_dnr_managed_areas.zip",
+        # 2026-11-12: the .zip holds only a FileGDB, which the extractor's zip reader does not look
+        # for ("No spatial files found in zip"); the .gpkg at the same path extracts (6,745; first layer dnr_management_units features).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/622/bdry_dnr_managed_areas.gpkg",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/bdry_dnr_managed_areas/FeatureServer/3",
         "access_method": "download",
         "file_format": "geopackage",
@@ -403,7 +407,9 @@ MN_GEOSPATIAL_DATASETS = {
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gis.data.mn.gov/datasets/8688b4b04b104e4fa104dc855281c6d6",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 8688b4b04b104e4fa104dc855281c6d6).
-        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/886/env_swap_coa.zip",
+        # 2026-11-12: the .zip holds only a FileGDB, which the extractor's zip reader does not look
+        # for ("No spatial files found in zip"); the .gpkg at the same path extracts (37 features).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/886/env_swap_coa.gpkg",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_swap_coa/FeatureServer/0",
         "access_method": "download",
         "file_format": "geopackage",
@@ -1137,7 +1143,9 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gis.data.mn.gov/datasets/minnesota::metro-conservation-corridors-1/about",
-        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/706/env_conservation_corridors.zip",
+        # 2026-11-12: the .zip holds only a FileGDB, which the extractor's zip reader does not look
+        # for ("No spatial files found in zip"); the .gpkg at the same path extracts (4 features).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/706/env_conservation_corridors.gpkg",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_conservation_corridors/FeatureServer/0",
         "access_method": "download",
         "file_format": "geopackage",
@@ -1270,7 +1278,9 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gis.data.mn.gov/datasets/dc159f8d412848f8819044a649577be6_0/about",
-        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/733/env_lakes_of_biological_signific.zip",
+        # 2026-11-12: the .zip holds only a FileGDB, which the extractor's zip reader does not look
+        # for ("No spatial files found in zip"); the .gpkg at the same path extracts (1,729 features).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/733/env_lakes_of_biological_signific.gpkg",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_lakes_of_biological_signific/FeatureServer/0",
         "access_method": "download",
         "file_format": "geopackage",
@@ -1291,7 +1301,9 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gis.data.mn.gov/maps/ad5983f428b84b4fbc8adfb946a06c3b/about",
-        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/847/water_shallow_lakes_id_by_wldlif.zip",
+        # 2026-11-12: the .zip holds only a FileGDB, which the extractor's zip reader does not look
+        # for ("No spatial files found in zip"); the .gpkg at the same path extracts (4,932; first layer, the priority subset is the second features).
+        "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/847/water_shallow_lakes_id_by_wldlif.gpkg",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/water_shallow_lakes_id_by_wldlif/FeatureServer/0",
         "service_url_priority": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/water_shallow_lakes_id_by_wldlif/FeatureServer/1",
         "access_method": "download",
