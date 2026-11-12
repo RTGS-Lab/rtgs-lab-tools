@@ -7,12 +7,16 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 # Start with just MN Geospatial Commons datasets for MVP
+# 2026-11-12: the Commons moved. Every old gisdata.mn.gov/dataset/<slug> page now redirects to
+# the https://gis.data.mn.gov/ home page, so "url" points at the item page
+# https://gis.data.mn.gov/datasets/<item id> instead. Each id was checked against the ArcGIS
+# item record (title, public access) on 2026-11-12.
 MN_GEOSPATIAL_DATASETS = {
     "wildlife_areas": {
         "description": "DNR Wildlife Management Areas",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/bdry-dnr-wildlife-mgmt-areas-pub",
+        "url": "https://gis.data.mn.gov/datasets/275daac450844f55bbd2efbc6a51584e",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 275daac450844f55bbd2efbc6a51584e).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/627/bdry_dnr_wildlife_mgmt_areas_pub.zip",
         "access_method": "download",
@@ -28,7 +32,7 @@ MN_GEOSPATIAL_DATASETS = {
         "description": "Mean annual potential groundwater recharge rates from 1996-2010 for Minnesota",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/id/dataset/geos-gw-recharge-1996-2010-mean",
+        "url": "https://gis.data.mn.gov/datasets/4c7faa8f4005420c95b750ce07fc593a",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 4c7faa8f4005420c95b750ce07fc593a).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/342/geos_gw_recharge_1996_2010_mean.zip",
         "access_method": "download",
@@ -50,7 +54,7 @@ MN_GEOSPATIAL_DATASETS = {
         "description": "DNR Scientific and Natural Areas",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/bdry-scientific-and-nat-areas",
+        "url": "https://gis.data.mn.gov/datasets/efb2f468b7dc440f8f60143456b978d2",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item efb2f468b7dc440f8f60143456b978d2).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/650/bdry_scientific_and_nat_areas.zip",
         "access_method": "download",
@@ -98,7 +102,7 @@ MN_GEOSPATIAL_DATASETS = {
         "description": "DNR Fisheries Acquisition - Aquatic Management Areas",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/plan-mndnr-fisheries-acquisition",
+        "url": "https://gis.data.mn.gov/datasets/5e8a2e67f2954268ac8f88cefb09f0df",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 5e8a2e67f2954268ac8f88cefb09f0df).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/802/plan_mndnr_fisheries_acquisition.zip",
         "access_method": "download",
@@ -113,7 +117,7 @@ MN_GEOSPATIAL_DATASETS = {
         "description": "Minnesota Biological Survey (MBS) - Sites of Biodiversity Significance",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/biota-mcbs-sites-of-biodiversity",
+        "url": "https://gis.data.mn.gov/datasets/cfb2da4b8adb4fa88654cd6e7b604b9b",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item cfb2da4b8adb4fa88654cd6e7b604b9b).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/687/biota_mcbs_sites_of_biodiversity.zip",
         # 2026-11-10: the Commons zips now hold compressed FileGDBs (CDF) that GDAL's OpenFileGDB
@@ -141,7 +145,7 @@ MN_GEOSPATIAL_DATASETS = {
         "description": "WAN (Wildlife Action Network) - Minnesota Wildlife Action Plan Network",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/env-mnwap-wildlife-action-netwrk",
+        "url": "https://gis.data.mn.gov/datasets/0c75d22b85254bd79a46d061fb16b035",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 0c75d22b85254bd79a46d061fb16b035).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/748/env_mnwap_wildlife_action_netwrk.zip",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_mnwap_wildlife_action_netwrk/FeatureServer/0",
@@ -167,7 +171,7 @@ MN_GEOSPATIAL_DATASETS = {
         "description": "Generalized Land Use 2020 - Metropolitan Council Regional Land Use",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/us-mn-state-metc-plan-generl-lnduse2020",
+        "url": "https://gis.data.mn.gov/datasets/02083b659b744f3e8f0867cf06c8fdb4",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 02083b659b744f3e8f0867cf06c8fdb4).
         "download_url": "https://gisdata.metc.state.mn.us/gisdata/Planning/generalized_landuse_2020.zip",
         "access_method": "download",
@@ -206,7 +210,7 @@ MN_GEOSPATIAL_DATASETS = {
         "description": "Cemeteries - Regional Parcels Dataset (filtered)",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/us-mn-state-metrogis-plan-regional-parcels",
+        "url": "https://gis.data.mn.gov/datasets/136b28bd0d874076b702ca55b9aafffc",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 136b28bd0d874076b702ca55b9aafffc).
         "download_url": "https://gisdata.metc.state.mn.us/gisdata/Parcels/plan_regional_parcels.zip",
         "access_method": "download",
@@ -234,7 +238,7 @@ MN_GEOSPATIAL_DATASETS = {
         "description": "DNR Level 9 Watersheds - Hydrologic Unit Boundaries",
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/geos-dnr-watersheds",
+        "url": "https://gis.data.mn.gov/datasets/9152888e541347428ce4ca6a718c8fd0",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 9152888e541347428ce4ca6a718c8fd0).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/875/geos_dnr_watersheds.zip",
         # 2026-11-10: layer 4 is DNR Level 08 All Catchments. The current suite has no Level 9
@@ -270,7 +274,7 @@ MN_GEOSPATIAL_DATASETS = {
         ),
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/bdry-dnr-managed-areas",
+        "url": "https://gis.data.mn.gov/datasets/a1f0f05706f34506879494c218216d16",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item a1f0f05706f34506879494c218216d16).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/622/bdry_dnr_managed_areas.zip",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/bdry_dnr_managed_areas/FeatureServer/3",
@@ -298,7 +302,7 @@ MN_GEOSPATIAL_DATASETS = {
         ),
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/us-mn-state-metc-plan-img2050-significantecoareas",
+        "url": "https://gis.data.mn.gov/datasets/a5b34c1fbc874f33a5fe09f22a7e836a",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item a5b34c1fbc874f33a5fe09f22a7e836a).
         "download_url": "https://gisdata.metc.state.mn.us/gisdata/Planning/imagine2050_significantecologicalareas.zip",
         "access_method": "download",
@@ -340,7 +344,7 @@ MN_GEOSPATIAL_DATASETS = {
         ),
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/biota-mlccs-npc-model-results",
+        "url": "https://gis.data.mn.gov/datasets/7dfc0f065481429697114cf4894366a7",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 7dfc0f065481429697114cf4894366a7).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/688/biota_mlccs_npc_model_results.zip",
         "access_method": "download",
@@ -365,7 +369,7 @@ MN_GEOSPATIAL_DATASETS = {
         ),
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/env-swap-habitats",
+        "url": "https://gis.data.mn.gov/datasets/f70069de20464372b75f3edcab7db3a5",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item f70069de20464372b75f3edcab7db3a5).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/887/env_swap_habitats.zip",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_swap_habitats/FeatureServer/0",
@@ -391,7 +395,7 @@ MN_GEOSPATIAL_DATASETS = {
         ),
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/env-swap-coa",
+        "url": "https://gis.data.mn.gov/datasets/8688b4b04b104e4fa104dc855281c6d6",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 8688b4b04b104e4fa104dc855281c6d6).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/886/env_swap_coa.zip",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/env_swap_coa/FeatureServer/0",
@@ -417,7 +421,7 @@ MN_GEOSPATIAL_DATASETS = {
         ),
         "source_type": "mn_geospatial",
         "extractor_class": "MNGeospatialExtractor",
-        "url": "https://gisdata.mn.gov/dataset/water-mn-public-waters",
+        "url": "https://gis.data.mn.gov/datasets/8159243e8b024922b3a2ea19b0c899dd",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 8159243e8b024922b3a2ea19b0c899dd).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/866/water_mn_public_waters.zip",
         # 2026-11-10: layer 1 basins (pwi_class P basin / W wetland); watercourses are layer 0.
