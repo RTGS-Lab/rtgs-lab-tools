@@ -241,10 +241,16 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://gis.data.mn.gov/datasets/9152888e541347428ce4ca6a718c8fd0",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item 9152888e541347428ce4ca6a718c8fd0).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/875/geos_dnr_watersheds.zip",
-        # 2026-11-10: layer 4 is DNR Level 08 All Catchments. The current suite has no Level 9
-        # auto-catchment layer and no CATCH_POS field (sheet row 45 query); up_count and upadj_cat
-        # give upstream links instead.
-        "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/geos_dnr_watersheds/FeatureServer/4",
+        # 2026-11-10: layer 4 of the Commons service is DNR Level 08 All Catchments; that service
+        # has no Level 9 auto-catchment layer and no CATCH_POS field.
+        # 2026-11-12: Level 09 DNR AutoCatchments (CATCH_POS, sheet row 45 query) is still part of
+        # the suite, but only inside the download zip (geos_dnr_watersheds_auto_catchments.gdb, a
+        # compressed FileGDB that GDAL's OpenFileGDB driver cannot read). Metropolitan Council
+        # republishes that layer from the GDRS as a feature service: 147,335 catchments statewide,
+        # 67,234 with CATCH_POS = 'HEADWATER'. service_url now points there so attribute_filter
+        # has its field; the Level 08 layer is kept below.
+        "service_url": "https://arcgis.metc.state.mn.us/server/rest/services/GDRS/DNR_geos_watersheds_dnr_level_09_auto_catchments/FeatureServer/0",
+        "service_url_level_08_catchments": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/geos_dnr_watersheds/FeatureServer/4",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "static",
