@@ -480,9 +480,15 @@ MN_GEOSPATIAL_DATASETS = {
         "source_type": "direct_download",
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://www.sciencebase.gov/catalog/item/6759abcfd34edfeb8710a004",
-        "download_url": "https://sciencebase.usgs.gov/manager/download/cm8rlfcwt001w0uphfpod8hzi",
+        # 2026-11-12: the sciencebase.usgs.gov/manager/download/cm8rlfcwt001w0uphfpod8hzi link
+        # answers HTTP 200 with the File Manager web page (text/html, 1,957 bytes), not the file.
+        # The catalog file/get link returns the zip itself (213,626,337 bytes, as the item lists).
+        "download_url": "https://www.sciencebase.gov/catalog/file/get/6759abcfd34edfeb8710a004?name=PADUS4_1_State_MN_GDB_KMZ.zip",
         "access_method": "download",
         "file_format": "filegdb",  # PADUS4_1_State_MN_GDB_KMZ.zip, ~213.6 MB
+        # Layers in PADUS4_1_StateMN.gdb: Fee, Easement, Designation, Proclamation, Marine and the
+        # combined PADUS4_1Comb_DOD_Trib_NGP_Fee_Desig_Ease_State_MN (17,143 features statewide).
+        "layer_name": "PADUS4_1Comb_DOD_Trib_NGP_Fee_Desig_Ease_State_MN",
         "update_frequency": "periodic",
         "spatial_type": "multipolygon",
         "model_critical": False,
