@@ -559,6 +559,18 @@ MN_GEOSPATIAL_DATASETS = {
         ),
         "source_type": "rest_api",
         "extractor_class": "MNGeospatialExtractor",
+        # TNC Center for Resilient Conservation Science data page (Hub page item
+        # 6cf3d06455f94fb7a2da2ea2a7fe40ec, "Terrestrial Resilience Data").
+        "url": "https://crcs.tnc.org/pages/data-terrestrial-resilience",
+        # 2026-11-12: that page's "DOWNLOAD GEODATABASE" link for the TNC Customized RCN is a
+        # public Box file, https://tnc.app.box.com/file/1537348825778?s=mj97yzyrnyiui40u7eubz7iluzmrwmlw
+        # download_url is the direct form of the same link. It returns
+        # Resilient_and_Connected_Network_TNC_Customized_2024.zip (1,279,961,211 bytes): one
+        # FileGDB raster, RCN_TNC_Customized, CONUS, 30 m, EPSG:5070, Int32 codes, about 50 GB
+        # unpacked. GDAL 3.8.4 (OpenFileGDB) reads it; clip by window, do not load it whole.
+        # Classes are in the table vat_RCN_TNC_Customized: RCN_W_DIVISION_UPDATES (the
+        # "Detailed" legend) and RCN_DIVISION_Simple.
+        "download_url": "https://tnc.app.box.com/index.php?rm=box_download_shared_file&shared_name=mj97yzyrnyiui40u7eubz7iluzmrwmlw&file_id=f_1537348825778",
         "service_url": "https://tiles.arcgis.com/tiles/F7DSX1DSNSiWmOqh/arcgis/rest/services/Resilient_and_Connected_Network_TNC_Customized_Detailed/MapServer",
         "access_method": "rest_api",
         "file_format": "mapserver",
@@ -571,8 +583,10 @@ MN_GEOSPATIAL_DATASETS = {
         "url_provenance": "crosswalk row 38 (Meaghan Dietrich), not independently discovered",
         # 2026-11-10: the MapServer is TilesOnly (rendered tiles, no values). The TNC vector
         # service Resilient_and_Connected_Network/FeatureServer/0 has 0 features in the
-        # Hennepin bbox. No public download of the classes found: model input NOT AVAILABLE.
-        "model_availability": "tiles only; no downloadable classes found 2026-11-10",
+        # Hennepin bbox. 2026-11-10 found no download of the classes; superseded 2026-11-12 by
+        # download_url above. The service_url is still tiles only.
+        "model_availability": "downloadable raster (download_url), 2024 version; service is tiles only",
+        "version": "2024",
         "crosswalk_rows": [38],
         "scoring_review_rows": [15],
     },
