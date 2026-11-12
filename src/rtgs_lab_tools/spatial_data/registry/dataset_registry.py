@@ -1867,9 +1867,11 @@ FORTHCOMING_DATASETS = {
         ),
         "would_supersede": ["WAN", "wildlife_action_network"],
         "status": "not_published",
-        "checked": "2026-11-10",
+        "checked": "2026-11-12",
         # 2026-11-10: Commons hub search "Conservation Action Network" returns only WAN, COA
         # and the SNA Marxan layer. Still not published.
+        # 2026-11-12: same three results from the Commons search API; ArcGIS Online search
+        # returns only COA. Still not published.
         "evidence": (
             "Full-text search of the Minnesota Geospatial Commons / ArcGIS catalog for "
             "'Conservation Action Network' returns no CAN item. DNR's Wildlife Action "
