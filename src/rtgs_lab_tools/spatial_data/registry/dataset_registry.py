@@ -250,7 +250,9 @@ MN_GEOSPATIAL_DATASETS = {
         # compressed FileGDB that GDAL's OpenFileGDB driver cannot read). Metropolitan Council
         # republishes that layer from the GDRS as a feature service: 147,335 catchments statewide,
         # 67,234 with CATCH_POS = 'HEADWATER'. service_url now points there so attribute_filter
-        # has its field; the Level 08 layer is kept below.
+        # has its field; the Level 08 layer is kept below. Vintage caveat: PUBLISH_DATE_1 is
+        # 2017-06-12 on all 1,996 catchments within a mile of Hennepin County, while the Commons
+        # suite is dated 2023-10-30. Whether Level 09 changed in the 2023 update is not confirmed.
         "service_url": "https://arcgis.metc.state.mn.us/server/rest/services/GDRS/DNR_geos_watersheds_dnr_level_09_auto_catchments/FeatureServer/0",
         "service_url_level_08_catchments": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/geos_dnr_watersheds/FeatureServer/4",
         "access_method": "download",
