@@ -1293,6 +1293,7 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://gis.data.mn.gov/maps/ad5983f428b84b4fbc8adfb946a06c3b/about",
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/847/water_shallow_lakes_id_by_wldlif.zip",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/water_shallow_lakes_id_by_wldlif/FeatureServer/0",
+        "service_url_priority": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/water_shallow_lakes_id_by_wldlif/FeatureServer/1",
         "access_method": "download",
         "file_format": "geopackage",
         "update_frequency": "periodic",
