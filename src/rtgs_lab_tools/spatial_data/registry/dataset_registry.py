@@ -164,8 +164,8 @@ MN_GEOSPATIAL_DATASETS = {
         # Minnesota Geospatial Commons (catalog full-text search returns no CAN
         # item; DNR's WAP 2025-2035 page describes it without an availability
         # date). WAN itself is still live and was refreshed 2026-09-16.
-        # Keep scoring on WAN. See FORTHCOMING_DATASETS["conservation_action_network"].
-        "successor_status": "CAN expected, not published as of 2026-09-21 - do not retire",
+        # Keep scoring on WAN. See MN_GEOSPATIAL_DATASETS["conservation_action_network"] (found 2026-11-12).
+        "successor_status": "CAN found on a DNR portal service 2026-11-12, not on the Commons and not confirmed with DNR - do not retire",
         "crosswalk_rows": [21],
         "scoring_review_rows": [26],
     },
@@ -287,7 +287,7 @@ MN_GEOSPATIAL_DATASETS = {
         "url": "https://gis.data.mn.gov/datasets/a1f0f05706f34506879494c218216d16",
         # 2026-11-10: the resources.gisdata.mn.gov path returned HTTP 404; current Commons link (item a1f0f05706f34506879494c218216d16).
         # 2026-11-12: the .zip holds only a FileGDB, which the extractor's zip reader does not look
-        # for ("No spatial files found in zip"); the .gpkg at the same path extracts (6,745; first layer dnr_management_units features).
+        # for ("No spatial files found in zip"); the .gpkg at the same path extracts (6,745 features in its first layer, dnr_management_units).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/622/bdry_dnr_managed_areas.gpkg",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/bdry_dnr_managed_areas/FeatureServer/3",
         "access_method": "download",
@@ -1318,7 +1318,7 @@ MN_GEOSPATIAL_DATASETS = {
         "extractor_class": "MNGeospatialExtractor",
         "url": "https://gis.data.mn.gov/maps/ad5983f428b84b4fbc8adfb946a06c3b/about",
         # 2026-11-12: the .zip holds only a FileGDB, which the extractor's zip reader does not look
-        # for ("No spatial files found in zip"); the .gpkg at the same path extracts (4,932; first layer, the priority subset is the second features).
+        # for ("No spatial files found in zip"); the .gpkg at the same path extracts (4,932 features in its first layer; the priority subset is the second layer).
         "download_url": "https://operations.gis.data.mn.gov/api/publicdownload/download/847/water_shallow_lakes_id_by_wldlif.gpkg",
         "service_url": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/water_shallow_lakes_id_by_wldlif/FeatureServer/0",
         "service_url_priority": "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/water_shallow_lakes_id_by_wldlif/FeatureServer/1",
@@ -1398,6 +1398,41 @@ MN_GEOSPATIAL_DATASETS = {
         # in the Hennepin bbox. Sheet row 47 names it "Combined_VulnerabilityRating".
         "replaces": "groundwater_susceptibility (2020 geodatabase) for sheet row 47",
         "scoring_review_rows": [47],
+    },
+    "conservation_action_network": {
+        "description": (
+            "Conservation Action Network (CAN), scored composite - the 2025-2035 Minnesota "
+            "Wildlife Action Plan successor to the 2015 Wildlife Action Network. Adds plants "
+            "as Species in Greatest Conservation Need and rescores cores and connectivity."
+        ),
+        "source_type": "mn_geospatial",
+        "extractor_class": "MNGeospatialExtractor",
+        # 2026-11-12: not on the Minnesota Geospatial Commons (its search still returns only WAN,
+        # COA and the SNA Marxan layer). Found in DNR's MN SWAP data portal, linked from the plan
+        # page https://www.dnr.state.mn.us/mnwap/index.html : web map "CAN and COA map", layer
+        # "Conservation Area Network data" = map service ewr_swap_can_final, layer 6
+        # (swap.swap.can_final; portal item created 2026-10-23; 896,967 polygons statewide).
+        # The service is the viewer's own: no metadata record, no licence or use constraint
+        # stated, and it may change without notice. Confirm with DNR before citing it as the
+        # published CAN. FORTHCOMING_DATASETS listed this key as not published until this date.
+        "url": "https://gis.dnr.state.mn.us/arcgis/home/item.html?id=19821f0ab64445cba6e4a81dc7e92ac5",
+        "portal_url": "https://gis.dnr.state.mn.us/arcgis/apps/experiencebuilder/experience/?id=3ae7bb73847d4a5ebb0f52ad85c5a86c",
+        "service_url": "https://gis.dnr.state.mn.us/arcgis/sharing/servers/19821f0ab64445cba6e4a81dc7e92ac5/rest/services/ewr_swap_can_final/MapServer/6",
+        "access_method": "rest_api",
+        "file_format": "mapserver",
+        "update_frequency": "unknown",
+        "spatial_type": "multipolygon",
+        "model_critical": False,
+        "coordinate_system": "EPSG:26915",
+        "temporal_coverage": "2025-2035 plan; service item created 2026-10-23",
+        "data_source": "Minnesota Department of Natural Resources",
+        # Fields: can_rank (Aquatic / Terrestrial / Prairie connectivity / Forest connectivity x
+        # 0, Low, Low-Medium, Medium, Medium-High, High), can_score_cat, can_score_norm and the
+        # component scores. Statewide pull is large: query a bbox.
+        "license_status": "not stated on the service or its portal item (2026-11-12); unconfirmed",
+        "would_supersede": ["WAN", "wildlife_action_network"],
+        "crosswalk_rows": [21, 42],
+        "scoring_review_rows": [26, 28],
     },
 }
 
@@ -1723,7 +1758,7 @@ FGDB_DATASETS = {
         # Crosswalk row 21. Even once CAN publishes, this entry is what the 2020
         # scoring actually ran against and RankNum_Model has no guaranteed CAN
         # equivalent. Retire only after the score mapping is re-derived.
-        "successor_status": "CAN expected, not published as of 2026-09-21 - do not retire",
+        "successor_status": "CAN found on a DNR portal service 2026-11-12, not on the Commons and not confirmed with DNR - do not retire",
         "crosswalk_rows": [21],
         "scoring_review_rows": [26],
     },
@@ -1861,31 +1896,6 @@ PENDING_HENNEPIN_DATASETS = {
 }
 
 FORTHCOMING_DATASETS = {
-    "conservation_action_network": {
-        "description": (
-            "Conservation Action Network (CAN) - the 2025-2035 Minnesota SWAP "
-            "successor to the 2015 Wildlife Action Network. Adds plants as Species in "
-            "Greatest Conservation Need and rescores cores and connectivity."
-        ),
-        "would_supersede": ["WAN", "wildlife_action_network"],
-        "status": "not_published",
-        "checked": "2026-11-12",
-        # 2026-11-10: Commons hub search "Conservation Action Network" returns only WAN, COA
-        # and the SNA Marxan layer. Still not published.
-        # 2026-11-12: same three results from the Commons search API; ArcGIS Online search
-        # returns only COA. Still not published.
-        "evidence": (
-            "Full-text search of the Minnesota Geospatial Commons / ArcGIS catalog for "
-            "'Conservation Action Network' returns no CAN item. DNR's Wildlife Action "
-            "Plan 2025-2035 page describes CAN conceptually as a spatial prioritization "
-            "tool but gives no availability date. The layer it would replace "
-            "(env-mnwap-wildlife-action-netwrk) was refreshed 2026-09-16 and is not "
-            "retired."
-        ),
-        "shipped_siblings": ["conservation_opportunity_areas", "swap_habitats"],
-        "crosswalk_rows": [21, 42],
-        "scoring_review_rows": [26, 28],
-    },
     "audubon_umrb_dataset": {
         "description": (
             "Forthcoming Upper Mississippi River Basin Audubon Chapter dataset; "
